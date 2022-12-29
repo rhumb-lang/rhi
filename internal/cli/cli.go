@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"git.sr.ht/~madcapjake/grhumb/internal/codegen"
+	"git.sr.ht/~madcapjake/grhumb/internal/generator"
 	"git.sr.ht/~madcapjake/grhumb/internal/parser"
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
@@ -17,22 +17,23 @@ type visitorContextKey int
 
 const VisitorCK visitorContextKey = iota
 
-func parse(visitor *codegen.RhumbVisitor, chars antlr.CharStream) {
+func parse(visitor *generator.RhumbVisitor, chars antlr.CharStream) {
 	lexer := parser.NewRhumbLexer(chars)
 
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 
 	p := parser.NewRhumbParser(stream)
-	p.AddErrorListener(new(codegen.RhumbErrorListener))
+	p.AddErrorListener(new(generator.RhumbErrorListener))
 	p.AddErrorListener(antlr.NewDiagnosticErrorListener(false))
 	// TODO: BailErrorStrategy is broken right now
 	// p.SetErrorHandler(antlr.NewBailErrorStrategy())
 	// p.BuildParseTrees = true
 
 	tree := p.Sequence()
-
 	visitor.Visit(tree)
-
+	vm := visitor.GetVM()
+	vm.Disassemble()
+	vm.Execute()
 }
 
 func ParseFile(ctx context.Context, args []string) error {
@@ -42,14 +43,15 @@ func ParseFile(ctx context.Context, args []string) error {
 		fmt.Fprintf(os.Stderr, "Error creating filestream: %s\n", err)
 		os.Exit(1)
 	}
-	parse(ctx.Value(VisitorCK).(*codegen.RhumbVisitor), input)
+
+	parse(ctx.Value(VisitorCK).(*generator.RhumbVisitor), input)
 	return nil
 }
 
 func ParseLine(ctx context.Context, args []string) error {
 	fmt.Println("Parsing line...")
 	input := antlr.NewInputStream(args[0])
-	parse(ctx.Value(VisitorCK).(*codegen.RhumbVisitor), input)
+	parse(ctx.Value(VisitorCK).(*generator.RhumbVisitor), input)
 	return nil
 }
 

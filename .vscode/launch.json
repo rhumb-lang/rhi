@@ -19,7 +19,7 @@
             "program": "cmd/rhumb/main.go",
             "args": [
                 "line",
-                "foo := 1"
+                "foo := 1; bar .= 1"
             ]
         }
 
