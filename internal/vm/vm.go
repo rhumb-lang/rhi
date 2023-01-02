@@ -89,6 +89,14 @@ func (vm *VirtualMachine) SubmitOuterRequest(ir InstrRef) {
 		vm.assignLabel()
 	case "++":
 		vm.addTwoInts()
+	case "--":
+		vm.subTwoInts()
+	case "**":
+		vm.mulTwoInts()
+	case "//":
+		vm.divTwoInts()
+	case "^^":
+		vm.expTwoInts()
 	default:
 		panic("Not a valid outer operator")
 	}

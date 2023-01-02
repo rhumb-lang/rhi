@@ -1,15 +1,10 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+)
 
 /* Phase 1
- * _.=_
- * _:=_
- * _++_
- * _--_
- * _**_
- * _^^_
- * _//_
  * _+/_
  * _-/_
  */
@@ -47,6 +42,52 @@ func (vm *VirtualMachine) addTwoInts() {
 	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
 	vm.stack = append(vm.stack, WordFromInt(val1+val2))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " + ", val2))
+}
+
+func (vm *VirtualMachine) subTwoInts() {
+	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	vm.stack = append(vm.stack, WordFromInt(val1-val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " - ", val2))
+}
+
+func (vm *VirtualMachine) mulTwoInts() {
+	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	vm.stack = append(vm.stack, WordFromInt(val1*val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2))
+}
+
+func (vm *VirtualMachine) divTwoInts() {
+	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	vm.stack = append(vm.stack, WordFromInt(val1/val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " / ", val2))
+}
+
+func expBySquaring(x, n uint32) uint32 {
+	if n == 0 {
+		return 1
+	}
+	var y uint32 = 1
+	for n > 1 {
+		if n%2 == 0 {
+			x = x * x
+			n = n / 2
+		} else {
+			y = x * y
+			x = x * x
+			n = (n - 1) / 2
+		}
+	}
+	return x * y
+}
+
+func (vm *VirtualMachine) expTwoInts() {
+	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	vm.stack = append(vm.stack, WordFromInt(expBySquaring(val1, val2)))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " ^ ", val2))
 }
 
 /* Phase 2

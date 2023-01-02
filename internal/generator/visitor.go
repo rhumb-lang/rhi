@@ -202,7 +202,18 @@ func (v *RhumbVisitor) VisitComparative(ctx *parser.ComparativeContext) interfac
 
 func (v *RhumbVisitor) VisitMultiplicative(ctx *parser.MultiplicativeContext) interface{} {
 	fmt.Println("multiply:", ctx.GetText())
-	return v.VisitChildren(ctx)
+	exprs := ctx.AllExpression()
+	for i := range exprs {
+		exprs[i].Accept(v)
+	}
+	mulOp := ctx.MultiplicativeOp()
+	v.vm.WriteCodeToMain(
+		mulOp.GetStart().GetLine(),
+		vm.NewInstrRef(vm.RefLabel, mulOp.GetText(), nil),
+		// FIXME: re-implement as NewInnerRequest
+		vm.NewOuterRequest,
+	)
+	return nil
 }
 
 func (v *RhumbVisitor) VisitAdditive(ctx *parser.AdditiveContext) interface{} {
@@ -258,7 +269,18 @@ func (v *RhumbVisitor) VisitSelector(ctx *parser.SelectorContext) interface{} {
 
 func (v *RhumbVisitor) VisitPower(ctx *parser.PowerContext) interface{} {
 	fmt.Println("power:", ctx.GetText())
-	return v.VisitChildren(ctx)
+	exprs := ctx.AllExpression()
+	for i := range exprs {
+		exprs[i].Accept(v)
+	}
+	powOp := ctx.ExponentiationOp()
+	v.vm.WriteCodeToMain(
+		powOp.GetStart().GetLine(),
+		vm.NewInstrRef(vm.RefLabel, powOp.GetText(), nil),
+		// FIXME: re-implement as NewInnerRequest
+		vm.NewOuterRequest,
+	)
+	return nil
 }
 
 func (v *RhumbVisitor) VisitMap(ctx *parser.MapContext) interface{} {
@@ -476,8 +498,8 @@ func (v *RhumbVisitor) VisitNumericalNegate(ctx *parser.NumericalNegateContext) 
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitBindBase(ctx *parser.BindBaseContext) interface{} {
-	fmt.Println("bind-base:", ctx.GetText())
+func (v *RhumbVisitor) VisitOuterScope(ctx *parser.OuterScopeContext) interface{} {
+	fmt.Println("outer-scope:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
