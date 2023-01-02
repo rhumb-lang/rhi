@@ -2,8 +2,18 @@ package vm
 
 import (
 	"encoding/binary"
-	"fmt"
+	"io"
+	"log"
+	"os"
 )
+
+var caLogger = log.New(io.Discard, "", log.LstdFlags)
+
+func init() {
+	if os.Getenv("RHUMB_CODE_ARRAY_DEBUG") == "1" {
+		caLogger = log.New(os.Stdout, "{CA} ", log.LstdFlags)
+	}
+}
 
 type CodeArray struct {
 	Mark      Word
@@ -41,7 +51,7 @@ func (ca *CodeArray) SetCodes(cs ...Code) {
 		}
 	}
 	if len(bs) > 0 {
-		fmt.Println(bs)
+		caLogger.Println(bs)
 		for range bs[len(bs):byteSize] {
 			bs = append(bs, 0x0)
 		}

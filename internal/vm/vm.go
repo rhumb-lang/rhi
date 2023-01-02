@@ -1,6 +1,19 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+	"log"
+	"os"
+)
+
+var vmLogger = log.New(io.Discard, "", log.LstdFlags)
+
+func init() {
+	if os.Getenv("RHUMB_VM_DEBUG") == "1" {
+		vmLogger = log.New(os.Stdout, "{VM} ", log.LstdFlags)
+	}
+}
 
 type VirtualMachine struct {
 	heap  []Word
@@ -40,16 +53,16 @@ func (vm *VirtualMachine) Execute() {
 }
 
 func logAddedToStack(stack []Word, txt string) {
-	fmt.Print("Added ", txt, " to stack: [")
+	logStr := fmt.Sprint("Added ", txt, " to stack: [")
 	for s := range stack {
-		fmt.Print(" ")
+		logStr = fmt.Sprint(logStr, " ")
 		if s == len(stack)-1 {
-			fmt.Print("\033[1m", stack[s].Debug(), "\033[0m")
+			logStr = fmt.Sprint(logStr, "\033[1m", stack[s].Debug(), "\033[0m")
 		} else {
-			fmt.Print(stack[s].Debug())
+			logStr = fmt.Sprint(logStr, stack[s].Debug())
 		}
 	}
-	fmt.Println(" ]")
+	vmLogger.Println(logStr, " ]")
 }
 
 func (vm *VirtualMachine) AddValueToStack(ir InstrRef) {

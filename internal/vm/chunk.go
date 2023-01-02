@@ -31,8 +31,12 @@ func (ir InstrRef) equals(other InstrRef) bool {
 
 type Chunk struct {
 	instructions CodeArray
-	prestack     []InstrRef
-	lines        []int
+
+	// FIXME: Find a less memory intensive line tracking system
+	lines []int
+
+	// FIXME: Convert to array of refs & literals for true compilation
+	prestack []InstrRef
 }
 
 func NewChunk(codes, refs []Word) Chunk {
@@ -120,7 +124,7 @@ func (ch Chunk) execTagIndex(vm *VirtualMachine, b byte, idx int) {
 }
 
 func (ch Chunk) Disassemble() {
-	fmt.Println("============= Routine =============")
+	fmt.Println("============= Chunk =============")
 	var line int
 	buf := ch.instructions.GetCodes()
 	for offset := 0; offset < ch.instructions.Len(); {
