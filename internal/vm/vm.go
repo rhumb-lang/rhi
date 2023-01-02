@@ -97,6 +97,15 @@ func (vm *VirtualMachine) SubmitOuterRequest(ir InstrRef) {
 		vm.divTwoInts()
 	case "^^":
 		vm.expTwoInts()
+	case "[[":
+		vm.beginMap()
+	case "]]":
+		vm.endMap()
+	case "((":
+		vm.beginRoutine()
+	case "))":
+		vm.endRoutine()
+
 	default:
 		panic("Not a valid outer operator")
 	}

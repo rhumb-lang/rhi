@@ -24,47 +24,6 @@ func locateScopeLabel(
 	return
 }
 
-func (vm *VirtualMachine) popStack() (popped Word) {
-	idx := len(vm.stack) - 1
-	popped = vm.stack[idx]
-	vm.stack = vm.stack[:idx]
-	return
-}
-
-func (vm *VirtualMachine) assignLabel() {
-	valWord := vm.popStack()
-	addrWord := vm.popStack()
-	vm.heap[addrWord.AsAddr()] = valWord
-}
-
-func (vm *VirtualMachine) addTwoInts() {
-	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	vm.stack = append(vm.stack, WordFromInt(val1+val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " + ", val2))
-}
-
-func (vm *VirtualMachine) subTwoInts() {
-	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	vm.stack = append(vm.stack, WordFromInt(val1-val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " - ", val2))
-}
-
-func (vm *VirtualMachine) mulTwoInts() {
-	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	vm.stack = append(vm.stack, WordFromInt(val1*val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2))
-}
-
-func (vm *VirtualMachine) divTwoInts() {
-	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	vm.stack = append(vm.stack, WordFromInt(val1/val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " / ", val2))
-}
-
 func expBySquaring(x, n uint32) uint32 {
 	if n == 0 {
 		return 1
@@ -83,11 +42,88 @@ func expBySquaring(x, n uint32) uint32 {
 	return x * y
 }
 
+func (vm *VirtualMachine) popStack() (popped Word) {
+	idx := len(vm.stack) - 1
+	popped = vm.stack[idx]
+	vm.stack = vm.stack[:idx]
+	return
+}
+
+func (vm *VirtualMachine) gatherTwoInts() (val1, val2 uint32) {
+	stackVal2 := vm.popStack()
+	stackVal1 := vm.popStack()
+	if stackVal1.IsAddr() {
+		val1 = vm.heap[stackVal1.AsAddr()].AsInt()
+	} else if stackVal1.IsInt() {
+		val1 = stackVal1.AsInt()
+	}
+	if stackVal2.IsAddr() {
+		val2 = vm.heap[stackVal2.AsAddr()].AsInt()
+	} else if stackVal2.IsInt() {
+		val2 = stackVal2.AsInt()
+	}
+	return
+}
+
+func (vm *VirtualMachine) assignLabel() {
+	valWord := vm.popStack()
+	addrWord := vm.popStack()
+	vm.heap[addrWord.AsAddr()] = valWord
+}
+
+func (vm *VirtualMachine) addTwoInts() {
+	val1, val2 := vm.gatherTwoInts()
+	vm.stack = append(vm.stack, WordFromInt(val1+val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " + ", val2))
+}
+
+func (vm *VirtualMachine) subTwoInts() {
+	val1, val2 := vm.gatherTwoInts()
+	vm.stack = append(vm.stack, WordFromInt(val1-val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " - ", val2))
+}
+
+func (vm *VirtualMachine) mulTwoInts() {
+	val1, val2 := vm.gatherTwoInts()
+	vm.stack = append(vm.stack, WordFromInt(val1*val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2))
+}
+
+func (vm *VirtualMachine) divTwoInts() {
+	val1, val2 := vm.gatherTwoInts()
+	vm.stack = append(vm.stack, WordFromInt(val1/val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " / ", val2))
+}
+
 func (vm *VirtualMachine) expTwoInts() {
-	val2 := vm.heap[vm.popStack().AsAddr()].AsInt()
-	val1 := vm.heap[vm.popStack().AsAddr()].AsInt()
+	val1, val2 := vm.gatherTwoInts()
 	vm.stack = append(vm.stack, WordFromInt(expBySquaring(val1, val2)))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " ^ ", val2))
+}
+
+func (vm *VirtualMachine) beginRoutine() {
+	vm.scope = append(vm.scope, make(map[string]int))
+	vm.stack = append(vm.stack, Word(TAG_MRK_STL))
+}
+
+func (vm *VirtualMachine) endRoutine() {
+	// TODO: try to delete things?
+	vm.scope = vm.scope[:len(vm.scope)-1]
+	for back := len(vm.stack); back > 0; back-- {
+		if vm.stack[back].IsSentinel() {
+			last := vm.stack[len(vm.stack)-1]
+			vm.stack = vm.stack[:back]
+			vm.stack[back] = last
+		}
+	}
+}
+
+func (vm *VirtualMachine) beginMap() {
+
+}
+
+func (vm *VirtualMachine) endMap() {
+
 }
 
 /* Phase 2

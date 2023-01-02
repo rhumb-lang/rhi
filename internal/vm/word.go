@@ -87,17 +87,18 @@ func WordFromRune(r rune) Word  { return Word(TAG_LIT_RNE | uint64(r)) }
 func WordFromSym(a int) Word    { return Word(TAG_LIT_SYM | uint64(a)) }
 func WordFromAddr(a int) Word   { return Word(TAG_ADDRESS | uint64(a)) }
 
-func (w Word) IsNAN() bool   { return uint64(w) == TAG_LIT_NAN }
-func (w Word) IsTrue() bool  { return uint64(w) == TAG_LIT_TRU }
-func (w Word) IsFalse() bool { return uint64(w) == TAG_LIT_FLS }
-func (w Word) IsBool() bool  { return w.IsTrue() || w.IsFalse() }
-func (w Word) IsEmpty() bool { return uint64(w) == TAG_LIT_ETY }
-func (w Word) IsInt() bool   { return uint64(w)&TAG_LIT_INT == TAG_LIT_INT }
-func (w Word) IsRune() bool  { return uint64(w)&TAG_LIT_RNE == TAG_LIT_RNE }
-func (w Word) IsSym() bool   { return uint64(w)&TAG_LIT_SYM == TAG_LIT_SYM }
-func (w Word) IsFloat() bool { return uint64(w)&TAG_SLT_NAN != TAG_SLT_NAN }
-func (w Word) IsMark() bool  { return uint64(w)&TAG_OBJ_MAP == TAG_OBJ_MAP }
-func (w Word) IsAddr() bool  { return uint64(w)&TAG_ADDRESS == TAG_ADDRESS }
+func (w Word) IsFloat() bool    { return uint64(w)&TAG_SLT_NAN != TAG_SLT_NAN }
+func (w Word) IsAddr() bool     { return uint64(w)&TAG_ADDRESS == TAG_ADDRESS }
+func (w Word) IsNAN() bool      { return uint64(w) == TAG_LIT_NAN }
+func (w Word) IsTrue() bool     { return uint64(w) == TAG_LIT_TRU }
+func (w Word) IsFalse() bool    { return uint64(w) == TAG_LIT_FLS }
+func (w Word) IsBool() bool     { return w.IsTrue() || w.IsFalse() }
+func (w Word) IsEmpty() bool    { return uint64(w) == TAG_LIT_ETY }
+func (w Word) IsInt() bool      { return uint64(w)&TAG_LIT_INT == TAG_LIT_INT }
+func (w Word) IsRune() bool     { return uint64(w)&TAG_LIT_RNE == TAG_LIT_RNE }
+func (w Word) IsSym() bool      { return uint64(w)&TAG_LIT_SYM == TAG_LIT_SYM }
+func (w Word) IsSentinel() bool { return uint64(w)&TAG_MRK_STL == TAG_MRK_STL }
+func (w Word) IsMark() bool     { return uint64(w)&TAG_OBJ_MAP == TAG_OBJ_MAP }
 
 func (w Word) isMrkT(t uint64) bool { return uint64(w)&TAG_ALLMARK == t }
 func (w Word) IsMap() bool          { return w.isMrkT(TAG_OBJ_MAP) }
