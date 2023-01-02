@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"git.sr.ht/~madcapjake/grhumb/internal/generator"
 	"git.sr.ht/~madcapjake/grhumb/internal/parser"
@@ -48,9 +49,9 @@ func ParseFile(ctx context.Context, args []string) error {
 	return nil
 }
 
-func ParseLine(ctx context.Context, args []string) error {
+func ParseLines(ctx context.Context, args []string) error {
 	fmt.Println("Parsing line...")
-	input := antlr.NewInputStream(args[0])
+	input := antlr.NewInputStream(strings.Join(args, "\n"))
 	parse(ctx.Value(VisitorCK).(*generator.RhumbVisitor), input)
 	return nil
 }
@@ -69,7 +70,7 @@ func ReadEvalPrintLoop(ctx context.Context, args []string) error {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			os.Exit(1)
 		}
-		if err = ParseLine(ctx, []string{text}); err != nil {
+		if err = ParseLines(ctx, []string{text}); err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		}
 	}

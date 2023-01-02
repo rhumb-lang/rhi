@@ -22,8 +22,8 @@ func main() {
 		},
 		{
 			Name:        "line",
-			Description: "evaluates line and any connected files",
-			ExecFunc:    cli.ParseLine,
+			Description: "evaluates lines and any connected files",
+			ExecFunc:    cli.ParseLines,
 		},
 		{
 			Name:        "repl",
