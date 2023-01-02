@@ -215,8 +215,8 @@ type RhumbParserVisitor interface {
 	// Visit a parse tree produced by RhumbParser#numericalNegate.
 	VisitNumericalNegate(ctx *NumericalNegateContext) interface{}
 
-	// Visit a parse tree produced by RhumbParser#bindBase.
-	VisitBindBase(ctx *BindBaseContext) interface{}
+	// Visit a parse tree produced by RhumbParser#outerScope.
+	VisitOuterScope(ctx *OuterScopeContext) interface{}
 
 	// Visit a parse tree produced by RhumbParser#logicalNegate.
 	VisitLogicalNegate(ctx *LogicalNegateContext) interface{}

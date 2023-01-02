@@ -206,43 +206,43 @@ func rhumbparserParserInit() {
 		0, 0, 0, 270, 275, 5, 28, 0, 0, 271, 275, 5, 29, 0, 0, 272, 275, 5, 18,
 		0, 0, 273, 275, 5, 19, 0, 0, 274, 270, 1, 0, 0, 0, 274, 271, 1, 0, 0, 0,
 		274, 272, 1, 0, 0, 0, 274, 273, 1, 0, 0, 0, 275, 29, 1, 0, 0, 0, 276, 290,
-		5, 22, 0, 0, 277, 290, 5, 58, 0, 0, 278, 290, 5, 6, 0, 0, 279, 290, 5,
-		41, 0, 0, 280, 290, 5, 14, 0, 0, 281, 290, 5, 2, 0, 0, 282, 290, 5, 55,
-		0, 0, 283, 290, 5, 48, 0, 0, 284, 290, 5, 30, 0, 0, 285, 290, 5, 3, 0,
-		0, 286, 290, 5, 52, 0, 0, 287, 290, 5, 26, 0, 0, 288, 290, 5, 17, 0, 0,
-		289, 276, 1, 0, 0, 0, 289, 277, 1, 0, 0, 0, 289, 278, 1, 0, 0, 0, 289,
-		279, 1, 0, 0, 0, 289, 280, 1, 0, 0, 0, 289, 281, 1, 0, 0, 0, 289, 282,
-		1, 0, 0, 0, 289, 283, 1, 0, 0, 0, 289, 284, 1, 0, 0, 0, 289, 285, 1, 0,
-		0, 0, 289, 286, 1, 0, 0, 0, 289, 287, 1, 0, 0, 0, 289, 288, 1, 0, 0, 0,
-		290, 31, 1, 0, 0, 0, 291, 295, 5, 4, 0, 0, 292, 295, 5, 3, 0, 0, 293, 295,
-		5, 45, 0, 0, 294, 291, 1, 0, 0, 0, 294, 292, 1, 0, 0, 0, 294, 293, 1, 0,
-		0, 0, 295, 33, 1, 0, 0, 0, 296, 301, 5, 65, 0, 0, 297, 300, 5, 84, 0, 0,
-		298, 300, 3, 36, 18, 0, 299, 297, 1, 0, 0, 0, 299, 298, 1, 0, 0, 0, 300,
-		303, 1, 0, 0, 0, 301, 299, 1, 0, 0, 0, 301, 302, 1, 0, 0, 0, 302, 304,
-		1, 0, 0, 0, 303, 301, 1, 0, 0, 0, 304, 307, 5, 85, 0, 0, 305, 307, 5, 64,
-		0, 0, 306, 296, 1, 0, 0, 0, 306, 305, 1, 0, 0, 0, 307, 35, 1, 0, 0, 0,
-		308, 318, 5, 81, 0, 0, 309, 310, 5, 79, 0, 0, 310, 311, 3, 0, 0, 0, 311,
-		312, 5, 67, 0, 0, 312, 318, 1, 0, 0, 0, 313, 314, 5, 80, 0, 0, 314, 315,
-		3, 0, 0, 0, 315, 316, 5, 71, 0, 0, 316, 318, 1, 0, 0, 0, 317, 308, 1, 0,
-		0, 0, 317, 309, 1, 0, 0, 0, 317, 313, 1, 0, 0, 0, 318, 37, 1, 0, 0, 0,
-		319, 320, 5, 72, 0, 0, 320, 321, 5, 78, 0, 0, 321, 359, 5, 73, 0, 0, 322,
-		323, 5, 72, 0, 0, 323, 327, 5, 66, 0, 0, 324, 326, 3, 2, 1, 0, 325, 324,
-		1, 0, 0, 0, 326, 329, 1, 0, 0, 0, 327, 325, 1, 0, 0, 0, 327, 328, 1, 0,
-		0, 0, 328, 330, 1, 0, 0, 0, 329, 327, 1, 0, 0, 0, 330, 331, 3, 0, 0, 0,
-		331, 332, 5, 67, 0, 0, 332, 333, 5, 73, 0, 0, 333, 359, 1, 0, 0, 0, 334,
-		335, 5, 72, 0, 0, 335, 339, 5, 68, 0, 0, 336, 338, 3, 2, 1, 0, 337, 336,
-		1, 0, 0, 0, 338, 341, 1, 0, 0, 0, 339, 337, 1, 0, 0, 0, 339, 340, 1, 0,
-		0, 0, 340, 342, 1, 0, 0, 0, 341, 339, 1, 0, 0, 0, 342, 343, 3, 0, 0, 0,
-		343, 344, 5, 69, 0, 0, 344, 345, 5, 73, 0, 0, 345, 359, 1, 0, 0, 0, 346,
-		347, 5, 72, 0, 0, 347, 351, 5, 70, 0, 0, 348, 350, 3, 2, 1, 0, 349, 348,
-		1, 0, 0, 0, 350, 353, 1, 0, 0, 0, 351, 349, 1, 0, 0, 0, 351, 352, 1, 0,
-		0, 0, 352, 354, 1, 0, 0, 0, 353, 351, 1, 0, 0, 0, 354, 355, 3, 0, 0, 0,
-		355, 356, 5, 71, 0, 0, 356, 357, 5, 73, 0, 0, 357, 359, 1, 0, 0, 0, 358,
-		319, 1, 0, 0, 0, 358, 322, 1, 0, 0, 0, 358, 334, 1, 0, 0, 0, 358, 346,
-		1, 0, 0, 0, 359, 39, 1, 0, 0, 0, 44, 43, 47, 58, 65, 69, 76, 80, 87, 91,
-		101, 105, 109, 116, 120, 124, 128, 134, 177, 181, 189, 194, 202, 206, 209,
-		211, 217, 221, 227, 239, 251, 256, 263, 268, 274, 289, 294, 299, 301, 306,
-		317, 327, 339, 351, 358,
+		5, 22, 0, 0, 277, 290, 5, 4, 0, 0, 278, 290, 5, 6, 0, 0, 279, 290, 5, 41,
+		0, 0, 280, 290, 5, 14, 0, 0, 281, 290, 5, 2, 0, 0, 282, 290, 5, 55, 0,
+		0, 283, 290, 5, 48, 0, 0, 284, 290, 5, 30, 0, 0, 285, 290, 5, 3, 0, 0,
+		286, 290, 5, 52, 0, 0, 287, 290, 5, 26, 0, 0, 288, 290, 5, 17, 0, 0, 289,
+		276, 1, 0, 0, 0, 289, 277, 1, 0, 0, 0, 289, 278, 1, 0, 0, 0, 289, 279,
+		1, 0, 0, 0, 289, 280, 1, 0, 0, 0, 289, 281, 1, 0, 0, 0, 289, 282, 1, 0,
+		0, 0, 289, 283, 1, 0, 0, 0, 289, 284, 1, 0, 0, 0, 289, 285, 1, 0, 0, 0,
+		289, 286, 1, 0, 0, 0, 289, 287, 1, 0, 0, 0, 289, 288, 1, 0, 0, 0, 290,
+		31, 1, 0, 0, 0, 291, 295, 5, 4, 0, 0, 292, 295, 5, 3, 0, 0, 293, 295, 5,
+		45, 0, 0, 294, 291, 1, 0, 0, 0, 294, 292, 1, 0, 0, 0, 294, 293, 1, 0, 0,
+		0, 295, 33, 1, 0, 0, 0, 296, 301, 5, 65, 0, 0, 297, 300, 5, 84, 0, 0, 298,
+		300, 3, 36, 18, 0, 299, 297, 1, 0, 0, 0, 299, 298, 1, 0, 0, 0, 300, 303,
+		1, 0, 0, 0, 301, 299, 1, 0, 0, 0, 301, 302, 1, 0, 0, 0, 302, 304, 1, 0,
+		0, 0, 303, 301, 1, 0, 0, 0, 304, 307, 5, 85, 0, 0, 305, 307, 5, 64, 0,
+		0, 306, 296, 1, 0, 0, 0, 306, 305, 1, 0, 0, 0, 307, 35, 1, 0, 0, 0, 308,
+		318, 5, 81, 0, 0, 309, 310, 5, 79, 0, 0, 310, 311, 3, 0, 0, 0, 311, 312,
+		5, 67, 0, 0, 312, 318, 1, 0, 0, 0, 313, 314, 5, 80, 0, 0, 314, 315, 3,
+		0, 0, 0, 315, 316, 5, 71, 0, 0, 316, 318, 1, 0, 0, 0, 317, 308, 1, 0, 0,
+		0, 317, 309, 1, 0, 0, 0, 317, 313, 1, 0, 0, 0, 318, 37, 1, 0, 0, 0, 319,
+		320, 5, 72, 0, 0, 320, 321, 5, 78, 0, 0, 321, 359, 5, 73, 0, 0, 322, 323,
+		5, 72, 0, 0, 323, 327, 5, 66, 0, 0, 324, 326, 3, 2, 1, 0, 325, 324, 1,
+		0, 0, 0, 326, 329, 1, 0, 0, 0, 327, 325, 1, 0, 0, 0, 327, 328, 1, 0, 0,
+		0, 328, 330, 1, 0, 0, 0, 329, 327, 1, 0, 0, 0, 330, 331, 3, 0, 0, 0, 331,
+		332, 5, 67, 0, 0, 332, 333, 5, 73, 0, 0, 333, 359, 1, 0, 0, 0, 334, 335,
+		5, 72, 0, 0, 335, 339, 5, 68, 0, 0, 336, 338, 3, 2, 1, 0, 337, 336, 1,
+		0, 0, 0, 338, 341, 1, 0, 0, 0, 339, 337, 1, 0, 0, 0, 339, 340, 1, 0, 0,
+		0, 340, 342, 1, 0, 0, 0, 341, 339, 1, 0, 0, 0, 342, 343, 3, 0, 0, 0, 343,
+		344, 5, 69, 0, 0, 344, 345, 5, 73, 0, 0, 345, 359, 1, 0, 0, 0, 346, 347,
+		5, 72, 0, 0, 347, 351, 5, 70, 0, 0, 348, 350, 3, 2, 1, 0, 349, 348, 1,
+		0, 0, 0, 350, 353, 1, 0, 0, 0, 351, 349, 1, 0, 0, 0, 351, 352, 1, 0, 0,
+		0, 352, 354, 1, 0, 0, 0, 353, 351, 1, 0, 0, 0, 354, 355, 3, 0, 0, 0, 355,
+		356, 5, 71, 0, 0, 356, 357, 5, 73, 0, 0, 357, 359, 1, 0, 0, 0, 358, 319,
+		1, 0, 0, 0, 358, 322, 1, 0, 0, 0, 358, 334, 1, 0, 0, 0, 358, 346, 1, 0,
+		0, 0, 359, 39, 1, 0, 0, 0, 44, 43, 47, 58, 65, 69, 76, 80, 87, 91, 101,
+		105, 109, 116, 120, 124, 128, 134, 177, 181, 189, 194, 202, 206, 209, 211,
+		217, 221, 227, 239, 251, 256, 263, 268, 274, 289, 294, 299, 301, 306, 317,
+		327, 339, 351, 358,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -584,7 +584,7 @@ func (p *RhumbParser) Sequence() (localctx ISequenceContext) {
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 
-		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 			{
 				p.SetState(42)
 				p.expression(0)
@@ -3224,7 +3224,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 
-		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 			{
 				p.SetState(68)
 				p.Sequence()
@@ -3262,7 +3262,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 
-		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 			{
 				p.SetState(79)
 				p.Sequence()
@@ -3300,7 +3300,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 
-		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 			{
 				p.SetState(90)
 				p.Sequence()
@@ -3356,7 +3356,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 			p.GetErrorHandler().Sync(p)
 			_la = p.GetTokenStream().LA(1)
 
-			if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+			if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 				{
 					p.SetState(104)
 
@@ -3414,7 +3414,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 			p.GetErrorHandler().Sync(p)
 			_la = p.GetTokenStream().LA(1)
 
-			if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+			if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 				{
 					p.SetState(119)
 
@@ -3687,7 +3687,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.GetErrorHandler().Sync(p)
 				_la = p.GetTokenStream().LA(1)
 
-				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 					{
 						p.SetState(180)
 						p.Sequence()
@@ -3776,7 +3776,7 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.GetErrorHandler().Sync(p)
 				_la = p.GetTokenStream().LA(1)
 
-				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286796) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
+				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7246575475584286812) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&16727) != 0 {
 					{
 						p.SetState(205)
 						p.Sequence()
@@ -7289,50 +7289,6 @@ func (s *AssertContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 	}
 }
 
-type BindBaseContext struct {
-	*PrefixOpContext
-}
-
-func NewBindBaseContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BindBaseContext {
-	var p = new(BindBaseContext)
-
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
-	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
-
-	return p
-}
-
-func (s *BindBaseContext) GetRuleContext() antlr.RuleContext {
-	return s
-}
-
-func (s *BindBaseContext) Tilde() antlr.TerminalNode {
-	return s.GetToken(RhumbParserTilde, 0)
-}
-
-func (s *BindBaseContext) EnterRule(listener antlr.ParseTreeListener) {
-	if listenerT, ok := listener.(RhumbParserListener); ok {
-		listenerT.EnterBindBase(s)
-	}
-}
-
-func (s *BindBaseContext) ExitRule(listener antlr.ParseTreeListener) {
-	if listenerT, ok := listener.(RhumbParserListener); ok {
-		listenerT.ExitBindBase(s)
-	}
-}
-
-func (s *BindBaseContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
-	switch t := visitor.(type) {
-	case RhumbParserVisitor:
-		return t.VisitBindBase(s)
-
-	default:
-		return t.VisitChildren(s)
-	}
-}
-
 type ImmutableDestructContext struct {
 	*PrefixOpContext
 }
@@ -7371,6 +7327,50 @@ func (s *ImmutableDestructContext) Accept(visitor antlr.ParseTreeVisitor) interf
 	switch t := visitor.(type) {
 	case RhumbParserVisitor:
 		return t.VisitImmutableDestruct(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
+type OuterScopeContext struct {
+	*PrefixOpContext
+}
+
+func NewOuterScopeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *OuterScopeContext {
+	var p = new(OuterScopeContext)
+
+	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	p.parser = parser
+	p.CopyFrom(ctx.(*PrefixOpContext))
+
+	return p
+}
+
+func (s *OuterScopeContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *OuterScopeContext) BSlash() antlr.TerminalNode {
+	return s.GetToken(RhumbParserBSlash, 0)
+}
+
+func (s *OuterScopeContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(RhumbParserListener); ok {
+		listenerT.EnterOuterScope(s)
+	}
+}
+
+func (s *OuterScopeContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(RhumbParserListener); ok {
+		listenerT.ExitOuterScope(s)
+	}
+}
+
+func (s *OuterScopeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case RhumbParserVisitor:
+		return t.VisitOuterScope(s)
 
 	default:
 		return t.VisitChildren(s)
@@ -7500,12 +7500,12 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 			p.Match(RhumbParserDash)
 		}
 
-	case RhumbParserTilde:
-		localctx = NewBindBaseContext(p, localctx)
+	case RhumbParserBSlash:
+		localctx = NewOuterScopeContext(p, localctx)
 		p.EnterOuterAlt(localctx, 2)
 		{
 			p.SetState(277)
-			p.Match(RhumbParserTilde)
+			p.Match(RhumbParserBSlash)
 		}
 
 	case RhumbParserBang:

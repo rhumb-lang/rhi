@@ -435,11 +435,11 @@ func (s *BaseRhumbParserListener) EnterNumericalNegate(ctx *NumericalNegateConte
 // ExitNumericalNegate is called when production numericalNegate is exited.
 func (s *BaseRhumbParserListener) ExitNumericalNegate(ctx *NumericalNegateContext) {}
 
-// EnterBindBase is called when production bindBase is entered.
-func (s *BaseRhumbParserListener) EnterBindBase(ctx *BindBaseContext) {}
+// EnterOuterScope is called when production outerScope is entered.
+func (s *BaseRhumbParserListener) EnterOuterScope(ctx *OuterScopeContext) {}
 
-// ExitBindBase is called when production bindBase is exited.
-func (s *BaseRhumbParserListener) ExitBindBase(ctx *BindBaseContext) {}
+// ExitOuterScope is called when production outerScope is exited.
+func (s *BaseRhumbParserListener) ExitOuterScope(ctx *OuterScopeContext) {}
 
 // EnterLogicalNegate is called when production logicalNegate is entered.
 func (s *BaseRhumbParserListener) EnterLogicalNegate(ctx *LogicalNegateContext) {}

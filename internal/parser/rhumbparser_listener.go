@@ -215,8 +215,8 @@ type RhumbParserListener interface {
 	// EnterNumericalNegate is called when entering the numericalNegate production.
 	EnterNumericalNegate(c *NumericalNegateContext)
 
-	// EnterBindBase is called when entering the bindBase production.
-	EnterBindBase(c *BindBaseContext)
+	// EnterOuterScope is called when entering the outerScope production.
+	EnterOuterScope(c *OuterScopeContext)
 
 	// EnterLogicalNegate is called when entering the logicalNegate production.
 	EnterLogicalNegate(c *LogicalNegateContext)
@@ -491,8 +491,8 @@ type RhumbParserListener interface {
 	// ExitNumericalNegate is called when exiting the numericalNegate production.
 	ExitNumericalNegate(c *NumericalNegateContext)
 
-	// ExitBindBase is called when exiting the bindBase production.
-	ExitBindBase(c *BindBaseContext)
+	// ExitOuterScope is called when exiting the outerScope production.
+	ExitOuterScope(c *OuterScopeContext)
 
 	// ExitLogicalNegate is called when exiting the logicalNegate production.
 	ExitLogicalNegate(c *LogicalNegateContext)

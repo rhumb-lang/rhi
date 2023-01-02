@@ -284,7 +284,7 @@ func (v *BaseRhumbParserVisitor) VisitNumericalNegate(ctx *NumericalNegateContex
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitBindBase(ctx *BindBaseContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitOuterScope(ctx *OuterScopeContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
