@@ -11,8 +11,8 @@ type WordArray struct {
 
 func NewWordArray(words ...Word) WordArray {
 	return WordArray{
-		Word(TAG_OBJ_ARR),
-		Word(TAG_ADDRESS),
+		Word(MAIN_ARR),
+		Word(VAL_ADDR),
 		WordFromInt(uint32(len(words))),
 		words,
 	}

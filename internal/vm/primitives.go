@@ -52,14 +52,14 @@ func (vm *VirtualMachine) popStack() (popped Word) {
 func (vm *VirtualMachine) gatherTwoInts() (val1, val2 uint32) {
 	stackVal2 := vm.popStack()
 	stackVal1 := vm.popStack()
-	if stackVal1.IsAddr() {
+	if stackVal1.IsAddress() {
 		val1 = vm.heap[stackVal1.AsAddr()].AsInt()
-	} else if stackVal1.IsInt() {
+	} else if stackVal1.IsInteger() {
 		val1 = stackVal1.AsInt()
 	}
-	if stackVal2.IsAddr() {
+	if stackVal2.IsAddress() {
 		val2 = vm.heap[stackVal2.AsAddr()].AsInt()
-	} else if stackVal2.IsInt() {
+	} else if stackVal2.IsInteger() {
 		val2 = stackVal2.AsInt()
 	}
 	return
@@ -101,29 +101,57 @@ func (vm *VirtualMachine) expTwoInts() {
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " ^ ", val2))
 }
 
+// New scope and add a sentinel to the stack
 func (vm *VirtualMachine) beginRoutine() {
 	vm.scope = append(vm.scope, make(map[string]int))
-	vm.stack = append(vm.stack, Word(TAG_MRK_STL))
+	vm.stack = append(vm.stack, Word(SENTINEL))
 }
 
-func (vm *VirtualMachine) endRoutine() {
-	// TODO: try to delete things?
-	vm.scope = vm.scope[:len(vm.scope)-1]
+// Same as routine
+func (vm *VirtualMachine) beginMap() {
+	vm.beginRoutine()
+}
+
+func (vm *VirtualMachine) unwindToSentinel() error {
 	for back := len(vm.stack); back > 0; back-- {
 		if vm.stack[back].IsSentinel() {
-			last := vm.stack[len(vm.stack)-1]
-			vm.stack = vm.stack[:back]
-			vm.stack[back] = last
+			vm.stack = vm.stack[:back-1]
+			return nil
 		}
 	}
+	return fmt.Errorf("No sentinel found")
 }
 
-func (vm *VirtualMachine) beginMap() {
+// Replace all sub stack values with one final result
+func (vm *VirtualMachine) endRoutine() {
+	stackLen := len(vm.stack)
+	last := vm.stack[stackLen-1]
 
+	vm.scope = vm.scope[:len(vm.scope)-1]
+
+	if err := vm.unwindToSentinel(); err != nil {
+		panic(err)
+	}
+
+	vm.stack = append(vm.stack, last)
 }
 
+// Delete all sub stack values and turn scope into map
 func (vm *VirtualMachine) endMap() {
+	scopeCount := len(vm.scope)
+	// mapScope := vm.scope[scopeCount-1]
 
+	vm.scope = vm.scope[:scopeCount-1]
+
+	if err := vm.unwindToSentinel(); err != nil {
+		panic(err)
+	}
+
+	// mapLeg := NewMapLegend(mapScope)
+	// legAddr := vm.heap[len(vm.heap)-1]
+	// vm.heap = append(vm.heap, mapLeg.AsWords())
+	// mapObj := NewMapObject(legAddr, mapScope)
+	// vm.heap = append(vm.heap)
 }
 
 /* Phase 2

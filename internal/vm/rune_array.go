@@ -15,7 +15,7 @@ type RuneArray struct {
 
 func NewRuneArray(addr Word, words ...Word) RuneArray {
 	return RuneArray{
-		Word(TAG_OBJ_ARR),
+		Word(RUNE_ARR),
 		addr,
 		WordFromInt(uint32(len(words))),
 		words,

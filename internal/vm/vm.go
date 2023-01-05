@@ -75,14 +75,14 @@ func (vm *VirtualMachine) SubmitLocalRequest(ir InstrRef) {
 	idx, ok := locateScopeLabel(vm.scope, ir.text)
 	if ok {
 		// TODO: Invoke address, skip addrRef
-		vm.stack = append(vm.stack, WordFromAddr(idx))
+		vm.stack = append(vm.stack, WordFromAddress(idx))
 		logAddedToStack(vm.stack, ir.text)
 		return
 	}
 	vm.heap = append(vm.heap, EmptyWord())
 	idx = len(vm.heap) - 1
 	vm.scope[len(vm.scope)-1][ir.text] = idx
-	vm.stack = append(vm.stack, WordFromAddr(idx))
+	vm.stack = append(vm.stack, WordFromAddress(idx))
 	logAddedToStack(vm.stack, ir.text)
 }
 

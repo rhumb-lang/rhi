@@ -24,8 +24,8 @@ type CodeArray struct {
 
 func NewCodeArray(words ...Word) CodeArray {
 	return CodeArray{
-		Mark:      Word(TAG_OBJ_ARR),
-		Legend:    Word(TAG_ADDRESS),
+		Mark:      Word(CODE_ARR),
+		Legend:    Word(VAL_ADDR),
 		Length:    WordFromInt(uint32(len(words))),
 		CodeWords: words,
 	}

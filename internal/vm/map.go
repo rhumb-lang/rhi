@@ -6,11 +6,11 @@ type Map struct {
 	Field  []Word
 }
 
-func NewMap() Map {
+func NewMap(count uint32, legAddr Word) Map {
 	return Map{
-		Word(TAG_OBJ_MAP),
-		Word(TAG_ADDRESS), // FIXME: Empty Address
-		make([]Word, 0),
+		Word(MAIN_MAP),
+		WordFromAddress(0),
+		make([]Word, count),
 	}
 }
 
@@ -23,6 +23,19 @@ type MapLegend struct {
 	PrevLegend Word // pointer, circular dependency list
 	NextLegend Word // pointer, circular dependency list
 	Field      []LegendFieldDescriptor
+}
+
+func NewMapLegend() MapLegend {
+	return MapLegend{
+		Word(MAIN_LGD),
+		WordFromAddress(0),
+		EmptyWord(),
+		WordFromInt(0),
+		WordFromInt(0),
+		WordFromAddress(0),
+		WordFromAddress(0),
+		make([]LegendFieldDescriptor, 0),
+	}
 }
 
 type RoutineLegend struct {
@@ -44,8 +57,10 @@ type ArrayLegend struct {
 	Parent     LegendFieldDescriptor
 }
 
+// T
+
 type LegendFieldDescriptor struct {
-	Name Word
-	Type Word // immutable, mutable, subfield
+	Mark Word // immutable, mutable, subfield
+	Name Word // address to TextMap
 	Data Word // constant, field offset, or
 }
