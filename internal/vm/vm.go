@@ -53,7 +53,7 @@ func (vm *VirtualMachine) Execute() {
 }
 
 func logAddedToStack(stack []Word, txt string) {
-	logStr := fmt.Sprint("Added ", txt, " to stack: [")
+	logStr := fmt.Sprintf("▏ %-7s ⇾ [", txt)
 	for s := range stack {
 		logStr = fmt.Sprint(logStr, " ")
 		if s == len(stack)-1 {

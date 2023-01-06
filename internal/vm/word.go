@@ -123,7 +123,7 @@ func WordFromAddress(a int) Word { return Word(VAL_ADDR | uint64(a)) }
 func (w Word) isVal(v uint64) bool { return uint64(w)&MASK_ONE == v }
 
 func (w Word) IsFloat() bool   { return uint64(w)&MASK_NAN != MASK_NAN }
-func (w Word) IsAddress() bool { return w.isVal(VAL_ADDR) }
+func (w Word) IsAddress() bool { return uint64(w)&VAL_ADDR == VAL_ADDR }
 func (w Word) IsTrue() bool    { return uint64(w) == VAL_TRUE }
 func (w Word) IsFalse() bool   { return uint64(w) == VAL_FALS }
 func (w Word) IsBool() bool    { return w.IsTrue() || w.IsFalse() }

@@ -119,7 +119,7 @@ func (vm *VirtualMachine) unwindToSentinel() error {
 			return nil
 		}
 	}
-	return fmt.Errorf("No sentinel found")
+	return fmt.Errorf("no sentinel found")
 }
 
 // Replace all sub stack values with one final result
