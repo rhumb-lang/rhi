@@ -11,7 +11,7 @@ const TAG_UNDER_REQUEST uint8 = 0b10000000
 const TAG_OUTER_REQUEST uint8 = 0b10100000
 const TAG_EVENT_REQUEST uint8 = 0b11000000
 const TAG_REPLY_REQUEST uint8 = 0b11100000
-const MAX_IDX_SIZE uint32 = 31
+const MAX_IDX_SIZE uint64 = 31
 
 func (c Code) String() (result string) {
 	switch c.Tag() {
@@ -35,7 +35,7 @@ func (c Code) String() (result string) {
 	return
 }
 
-func generateCodes(tag uint8, idx uint32) []Code {
+func generateCodes(tag uint8, idx uint64) []Code {
 	codeWithExtensions := make([]Code, (idx/MAX_IDX_SIZE)+1)
 	remaining := idx
 	for i := range codeWithExtensions {
@@ -67,7 +67,7 @@ func (c Code) IsIndexExtension() bool {
 	return c.Tag() == TAG_IDX_EXTENSION
 }
 
-func NewValueLiteral(idx uint32) []Code {
+func NewValueLiteral(idx uint64) []Code {
 	return generateCodes(TAG_VALUE_LITERAL, idx)
 }
 
@@ -75,7 +75,7 @@ func (c Code) IsValueLiteral() bool {
 	return c.Tag() == TAG_VALUE_LITERAL
 }
 
-func NewLocalRequest(idx uint32) []Code {
+func NewLocalRequest(idx uint64) []Code {
 	return generateCodes(TAG_LOCAL_REQUEST, idx)
 }
 
@@ -83,7 +83,7 @@ func (c Code) IsLocalRequest() bool {
 	return c.Tag() == TAG_LOCAL_REQUEST
 }
 
-func NewInnerRequest(idx uint32) []Code {
+func NewInnerRequest(idx uint64) []Code {
 	return generateCodes(TAG_INNER_REQUEST, idx)
 }
 
@@ -91,7 +91,7 @@ func (c Code) IsInnerRequest() bool {
 	return c.Tag() == TAG_INNER_REQUEST
 }
 
-func NewUnderRequest(idx uint32) []Code {
+func NewUnderRequest(idx uint64) []Code {
 	return generateCodes(TAG_UNDER_REQUEST, idx)
 }
 
@@ -99,7 +99,7 @@ func (c Code) IsUnderRequest() bool {
 	return c.Tag() == TAG_UNDER_REQUEST
 }
 
-func NewOuterRequest(idx uint32) []Code {
+func NewOuterRequest(idx uint64) []Code {
 	return generateCodes(TAG_OUTER_REQUEST, idx)
 }
 
@@ -107,7 +107,7 @@ func (c Code) IsOuterRequest() bool {
 	return c.Tag() == TAG_OUTER_REQUEST
 }
 
-func NewEventRequest(idx uint32) []Code {
+func NewEventRequest(idx uint64) []Code {
 	return generateCodes(TAG_EVENT_REQUEST, idx)
 }
 
@@ -115,7 +115,7 @@ func (c Code) IsEventRequest() bool {
 	return c.Tag() == TAG_EVENT_REQUEST
 }
 
-func NewReplyRequest(idx uint32) []Code {
+func NewReplyRequest(idx uint64) []Code {
 	return generateCodes(TAG_REPLY_REQUEST, idx)
 }
 

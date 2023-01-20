@@ -25,7 +25,7 @@
                 "foo ** bar // 6"
             ],
             "env": {
-                "RHUMB_VISITOR_DEBUG": "1",
+                "RHUMB_VISITOR_DEBUG": "0",
                 "RHUMB_CODE_ARRAY_DEBUG": "1",
                 "RHUMB_VM_DEBUG": "1"
             }

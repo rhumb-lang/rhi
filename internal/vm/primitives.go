@@ -2,27 +2,14 @@ package vm
 
 import (
 	"fmt"
+
+	"git.sr.ht/~madcapjake/grhumb/internal/word"
 )
 
 /* Phase 1
  * _+/_
  * _-/_
  */
-
-func locateScopeLabel(
-	scopes []map[string]int, lbl string,
-) (
-	idx int, ok bool,
-) {
-	topScope := len(scopes) - 1
-	for i := topScope; i >= 0; i-- {
-		idx, ok = scopes[i][lbl]
-		if ok {
-			return
-		}
-	}
-	return
-}
 
 func expBySquaring(x, n uint32) uint32 {
 	if n == 0 {
@@ -42,7 +29,7 @@ func expBySquaring(x, n uint32) uint32 {
 	return x * y
 }
 
-func (vm *VirtualMachine) popStack() (popped Word) {
+func (vm *VirtualMachine) popStack() (popped word.Word) {
 	idx := len(vm.stack) - 1
 	popped = vm.stack[idx]
 	vm.stack = vm.stack[:idx]
@@ -73,38 +60,38 @@ func (vm *VirtualMachine) assignLabel() {
 
 func (vm *VirtualMachine) addTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, WordFromInt(val1+val2))
+	vm.stack = append(vm.stack, word.FromInt(val1+val2))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " + ", val2))
 }
 
 func (vm *VirtualMachine) subTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, WordFromInt(val1-val2))
+	vm.stack = append(vm.stack, word.FromInt(val1-val2))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " - ", val2))
 }
 
 func (vm *VirtualMachine) mulTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, WordFromInt(val1*val2))
+	vm.stack = append(vm.stack, word.FromInt(val1*val2))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2))
 }
 
 func (vm *VirtualMachine) divTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, WordFromInt(val1/val2))
+	vm.stack = append(vm.stack, word.FromInt(val1/val2))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " / ", val2))
 }
 
 func (vm *VirtualMachine) expTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, WordFromInt(expBySquaring(val1, val2)))
+	vm.stack = append(vm.stack, word.FromInt(expBySquaring(val1, val2)))
 	logAddedToStack(vm.stack, fmt.Sprint(val1, " ^ ", val2))
 }
 
 // New scope and add a sentinel to the stack
 func (vm *VirtualMachine) beginRoutine() {
 	vm.scope = append(vm.scope, make(map[string]int))
-	vm.stack = append(vm.stack, Word(SENTINEL))
+	vm.stack = append(vm.stack, word.Sentinel())
 }
 
 // Same as routine

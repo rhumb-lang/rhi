@@ -1,4 +1,4 @@
-package vm
+package word
 
 import (
 	"bytes"
@@ -41,7 +41,7 @@ const MARK_ARR uint64 = 0x7F_FE_80_00_00_00_00_00
 
 const MAIN_ARR uint64 = 0x7F_FE_80_20_00_00_00_00
 const RUNE_ARR uint64 = 0x7F_FE_80_30_00_00_00_00
-const CODE_ARR uint64 = 0x7F_FE_40_40_00_00_00_00
+const CODE_ARR uint64 = 0x7F_FE_80_40_00_00_00_00
 const META_ARR uint64 = 0x7F_FE_80_F0_00_00_00_00
 
 const MARK_LGD uint64 = 0x7F_FE_C0_00_00_00_00_00
@@ -50,6 +50,7 @@ const MAIN_LGD uint64 = 0x7F_FE_C0_10_00_00_00_00
 const LIST_LGD uint64 = 0x7F_FE_C0_20_00_00_00_00
 const TEXT_LGD uint64 = 0x7F_FE_C0_30_00_00_00_00
 const FUNC_LGD uint64 = 0x7F_FE_C0_40_00_00_00_00
+const ARRA_LGD uint64 = 0x7F_FE_C0_50_00_00_00_00
 const META_LGD uint64 = 0x7F_FE_C0_F0_00_00_00_00
 
 const MARK_DES uint64 = 0x7F_FF_00_00_00_00_00_00
@@ -75,26 +76,27 @@ const MASK_TWO uint64 = 0x7F_FF_C0_F0_00_00_00_00
 func NewWord(a any) Word {
 	switch a := a.(type) {
 	case float64:
-		return WordFromFloat(a)
+		return FromFloat(a)
 	case float32:
-		return WordFromFloat(float64(a))
+		return FromFloat(float64(a))
 	case bool:
-		return WordFromBool(a)
+		return FromBool(a)
 	case int:
-		return WordFromInt(uint32(a))
+		return FromInt(uint32(a))
 	case int64:
-		return WordFromInt(uint32(a))
+		return FromInt(uint32(a))
 	case rune:
-		return WordFromRune(a)
+		return FromRune(a)
 	default:
-		return EmptyWord()
+		return Empty()
 	}
 }
 
-func EmptyWord() Word      { return Word(VAL_EMPT) }
-func NotANumberWord() Word { return Word(ERR_NUMB) }
+func Empty() Word    { return Word(VAL_EMPT) }
+func NAN() Word      { return Word(ERR_NUMB) }
+func Sentinel() Word { return Word(SENTINEL) }
 
-func WordFromFloat(f float64) Word {
+func FromFloat(f float64) Word {
 	var bytes [8]byte
 	fbits := math.Float64bits(f)
 	bytes[0] = byte(fbits >> 56)
@@ -108,17 +110,17 @@ func WordFromFloat(f float64) Word {
 	return Word(binary.LittleEndian.Uint64(bytes[:]))
 }
 
-func WordFromBool(b bool) Word {
+func FromBool(b bool) Word {
 	if b {
 		return Word(VAL_TRUE)
 	} else {
 		return Word(VAL_FALS)
 	}
 }
-func WordFromInt(i uint32) Word  { return Word(VAL_NUMB | uint64(i)) }
-func WordFromRune(r rune) Word   { return Word(VAL_RUNE | uint64(r)) }
-func WordFromSym(a int) Word     { return Word(VAL_SYMB | uint64(a)) }
-func WordFromAddress(a int) Word { return Word(VAL_ADDR | uint64(a)) }
+func FromInt(i uint32) Word  { return Word(VAL_NUMB | uint64(i)) }
+func FromRune(r rune) Word   { return Word(VAL_RUNE | uint64(r)) }
+func FromSym(a int) Word     { return Word(VAL_SYMB | uint64(a)) }
+func FromAddress(a int) Word { return Word(VAL_ADDR | uint64(a)) }
 
 func (w Word) isVal(v uint64) bool { return uint64(w)&MASK_ONE == v }
 
@@ -135,43 +137,45 @@ func (w Word) IsSym() bool     { return w.isVal(VAL_SYMB) }
 
 func (w Word) IsSentinel() bool { return uint64(w) == SENTINEL }
 
-func (w Word) isMark(m uint64) bool { return uint64(w)&MASK_ONE == m }
+func (w Word) isMark(m uint64) bool  { return uint64(w)&MASK_ONE == m }
+func (w Word) isMark2(m uint64) bool { return uint64(w)&MASK_TWO == m }
 
 func (w Word) IsNAN() bool { return w.isMark(ERR_NUMB) }
 
 func (w Word) IsAnyMark() bool     { return uint64(w)&MASK_ONE > MARK_MAP }
 func (w Word) IsMapMark() bool     { return w.isMark(MARK_MAP) }
-func (w Word) IsMainMapMark() bool { return w.isMark(MAIN_MAP) }
-func (w Word) IsListMapMark() bool { return w.isMark(LIST_MAP) }
-func (w Word) IsTextMapMark() bool { return w.isMark(TEXT_MAP) }
-func (w Word) IsFuncMapMark() bool { return w.isMark(FUNC_MAP) }
-func (w Word) IsMetaMapMark() bool { return w.isMark(META_MAP) }
+func (w Word) IsMainMapMark() bool { return w.isMark2(MAIN_MAP) }
+func (w Word) IsListMapMark() bool { return w.isMark2(LIST_MAP) }
+func (w Word) IsTextMapMark() bool { return w.isMark2(TEXT_MAP) }
+func (w Word) IsFuncMapMark() bool { return w.isMark2(FUNC_MAP) }
+func (w Word) IsMetaMapMark() bool { return w.isMark2(META_MAP) }
 
 func (w Word) IsArrayMark() bool     { return w.isMark(MARK_ARR) }
-func (w Word) IsMainArrayMark() bool { return w.isMark(MAIN_ARR) }
-func (w Word) IsRuneArrayMark() bool { return w.isMark(RUNE_ARR) }
-func (w Word) IsCodeArrayMark() bool { return w.isMark(CODE_ARR) }
-func (w Word) IsMetaArrayMark() bool { return w.isMark(META_ARR) }
+func (w Word) IsMainArrayMark() bool { return w.isMark2(MAIN_ARR) }
+func (w Word) IsRuneArrayMark() bool { return w.isMark2(RUNE_ARR) }
+func (w Word) IsCodeArrayMark() bool { return w.isMark2(CODE_ARR) }
+func (w Word) IsMetaArrayMark() bool { return w.isMark2(META_ARR) }
 
 func (w Word) IsLegendMark() bool     { return w.isMark(MARK_LGD) }
-func (w Word) IsMainLegendMark() bool { return w.isMark(MAIN_LGD) }
-func (w Word) IsListLegendMark() bool { return w.isMark(LIST_LGD) }
-func (w Word) IsTextLegendMark() bool { return w.isMark(TEXT_LGD) }
-func (w Word) IsFuncLegendMark() bool { return w.isMark(FUNC_LGD) }
-func (w Word) IsMetaLegendMark() bool { return w.isMark(META_LGD) }
+func (w Word) IsMainLegendMark() bool { return w.isMark2(MAIN_LGD) }
+func (w Word) IsListLegendMark() bool { return w.isMark2(LIST_LGD) }
+func (w Word) IsTextLegendMark() bool { return w.isMark2(TEXT_LGD) }
+func (w Word) IsFuncLegendMark() bool { return w.isMark2(FUNC_LGD) }
+func (w Word) IsArraLegendMark() bool { return w.isMark2(ARRA_LGD) }
+func (w Word) IsMetaLegendMark() bool { return w.isMark2(META_LGD) }
 
 func (w Word) IsDescMark() bool        { return w.isMark(MARK_DES) }
-func (w Word) IsIntegerDescMark() bool { return w.isMark(DES_NUMB) }
-func (w Word) IsFloatDescMark() bool   { return w.isMark(DES_FLOA) }
-func (w Word) IsBoolDescMark() bool    { return w.isMark(DES_BOOL) }
-func (w Word) IsRuneDescMark() bool    { return w.isMark(DES_RUNE) }
-func (w Word) IsSymbolDescMark() bool  { return w.isMark(DES_SYMB) }
-func (w Word) IsDateDescMark() bool    { return w.isMark(DES_DATE) }
-func (w Word) IsAddressDescMark() bool { return w.isMark(DES_ADDR) }
+func (w Word) IsIntegerDescMark() bool { return w.isMark2(DES_NUMB) }
+func (w Word) IsFloatDescMark() bool   { return w.isMark2(DES_FLOA) }
+func (w Word) IsBoolDescMark() bool    { return w.isMark2(DES_BOOL) }
+func (w Word) IsRuneDescMark() bool    { return w.isMark2(DES_RUNE) }
+func (w Word) IsSymbolDescMark() bool  { return w.isMark2(DES_SYMB) }
+func (w Word) IsDateDescMark() bool    { return w.isMark2(DES_DATE) }
+func (w Word) IsAddressDescMark() bool { return w.isMark2(DES_ADDR) }
 
-func (w Word) IsChunk() bool { return w.isMark(CMP_UNIT) }
+func (w Word) IsCmpUnit() bool { return w.isMark(CMP_UNIT) }
 
-func (w Word) Debug() any {
+func (w Word) Debug() string {
 	if w.IsNAN() {
 		return "NAN"
 	} else if w.IsTrue() {
@@ -181,25 +185,76 @@ func (w Word) Debug() any {
 	} else if w.IsEmpty() {
 		return "EMPTY"
 	} else if w.IsInteger() {
-		return fmt.Sprint("{INT: ", w.AsInt(), "}")
+		return fmt.Sprint("N  ", w.AsInt(), "    ")
 	} else if w.IsRune() {
-		return fmt.Sprint("{RUNE: ", w.AsRune(), "}")
+		return fmt.Sprint("R  '", string(w.AsRune()), "'")
 	} else if w.IsSym() {
-		return "SYMBOL" // FIXME: Implement symbols
+		return "S" // FIXME: Implement symbols
 	} else if w.IsAddress() { // must trigger before IsFloat for unknown reasons
-		return fmt.Sprint("{ADDR: ", w.AsAddr(), "}")
+		return fmt.Sprint("A ", w.AsAddr(), "    ")
 	} else if w.IsFloat() {
-		return fmt.Sprint("{FLOAT: ", w.AsFloat(), "}")
+		// return fmt.Sprintf("F %.1e", w.AsFloat())
+		return ". . . . ."
 	} else if w.IsMapMark() {
-		return "MAP"
-	} else if w.IsArrayMark() {
-		return "ARRAY"
+		return "MAP MARK"
+	} else if w.IsCodeArrayMark() {
+		return "CODE MARK"
+	} else if w.IsMainArrayMark() {
+		return "LIST MARK"
+	} else if w.IsRuneArrayMark() {
+		return "RUNE MARK"
 	} else if w.IsFuncMapMark() {
 		return "ROUTINE"
-	} else if w.IsChunk() {
-		return "CHUNK"
+	} else if w.IsCmpUnit() {
+		return "CMPUNIT"
+	} else if w.IsSentinel() {
+		return "SENTINEL"
 	} else {
-		return nil
+		return "..."
+	}
+}
+
+func (x Word) Equals(y Word) bool {
+	if x.IsNAN() {
+		return false
+	} else if x.IsTrue() {
+		return y.IsTrue()
+	} else if x.IsFalse() {
+		return y.IsFalse()
+	} else if x.IsEmpty() {
+		return y.IsEmpty()
+	} else if x.IsInteger() {
+		if y.IsInteger() {
+			return x.IsInteger() == y.IsInteger()
+		} else {
+			return false
+		}
+	} else if x.IsRune() {
+		if y.IsRune() {
+			return x.AsRune() == y.AsRune()
+		} else {
+			return false
+		}
+	} else if x.IsSym() {
+		panic("symbols are not yet implemented")
+	} else if x.IsAddress() { // must trigger before IsFloat for unknown reasons
+		if y.IsAddress() {
+			return x.AsAddr() == y.AsAddr()
+		} else {
+			return false
+		}
+	} else if x.IsFloat() {
+		if y.IsFloat() {
+			return x.AsFloat() == y.AsFloat()
+		} else {
+			return false
+		}
+	} else if x.IsAnyMark() {
+		panic("should not compare marks")
+	} else if x.IsCmpUnit() {
+		panic("should not compare chunks")
+	} else {
+		panic("unknown object comparison")
 	}
 }
 

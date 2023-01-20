@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"os"
+
+	"git.sr.ht/~madcapjake/grhumb/internal/word"
 )
 
 var caLogger = log.New(io.Discard, "", log.LstdFlags)
@@ -15,79 +17,183 @@ func init() {
 	}
 }
 
+// type CodeArray struct {
+// 	Mark      word.Word
+// 	Legend    word.Word // Address
+//  Size      word.Word
+// 	Length    word.Word
+// 	CodeWords []word.Word // Words are packed 8-elem Codes
+// }
+
+const (
+	code_lgd_offset uint64 = 1
+	code_sze_offset uint64 = 2
+	code_len_offset uint64 = 3
+	code_arr_offset uint64 = 4
+)
+
 type CodeArray struct {
-	Mark      Word
-	Legend    Word // Address
-	Length    Word
-	CodeWords []Word // Words are packed 8-elem Codes
+	// address in vm's heap
+	id uint64
 }
 
-func NewCodeArray(words ...Word) CodeArray {
-	return CodeArray{
-		Mark:      Word(CODE_ARR),
-		Legend:    Word(VAL_ADDR),
-		Length:    WordFromInt(uint32(len(words))),
-		CodeWords: words,
+func NewCodeArray(
+	vm *VirtualMachine,
+	legAddr word.Word,
+	words ...word.Word,
+) CodeArray {
+	wordsLen := uint32(len(words))
+	wordsSize := uint32(code_arr_offset) + wordsLen
+	caWords := make([]word.Word, 0, wordsSize)
+	caWords = append(caWords,
+		/* Mark:   */ word.Word(word.CODE_ARR),
+		/* Legend: */ legAddr,
+		/* Size:   */ word.FromInt(wordsSize),
+		/* Length: */ word.FromInt(wordsLen),
+	)
+	caWords = append(caWords, words...)
+
+	loc, err := vm.ReAllocate(caWords...)
+	if err != nil {
+		panic("allocation failed")
 	}
+	return CodeArray{uint64(loc)}
 }
 
-func (ca *CodeArray) SetCodes(cs ...Code) {
-	origLen := ca.Length.AsInt()
-	newLen := uint32(len(cs))
-	byteSize := uint32(8)
-	bs := make([]byte, 0, byteSize)
-	currWordVacancy := ca.currentVacancy()
-	if currWordVacancy {
-		ca.getCodesFromWord(ca.currentIndex(), &bs)
+func ReviveCodeArray(vm *VirtualMachine, addr word.Word) CodeArray {
+	i := addr.AsAddr()
+	mark := vm.heap[i]
+	if !(mark.IsCodeArrayMark()) {
+		panic("not a code array mark")
 	}
-	for c := uint32(0); c < newLen; c++ {
-		bs = append(bs, byte(cs[c]))
-		if (c+1)%byteSize == 0 {
-			ca.CodeWords = append(
-				ca.CodeWords,
-				Word(binary.BigEndian.Uint64(bs)),
-			)
+	legend := vm.heap[i+code_lgd_offset]
+	if !(legend.IsAddress()) {
+		panic("code array legend word is not an address")
+	}
+	size := vm.heap[i+code_sze_offset]
+	if !(size.IsInteger()) {
+		panic("code array object size word is not an integer")
+	}
+	return CodeArray{i}
+}
+
+// Given a possible new line and some new codes, what
+// will the new total word size of this object?
+func (ca CodeArray) NewSize(vm *VirtualMachine, newLine bool, cs ...Code) (size uint64) {
+	var (
+		origSize    uint64 = ca.Size(vm)
+		newLength   int    = len(cs)
+		freshLength int
+		wholeWords  int
+		remainder   int
+	)
+	if newLine {
+		size = origSize + 1
+		wholeWords = newLength / 8
+		remainder = newLength % 8
+		if remainder == 0 {
+			size += uint64(wholeWords)
+		} else {
+			size += uint64(wholeWords + 1)
+		}
+	} else {
+		size = origSize
+		remainder = ca.getWordCodeCount(vm, uint64(ca.Size(vm)-1))
+		freshLength = newLength - remainder
+		wholeWords = freshLength / 8
+		remainder = freshLength % 8
+		if remainder == 0 {
+			size += uint64(wholeWords)
+		} else {
+			size += uint64(wholeWords + 1)
+		}
+	}
+	return
+}
+
+func (ca *CodeArray) SetCodes(
+	vm *VirtualMachine,
+	newLine bool,
+	cs ...Code,
+) {
+	var (
+		origLen  uint64 = uint64(ca.Length(vm))
+		newLen   uint32 = uint32(len(cs))
+		byteSize uint32 = 8
+		codeID   uint32
+		initSize uint32
+		bs       []byte      = make([]byte, 0, byteSize)
+		ws       []word.Word = make([]word.Word, 0, newLen/8)
+	)
+	if newLine {
+		ws = append(ws, word.Sentinel())
+	} else {
+		if ca.lastWordVacancy(vm) {
+			ca.getCodesFromWord(vm, uint64(ca.Length(vm))-1, &bs)
+			initSize = uint32(len(bs))
+			for ; codeID < newLen; codeID++ {
+				bs = append(bs, byte(cs[codeID]))
+				if initSize+codeID+1 == byteSize {
+					vm.heap[ca.id+ca.Size(vm)] = word.Word(
+						binary.BigEndian.Uint64(bs))
+					bs = make([]byte, 0, byteSize)
+					break
+				}
+			}
+
+		}
+	}
+	for ; codeID < newLen; codeID++ {
+		bs = append(bs, byte(cs[codeID]))
+		if codeID+1 == byteSize {
+			ws = append(ws, word.Word(binary.BigEndian.Uint64(bs)))
 			bs = make([]byte, 0, byteSize)
 		}
 	}
+
 	if len(bs) > 0 {
 		caLogger.Println(bs)
 		for range bs[len(bs):byteSize] {
 			bs = append(bs, 0x0)
 		}
-		newCodeWord := Word(binary.BigEndian.Uint64(bs))
-		if currWordVacancy {
-			ca.CodeWords[ca.currentIndex()] = newCodeWord
-		} else {
-			ca.CodeWords = append(ca.CodeWords, newCodeWord)
-		}
+		ws = append(ws, word.Word(binary.BigEndian.Uint64(bs)))
 	}
-	ca.Length = WordFromInt(origLen + newLen)
-}
 
-func (ca *CodeArray) vacancy() uint32 {
-	caLen := ca.Length.AsInt()
-	modByte := caLen % 8
-	return modByte
-}
-
-func (ca *CodeArray) currentVacancy() bool {
-	return ca.vacancy() != 0
-}
-
-func (ca *CodeArray) currentIndex() int {
-	if ca.currentVacancy() {
-		return len(ca.CodeWords) - 1
-	} else {
-		return len(ca.CodeWords)
-	}
-}
-
-func (ca *CodeArray) getCodesFromWord(wi int, b *[]byte) {
-	var (
-		buf  []byte = *b
-		word Word   = ca.CodeWords[wi]
+	finalLength := uint32(origLen) + uint32(len(ws))
+	ca.SetSize(vm, finalLength+4)
+	ca.SetLength(vm, finalLength)
+	newId, _ := vm.Allocate(
+		int(ca.id),
+		int(origLen)+int(code_arr_offset),
+		ws...,
 	)
+	if newId != ca.id {
+		// vm.UpdateAddresses(ca.id, newId)
+		ca.id = newId
+	}
+}
+
+func (ca *CodeArray) lastWordVacancy(vm *VirtualMachine) bool {
+	lastIndex := uint64(ca.Length(vm) - 1)
+	return ca.getWordCodeCount(vm, lastIndex) != 0
+}
+
+// func (ca *CodeArray) currentIndex(vm *VirtualMachine) int {
+// 	if ca.lastWordVacancy(vm) {
+// 		return int(ca.Length(vm)) - 1
+// 	} else {
+// 		return int(ca.Length(vm))
+// 	}
+// }
+
+func (ca CodeArray) getCodesFromWord(vm *VirtualMachine, wi uint64, b *[]byte) {
+	var (
+		buf  []byte    = *b
+		word word.Word = vm.heap[ca.id+code_arr_offset+wi]
+	)
+	if word.IsSentinel() {
+		panic("cannot get codes from sentinel")
+	}
 	for offset := 56; offset >= 0; offset -= 8 {
 		i := uint64(word) >> offset
 		subByte := byte(i)
@@ -99,15 +205,66 @@ func (ca *CodeArray) getCodesFromWord(wi int, b *[]byte) {
 	*b = buf
 }
 
-func (ca *CodeArray) GetCodes() []byte {
-	cwLen := len(ca.CodeWords)
+func (ca CodeArray) getWordCodeCount(vm *VirtualMachine, wi uint64) int {
+	var (
+		count int
+		id    uint64    = ca.id + code_arr_offset + wi
+		word  word.Word = vm.heap[id]
+	)
+	if word.IsSentinel() {
+		panic("cannot get codes from sentinel")
+	}
+	for offset := 56; offset >= 0; offset -= 8 {
+		i := uint64(word) >> offset
+		subByte := byte(i)
+		if subByte == 0 {
+			break
+		}
+		count = count + 1
+	}
+	return count
+}
+
+func (ca CodeArray) GetCodes(vm *VirtualMachine) []byte {
+	cwLen := uint64(ca.Length(vm))
 	buf := make([]byte, 0, cwLen*8)
-	for wordIndex := 0; wordIndex < cwLen; wordIndex++ {
-		ca.getCodesFromWord(wordIndex, &buf)
+	for wIndex := code_arr_offset; wIndex < cwLen; wIndex++ {
+		if !(vm.heap[ca.id+wIndex].IsSentinel()) {
+			ca.getCodesFromWord(vm, wIndex, &buf)
+		}
 	}
 	return buf
 }
 
-func (ca *CodeArray) Len() int {
-	return int(ca.Length.AsInt())
+func (ca *CodeArray) GetLine(vm *VirtualMachine, codeIndex int) (lines int) {
+	codes, cwLen, cwSize := 0, ca.Length(vm), ca.Size(vm)
+	if uint32(codeIndex) > cwLen {
+		panic("index greater than length")
+	}
+	for i := uint64(0); i < cwSize && codes <= codeIndex; i++ {
+		if vm.heap[ca.id+code_arr_offset+i].IsSentinel() {
+			lines += 1
+		} else {
+			codes += ca.getWordCodeCount(vm, i)
+		}
+	}
+	return
+}
+
+func (ca CodeArray) Legend(vm *VirtualMachine) uint64 {
+	return vm.heap[ca.id+code_lgd_offset].AsAddr()
+}
+func (ca CodeArray) Size(vm *VirtualMachine) uint64 {
+	return uint64(vm.heap[ca.id+code_sze_offset].AsInt())
+}
+func (ca CodeArray) Length(vm *VirtualMachine) uint32 {
+	return vm.heap[ca.id+code_len_offset].AsInt()
+}
+
+func (ca *CodeArray) SetSize(vm *VirtualMachine, s uint32) {
+	vm.heap[ca.id+code_sze_offset] = word.FromInt(s)
+}
+
+func (ca *CodeArray) SetLength(vm *VirtualMachine, l uint32) {
+	vm.heap[ca.id+code_len_offset] = word.FromInt(l)
 }

@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"os"
+
+	"git.sr.ht/~madcapjake/grhumb/internal/word"
 )
 
 var vmLogger = log.New(io.Discard, "", log.LstdFlags)
@@ -16,43 +18,202 @@ func init() {
 }
 
 type VirtualMachine struct {
-	heap  []Word
+	heap  []word.Word
 	free  []bool
-	stack []Word
+	stack []word.Word
 	scope []map[string]int
 	main  Chunk
 }
 
+func (vm VirtualMachine) DebugHeap() {
+	width := 4
+	for i := range vm.heap {
+		if i%width == 0 {
+			fmt.Println()
+		}
+		if vm.free[i] {
+			fmt.Printf("{%3v:           }", i)
+		} else {
+			fmt.Printf("[%3v: %-9s ]", i, vm.heap[i].Debug())
+		}
+	}
+	fmt.Println()
+}
+
 func NewVirtualMachine() *VirtualMachine {
 	vm := new(VirtualMachine)
-	vm.heap = make([]Word, 0)
-	vm.free = make([]bool, 0)
-	vm.stack = make([]Word, 0)
+	const init_heap_len int = 10
+	vm.heap = make([]word.Word, 0, init_heap_len)
+	vm.free = make([]bool, 0, init_heap_len)
+	vm.ReAllocate(word.Word(word.SENTINEL))
+	vm.stack = make([]word.Word, 0)
 	vm.scope = make([]map[string]int, 0)
 	vm.scope = append(vm.scope, make(map[string]int))
-	vm.main = NewChunk(nil, nil)
+	vm.main = NewChunk(vm)
 	return vm
 }
 
+// Traverses the free list until a sufficiently-sized chunk
+// of free slots is available to place the word arguments.
+//
+// Returns the index of the final heap location.
+func (vm *VirtualMachine) ReAllocate(ws ...word.Word) (uint64, error) {
+	obj := *vm
+	size := len(ws)
+	if size == 0 {
+		return 0, fmt.Errorf("no words provided")
+	}
+	var first, next int
+	for first = 0; first < len(obj.free); first += next {
+		next = 0
+		if obj.free[first] {
+			if size == 1 {
+				vmLogger.Println("adding word to index:", first)
+				obj.heap[first] = ws[0]
+				obj.free[first] = false
+				obj.DebugHeap()
+				*vm = obj
+				return uint64(first), nil
+			} else {
+				last := first + size
+				for next = range obj.free[first+1 : last] {
+					if !(obj.free[next]) {
+						next++
+						break
+					} else if next == last {
+						vmLogger.Println("appending words to index:", first)
+						obj.allocInPlace(first, last, ws...)
+						obj.DebugHeap()
+						*vm = obj
+						return uint64(first), nil
+					}
+				}
+			}
+		} else {
+			next = 1
+		}
+	}
+	// no available chunk in existing memory locations.
+	first = len(obj.heap)
+	vmLogger.Println("appending words to end:", first)
+	obj = appendRhumb(obj, ws)
+	*vm = obj
+	return uint64(first), nil
+}
+
+// Traverses the free list directly after the current
+// used memory for this object. If there is sufficient free
+// slots, then allocInPlace. Otherwise, call ReAllocate.
+//
+// Returns the index of the final heap location.
+func (vm *VirtualMachine) Allocate(
+	loc int,
+	oldSize int,
+	ws ...word.Word,
+) (uint64, error) {
+	var (
+		obj       VirtualMachine = *vm
+		newSize   int            = len(ws)
+		lastOldId int            = loc + oldSize
+	)
+	if newSize == 0 {
+		return 0, fmt.Errorf("no words provided")
+	}
+	var i int = lastOldId
+	if i == len(obj.free) {
+		vmLogger.Println("appending words to end:", i)
+		obj = appendRhumb(obj, ws)
+		*vm = obj
+		return uint64(loc), nil
+	}
+
+	if obj.free[i] {
+		if newSize == 1 {
+			vmLogger.Println("appending word to index:", i)
+			obj.heap[i] = ws[0]
+			obj.free[i] = false
+			obj.DebugHeap()
+			*vm = obj
+			return uint64(loc), nil
+		} else {
+			last := i + newSize
+			for i = i + 1; i < last; i++ {
+				if !(obj.free[i]) {
+					break
+				} else if i == last {
+					first := lastOldId
+					vmLogger.Println("appending words to index:", first)
+					obj.allocInPlace(first, last, ws...)
+					obj.DebugHeap()
+					*vm = obj
+					return uint64(loc), nil
+				}
+			}
+		}
+	}
+	// Subsequent memory spots unavailable, search for any
+	// available memory spot across heap
+	totalWords := make([]word.Word, 0, oldSize+newSize)
+	totalWords = append(totalWords, obj.heap[loc:lastOldId]...)
+	totalWords = append(totalWords, ws...)
+
+	for f := range obj.free[loc:lastOldId] {
+		obj.free[loc+f] = true
+	}
+
+	id, err := obj.ReAllocate(totalWords...)
+	*vm = obj
+	return id, err
+}
+
+// Appends to heap and free slices, used in allocate and reallocate
+func appendRhumb(vm VirtualMachine, ws []word.Word) VirtualMachine {
+	for i := range ws {
+		vm.heap = append(vm.heap, ws[i])
+		vm.free = append(vm.free, false)
+	}
+	vm.DebugHeap()
+	return vm
+}
+
+// Only run this if you are absolutely sure there is room
+// to allocate in the heap. Overwriting memory is possible.
+func (vm VirtualMachine) allocInPlace(x, y int, ws ...word.Word) {
+	for hID, wID := x, 0; hID < y; hID, wID = hID+1, wID+1 {
+		vm.heap[hID], vm.free[hID] = ws[wID], false
+	}
+}
+
+// func (vm VirtualMachine) UpdateAddresses(oldId, newId uint64) {
+// 	for i, free := range vm.free {
+// 		if !(free) {
+// 			w := vm.heap[i]
+// 			if w.IsAddress() && w.AsAddr() == oldId {
+// 				vm.heap[i] = word.FromAddress(int(newId))
+// 			}
+// 		}
+// 	}
+// }
+
 func (vm *VirtualMachine) WriteCodeToMain(
 	line int,
-	ref InstrRef,
-	codeFactory func(i uint32) []Code,
+	lit word.Word,
+	codeFactory func(i uint64) []Code,
 ) {
-	id := vm.main.AddReference(ref)
+	id, _ := vm.main.AddLiteral(vm, lit)
 	codes := codeFactory(id)
-	vm.main.WriteCode(line, codes)
+	vm.main.WriteCode(vm, line, codes)
 }
 
 func (vm *VirtualMachine) Disassemble() {
-	vm.main.Disassemble()
+	// vm.main.Disassemble()
 }
 
 func (vm *VirtualMachine) Execute() {
-	vm.main.Execute(vm)
+	// vm.main.Execute(vm)
 }
 
-func logAddedToStack(stack []Word, txt string) {
+func logAddedToStack(stack []word.Word, txt string) {
 	logStr := fmt.Sprintf("▏ %-7s ⇾ [", txt)
 	for s := range stack {
 		logStr = fmt.Sprint(logStr, " ")
@@ -65,39 +226,90 @@ func logAddedToStack(stack []Word, txt string) {
 	vmLogger.Println(logStr, " ]")
 }
 
-func (vm *VirtualMachine) AddValueToStack(ir InstrRef) {
-	vm.stack = append(vm.stack, NewWord(ir.value))
-	logAddedToStack(vm.stack, ir.text)
+func locateScopeLabel(
+	scopes []map[string]int, lbl string,
+) (
+	idx int, ok bool,
+) {
+	topScope := len(scopes) - 1
+	for i := topScope; i >= 0; i-- {
+		idx, ok = scopes[i][lbl]
+		if ok {
+			return
+		}
+	}
+	return
 }
 
-// Currently just for traversing the scope outwardly
-func (vm *VirtualMachine) SubmitLocalRequest(ir InstrRef) {
-	idx, ok := locateScopeLabel(vm.scope, ir.text)
-	if ok {
-		// TODO: Invoke address, skip addrRef
-		vm.stack = append(vm.stack, WordFromAddress(idx))
-		logAddedToStack(vm.stack, ir.text)
-		return
-	}
-	vm.heap = append(vm.heap, EmptyWord())
-	idx = len(vm.heap) - 1
-	vm.scope[len(vm.scope)-1][ir.text] = idx
-	vm.stack = append(vm.stack, WordFromAddress(idx))
-	logAddedToStack(vm.stack, ir.text)
+// func (vm *VirtualMachine) TextMapFromString(s string) word.Word {
+// 	var first word.Word
+// 	var rn rune
+// 	var sz, runeCount int
+// 	for si := 0; si < len(s); si += sz {
+// 		rn, sz = utf8.DecodeRuneInString(s[si:])
+// 		vm.heap = append(vm.heap, word.FromRune(rn))
+// 		if si == 0 {
+// 			first = word.FromAddress(len(vm.heap) - 1)
+// 		}
+// 		runeCount += 1
+// 	}
+// 	last := int(first.AsInt()) + runeCount
+// 	legend := TextMapLegend{
+// 		BaseMapLegend: BaseMapLegend{
+// 			Legend: Legend{
+// 				Mark:       word.Word(word.TEXT_LGD),
+// 				MetaLegend: word.FromAddress(0),
+// 			},
+// 			TrashSweep: Empty(),
+// 			Length:     word.FromInt(0),
+// 			Count:      word.FromInt(0),
+// 			ReqLink:    word.FromAddress(0),
+// 			DepLink:    word.FromAddress(0),
+// 		},
+// 		Runes: NewRuneArray(first, vm.heap[first.AsInt():last]...),
+// 	}
+// }
+
+func (vm *VirtualMachine) AddLiteralToStack(literal word.Word) {
+	vm.stack = append(vm.stack, literal)
+	logAddedToStack(vm.stack, literal.Debug())
+}
+
+func (vm *VirtualMachine) getStringFromRuneArray(labelAddr word.Word) {
+
+}
+
+// Currently just for lexically traversing the scope
+func (vm *VirtualMachine) SubmitLocalRequest(label word.Word) {
+	// labelValue := vm.getStringFromRuneArray(label)
+	// idx, ok := locateScopeLabel(vm.scope, label)
+	// if ok {
+	// 	// TODO: Invoke address, skip addrRef
+	// 	vm.stack = append(vm.stack, word.FromAddress(idx))
+	// 	logAddedToStack(vm.stack, ir.text)
+	// 	return
+	// }
+	// vm.heap = append(vm.heap, EmptyWord())
+	// idx = len(vm.heap) - 1
+	// vm.scope[len(vm.scope)-1][ir.text] = idx
+	// vm.stack = append(vm.stack, word.FromAddress(idx))
+	// logAddedToStack(vm.stack, ir.text)
 }
 
 // Used for traversing maps and legends
-func (vm *VirtualMachine) SubmitInnerRequest(ir InstrRef) {
+func (vm *VirtualMachine) SubmitInnerRequest(label word.Word) {
 
 }
 
 // Used for traversing submaps and legends
-func (vm *VirtualMachine) SubmitUnderRequest(ir InstrRef) {
+func (vm *VirtualMachine) SubmitUnderRequest(label word.Word) {
 }
 
 // Used for traversing primitives and compilations
-func (vm *VirtualMachine) SubmitOuterRequest(ir InstrRef) {
-	switch ir.text {
+func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
+	// FIXME: locate text
+	text := ""
+	switch text {
 	case ".=", ":=":
 		vm.assignLabel()
 	case "++":
@@ -124,8 +336,8 @@ func (vm *VirtualMachine) SubmitOuterRequest(ir InstrRef) {
 	}
 }
 
-// Used for signalling across Rhumb
-func (vm *VirtualMachine) SubmitEventRequest(ir InstrRef) {}
+// // Used for signalling across Rhumb
+// func (vm *VirtualMachine) SubmitEventRequest(ir InstrRef) {}
 
-// Used for replying to signals across Rhumb
-func (vm *VirtualMachine) SubmitReplyRequest(ir InstrRef) {}
+// // Used for replying to signals across Rhumb
+// func (vm *VirtualMachine) SubmitReplyRequest(ir InstrRef) {}

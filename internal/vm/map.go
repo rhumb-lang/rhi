@@ -1,66 +1,38 @@
 package vm
 
-type Map struct {
-	Mark   Word
-	Legend Word // Address
-	Field  []Word
+import "git.sr.ht/~madcapjake/grhumb/internal/word"
+
+// type RhumbMap struct {
+// 	Mark   word.Word
+// 	Legend word.Word
+// 	Field  []word.Word
+// }
+
+type RhumbMap []word.Word
+
+func NewMap(mark word.Word, legend word.Word, fields ...word.Word) RhumbMap {
+	rmap := make([]word.Word, 0, 2+len(fields))
+	rmap = append(rmap, mark, legend)
+	rmap = append(rmap, fields...)
+	return rmap
 }
 
-func NewMap(count uint32, legAddr Word) Map {
-	return Map{
-		Word(MAIN_MAP),
-		WordFromAddress(0),
-		make([]Word, count),
-	}
+func NewMainMap(count uint32, legAddr word.Word) RhumbMap {
+	return NewMap(word.Word(word.MAIN_MAP), legAddr)
 }
 
-type MapLegend struct {
-	Mark       Word
-	MetaLegend Word
-	TrashSweep Word
-	Length     Word
-	Count      Word
-	PrevLegend Word // pointer, circular dependency list
-	NextLegend Word // pointer, circular dependency list
-	Field      []LegendFieldDescriptor
+func NewListMap(count uint32, legAddr word.Word) RhumbMap {
+	return NewMap(word.Word(word.LIST_MAP), legAddr)
 }
 
-func NewMapLegend() MapLegend {
-	return MapLegend{
-		Word(MAIN_LGD),
-		WordFromAddress(0),
-		EmptyWord(),
-		WordFromInt(0),
-		WordFromInt(0),
-		WordFromAddress(0),
-		WordFromAddress(0),
-		make([]LegendFieldDescriptor, 0),
-	}
+func NewTextMap(count uint32, legAddr word.Word) RhumbMap {
+	return NewMap(word.Word(word.TEXT_MAP), legAddr)
 }
 
-type RoutineLegend struct {
-	Mark       Word
-	MetaLegend Word // pointer to the toplevel MapLegend
-	TrashSweep Word
-	Length     Word
-	Count      Word
-	PrevLegend Word // pointer, circular dependency list
-	NextLegend Word // pointer, circular dependency list
-	Code       Word // pointer to CodeArray
-	Field      []LegendFieldDescriptor
+func NewFuncMap(count uint32, legAddr word.Word) RhumbMap {
+	return NewMap(word.Word(word.FUNC_MAP), legAddr)
 }
 
-type ArrayLegend struct {
-	Mark       Word
-	MetaLegend Word
-	TrashSweep Word
-	Parent     LegendFieldDescriptor
-}
-
-// T
-
-type LegendFieldDescriptor struct {
-	Mark Word // immutable, mutable, subfield
-	Name Word // address to TextMap
-	Data Word // constant, field offset, or
+func NewMetaMap(count uint32, legAddr word.Word) RhumbMap {
+	return NewMap(word.Word(word.META_MAP), legAddr)
 }

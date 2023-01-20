@@ -9,8 +9,9 @@ import (
 	"reflect"
 	"strconv"
 
-	"git.sr.ht/~madcapjake/grhumb/internal/parser"
+	P "git.sr.ht/~madcapjake/grhumb/internal/parser"
 	"git.sr.ht/~madcapjake/grhumb/internal/vm"
+	"git.sr.ht/~madcapjake/grhumb/internal/word"
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
@@ -43,7 +44,7 @@ type RhumbReturn struct {
 }
 
 type RhumbVisitor struct {
-	parser.BaseRhumbParserVisitor
+	P.BaseRhumbParserVisitor
 	vm vm.VirtualMachine
 }
 
@@ -79,45 +80,58 @@ func (v *RhumbVisitor) VisitChildren(node antlr.RuleNode) interface{} {
 	return nil
 }
 
-func (v *RhumbVisitor) VisitSequence(ctx *parser.SequenceContext) interface{} {
+func (v *RhumbVisitor) VisitSequence(ctx *P.SequenceContext) interface{} {
 	logger.Println("sequence!")
 	// logger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitSimple(ctx *parser.SimpleContext) interface{} {
+func (v *RhumbVisitor) VisitSimple(ctx *P.SimpleContext) interface{} {
 	logger.Println("simple:", ctx.GetText())
 	return v.Visit(ctx.GetChild(0).(antlr.ParseTree))
 }
 
-func (v *RhumbVisitor) VisitMutableLabel(ctx *parser.MutableLabelContext) interface{} {
+func (v *RhumbVisitor) VisitMutableLabel(ctx *P.MutableLabelContext) interface{} {
 	logger.Println("mutable label:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLabelLiteral(ctx *parser.LabelLiteralContext) interface{} {
-	text := ctx.GetText()
+func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{} {
+	var (
+		text string       = ctx.GetText()
+		ra   vm.RuneArray = vm.NewRuneArray(
+			&v.vm,
+			word.FromAddress(0),
+			vm.RuneWords(text)...,
+		)
+	)
 	logger.Println("label:", text)
 	v.vm.WriteCodeToMain(
 		ctx.GetStart().GetLine(),
-		vm.NewInstrRef(vm.RefLabel, text, nil),
+		word.FromAddress(int(ra.Id())),
 		vm.NewLocalRequest,
 	)
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitAssignment(ctx *parser.AssignmentContext) interface{} {
+func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 	logger.Println("assignment!")
 	// TODO: implement map assignment
-	var text string
+	var (
+		text string
+		ra   vm.RuneArray
+	)
 	if addr := ctx.GetAddress(); addr != nil {
 		text = addr.GetText()
 		logger.Println("Address:", text)
 		// TODO: check for a matching subroutine and invoke
 		// TODO: check for matching outer scoped label
+
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), vm.RuneWords(text)...)
+
 		v.vm.WriteCodeToMain(
 			addr.GetLine(),
-			vm.NewInstrRef(vm.RefLabel, text, nil),
+			word.FromAddress(int(ra.Id())),
 			vm.NewLocalRequest,
 		)
 	} else {
@@ -126,9 +140,10 @@ func (v *RhumbVisitor) VisitAssignment(ctx *parser.AssignmentContext) interface{
 		logger.Printf("addrRef.Accept(v): %v\n", addrRef.Accept(v))
 		text = addrRef.GetText()
 		logger.Println("AddressRef:", text)
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), vm.RuneWords(text)...)
 		v.vm.WriteCodeToMain(
 			addrRef.GetStart().GetLine(),
-			vm.NewInstrRef(vm.RefLabel, text, nil),
+			word.FromAddress(int(ra.Id())),
 			vm.NewLocalRequest,
 		)
 	}
@@ -136,22 +151,27 @@ func (v *RhumbVisitor) VisitAssignment(ctx *parser.AssignmentContext) interface{
 	logger.Println("ctx.Expression().Accept...")
 	logger.Println("ctx.Expression().Accept:", ctx.Expression().Accept(v))
 	logger.Println("INNER:")
-	assignOp := ctx.AssignmentOp()
+	op := ctx.AssignmentOp()
+	ra = vm.NewRuneArray(
+		&v.vm,
+		word.FromAddress(0),
+		vm.RuneWords(op.GetText())...,
+	)
 	v.vm.WriteCodeToMain(
-		assignOp.GetStart().GetLine(),
-		vm.NewInstrRef(vm.RefLabel, assignOp.GetText(), nil),
+		op.GetStart().GetLine(),
+		word.FromAddress(int(ra.Id())),
 		vm.NewOuterRequest,
 	)
 	return nil
 }
 
-func (v *RhumbVisitor) VisitFloatLiteral(ctx *parser.FloatLiteralContext) interface{} {
+func (v *RhumbVisitor) VisitFloatLiteral(ctx *P.FloatLiteralContext) interface{} {
 	// logger.Println("float-lit!")
 	logger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIntegerLiteral(ctx *parser.IntegerLiteralContext) interface{} {
+func (v *RhumbVisitor) VisitIntegerLiteral(ctx *P.IntegerLiteralContext) interface{} {
 	text := ctx.GetText()
 	val, err := strconv.ParseInt(text, 10, 32)
 	if err != nil {
@@ -160,462 +180,484 @@ func (v *RhumbVisitor) VisitIntegerLiteral(ctx *parser.IntegerLiteralContext) in
 	logger.Println("VALUE:", val)
 	v.vm.WriteCodeToMain(
 		ctx.GetStart().GetLine(),
-		vm.NewInstrRef(vm.RefInt, text, val),
+		word.FromInt(uint32(val)),
 		vm.NewValueLiteral,
 	)
 	return RhumbReturn{val, nil}
 }
 
-func (v *RhumbVisitor) VisitStringLiteral(ctx *parser.StringLiteralContext) interface{} {
+func (v *RhumbVisitor) VisitStringLiteral(ctx *P.StringLiteralContext) interface{} {
 	logger.Println("string-lit:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitReferenceLiteral(ctx *parser.ReferenceLiteralContext) interface{} {
+func (v *RhumbVisitor) VisitReferenceLiteral(ctx *P.ReferenceLiteralContext) interface{} {
 	logger.Println("ref-lit:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitConjunctive(ctx *parser.ConjunctiveContext) interface{} {
+func (v *RhumbVisitor) VisitConjunctive(ctx *P.ConjunctiveContext) interface{} {
 	logger.Println("conj:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitAccess(ctx *parser.AccessContext) interface{} {
+func (v *RhumbVisitor) VisitAccess(ctx *P.AccessContext) interface{} {
 	logger.Println("access:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitApplicative(ctx *parser.ApplicativeContext) interface{} {
+func (v *RhumbVisitor) VisitApplicative(ctx *P.ApplicativeContext) interface{} {
 	logger.Println("applicative:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitConditional(ctx *parser.ConditionalContext) interface{} {
+func (v *RhumbVisitor) VisitConditional(ctx *P.ConditionalContext) interface{} {
 	logger.Println("cond:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitPrefix(ctx *parser.PrefixContext) interface{} {
+func (v *RhumbVisitor) VisitPrefix(ctx *P.PrefixContext) interface{} {
 	logger.Println("prefix:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitComparative(ctx *parser.ComparativeContext) interface{} {
+func (v *RhumbVisitor) VisitComparative(ctx *P.ComparativeContext) interface{} {
 	logger.Println("compare:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitMultiplicative(ctx *parser.MultiplicativeContext) interface{} {
+func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interface{} {
 	logger.Println("multiply:", ctx.GetText())
-	exprs := ctx.AllExpression()
+	var (
+		exprs []P.IExpressionContext     = ctx.AllExpression()
+		mulOp P.IMultiplicativeOpContext = ctx.MultiplicativeOp()
+		ra    vm.RuneArray               = vm.NewRuneArray(
+			&v.vm,
+			word.FromAddress(0),
+			vm.RuneWords(mulOp.GetText())...,
+		)
+	)
+
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
-	mulOp := ctx.MultiplicativeOp()
+
 	v.vm.WriteCodeToMain(
 		mulOp.GetStart().GetLine(),
-		vm.NewInstrRef(vm.RefLabel, mulOp.GetText(), nil),
-		// FIXME: re-implement as NewInnerRequest
-		vm.NewOuterRequest,
+		word.FromAddress(int(ra.Id())),
+		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 	return nil
 }
 
-func (v *RhumbVisitor) VisitAdditive(ctx *parser.AdditiveContext) interface{} {
+func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
 	logger.Println("additive:", ctx.GetText())
-	exprs := ctx.AllExpression()
+	var (
+		exprs []P.IExpressionContext = ctx.AllExpression()
+		addOp P.IAdditiveOpContext   = ctx.AdditiveOp()
+		ra    vm.RuneArray           = vm.NewRuneArray(
+			&v.vm,
+			word.FromAddress(0),
+			vm.RuneWords(addOp.GetText())...,
+		)
+	)
+
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
-	addOp := ctx.AdditiveOp()
+
 	v.vm.WriteCodeToMain(
 		addOp.GetStart().GetLine(),
-		vm.NewInstrRef(vm.RefLabel, addOp.GetText(), nil),
-		// FIXME: re-implement as NewInnerRequest
-		vm.NewOuterRequest,
+		word.FromAddress(int(ra.Id())),
+		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 	return nil
 }
 
-func (v *RhumbVisitor) VisitInvocation(ctx *parser.InvocationContext) interface{} {
+func (v *RhumbVisitor) VisitInvocation(ctx *P.InvocationContext) interface{} {
 	logger.Println("invoke:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitRoutine(ctx *parser.RoutineContext) interface{} {
+func (v *RhumbVisitor) VisitRoutine(ctx *P.RoutineContext) interface{} {
 	logger.Println("routine:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitDisjunctive(ctx *parser.DisjunctiveContext) interface{} {
+func (v *RhumbVisitor) VisitDisjunctive(ctx *P.DisjunctiveContext) interface{} {
 	logger.Println("disjunct:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIdentity(ctx *parser.IdentityContext) interface{} {
+func (v *RhumbVisitor) VisitIdentity(ctx *P.IdentityContext) interface{} {
 	logger.Println("identify:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitEffect(ctx *parser.EffectContext) interface{} {
+func (v *RhumbVisitor) VisitEffect(ctx *P.EffectContext) interface{} {
 	logger.Println("effect:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitMember(ctx *parser.MemberContext) interface{} {
+func (v *RhumbVisitor) VisitMember(ctx *P.MemberContext) interface{} {
 	logger.Println("member:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitSelector(ctx *parser.SelectorContext) interface{} {
+func (v *RhumbVisitor) VisitSelector(ctx *P.SelectorContext) interface{} {
 	logger.Println("selector:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitPower(ctx *parser.PowerContext) interface{} {
+func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 	logger.Println("power:", ctx.GetText())
-	exprs := ctx.AllExpression()
+	var (
+		exprs []P.IExpressionContext     = ctx.AllExpression()
+		powOp P.IExponentiationOpContext = ctx.ExponentiationOp()
+		ra    vm.RuneArray               = vm.NewRuneArray(
+			&v.vm,
+			word.FromAddress(0),
+			vm.RuneWords(powOp.GetText())...,
+		)
+	)
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
-	powOp := ctx.ExponentiationOp()
 	v.vm.WriteCodeToMain(
 		powOp.GetStart().GetLine(),
-		vm.NewInstrRef(vm.RefLabel, powOp.GetText(), nil),
-		// FIXME: re-implement as NewInnerRequest
-		vm.NewOuterRequest,
+		word.FromAddress(int(ra.Id())),
+		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 	return nil
 }
 
-func (v *RhumbVisitor) VisitMap(ctx *parser.MapContext) interface{} {
+func (v *RhumbVisitor) VisitMap(ctx *P.MapContext) interface{} {
 	logger.Println("map:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitFreeze(ctx *parser.FreezeContext) interface{} {
+func (v *RhumbVisitor) VisitFreeze(ctx *P.FreezeContext) interface{} {
 	logger.Println("freeze:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitInner(ctx *parser.InnerContext) interface{} {
+func (v *RhumbVisitor) VisitInner(ctx *P.InnerContext) interface{} {
 	logger.Println("inner:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLength(ctx *parser.LengthContext) interface{} {
+func (v *RhumbVisitor) VisitLength(ctx *P.LengthContext) interface{} {
 	logger.Println("length:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitFunction(ctx *parser.FunctionContext) interface{} {
+func (v *RhumbVisitor) VisitFunction(ctx *P.FunctionContext) interface{} {
 	logger.Println("function:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitJunction(ctx *parser.JunctionContext) interface{} {
+func (v *RhumbVisitor) VisitJunction(ctx *P.JunctionContext) interface{} {
 	logger.Println("junction:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitGreaterThan(ctx *parser.GreaterThanContext) interface{} {
+func (v *RhumbVisitor) VisitGreaterThan(ctx *P.GreaterThanContext) interface{} {
 	logger.Println("greater-than:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitGreaterThanOrEqualTo(ctx *parser.GreaterThanOrEqualToContext) interface{} {
+func (v *RhumbVisitor) VisitGreaterThanOrEqualTo(ctx *P.GreaterThanOrEqualToContext) interface{} {
 	logger.Println("greater-than-or-equal-to:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLessThan(ctx *parser.LessThanContext) interface{} {
+func (v *RhumbVisitor) VisitLessThan(ctx *P.LessThanContext) interface{} {
 	logger.Println("less-than:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLessThanOrEqualTo(ctx *parser.LessThanOrEqualToContext) interface{} {
+func (v *RhumbVisitor) VisitLessThanOrEqualTo(ctx *P.LessThanOrEqualToContext) interface{} {
 	logger.Println("less-than-or-equal-to:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIsEqual(ctx *parser.IsEqualContext) interface{} {
+func (v *RhumbVisitor) VisitIsEqual(ctx *P.IsEqualContext) interface{} {
 	logger.Println("is-equal:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIsLike(ctx *parser.IsLikeContext) interface{} {
+func (v *RhumbVisitor) VisitIsLike(ctx *P.IsLikeContext) interface{} {
 	logger.Println("is-like:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIsIn(ctx *parser.IsInContext) interface{} {
+func (v *RhumbVisitor) VisitIsIn(ctx *P.IsInContext) interface{} {
 	logger.Println("is-in:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIsOverlayed(ctx *parser.IsOverlayedContext) interface{} {
+func (v *RhumbVisitor) VisitIsOverlayed(ctx *P.IsOverlayedContext) interface{} {
 	logger.Println("is-overlayed:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIsTopmost(ctx *parser.IsTopmostContext) interface{} {
+func (v *RhumbVisitor) VisitIsTopmost(ctx *P.IsTopmostContext) interface{} {
 	logger.Println("is-topmost:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNotEqual(ctx *parser.NotEqualContext) interface{} {
+func (v *RhumbVisitor) VisitNotEqual(ctx *P.NotEqualContext) interface{} {
 	logger.Println("not-equal:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNotLike(ctx *parser.NotLikeContext) interface{} {
+func (v *RhumbVisitor) VisitNotLike(ctx *P.NotLikeContext) interface{} {
 	logger.Println("not-like:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNotIn(ctx *parser.NotInContext) interface{} {
+func (v *RhumbVisitor) VisitNotIn(ctx *P.NotInContext) interface{} {
 	logger.Println("not-in:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNotOverlayed(ctx *parser.NotOverlayedContext) interface{} {
+func (v *RhumbVisitor) VisitNotOverlayed(ctx *P.NotOverlayedContext) interface{} {
 	logger.Println("not-overlayed:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNotTopmost(ctx *parser.NotTopmostContext) interface{} {
+func (v *RhumbVisitor) VisitNotTopmost(ctx *P.NotTopmostContext) interface{} {
 	logger.Println("not-topmost:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitConjunctiveOp(ctx *parser.ConjunctiveOpContext) interface{} {
+func (v *RhumbVisitor) VisitConjunctiveOp(ctx *P.ConjunctiveOpContext) interface{} {
 	logger.Println("conj-op:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitDisjunctiveOp(ctx *parser.DisjunctiveOpContext) interface{} {
+func (v *RhumbVisitor) VisitDisjunctiveOp(ctx *P.DisjunctiveOpContext) interface{} {
 	logger.Println("disjunct-op:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitOtherwise(ctx *parser.OtherwiseContext) interface{} {
+func (v *RhumbVisitor) VisitOtherwise(ctx *P.OtherwiseContext) interface{} {
 	logger.Println("otherwise:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitDefault(ctx *parser.DefaultContext) interface{} {
+func (v *RhumbVisitor) VisitDefault(ctx *P.DefaultContext) interface{} {
 	logger.Println("default:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitForeach(ctx *parser.ForeachContext) interface{} {
+func (v *RhumbVisitor) VisitForeach(ctx *P.ForeachContext) interface{} {
 	logger.Println("for-each:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitWhile(ctx *parser.WhileContext) interface{} {
+func (v *RhumbVisitor) VisitWhile(ctx *P.WhileContext) interface{} {
 	logger.Println("while:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitThen(ctx *parser.ThenContext) interface{} {
+func (v *RhumbVisitor) VisitThen(ctx *P.ThenContext) interface{} {
 	logger.Println("then:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitElse(ctx *parser.ElseContext) interface{} {
+func (v *RhumbVisitor) VisitElse(ctx *P.ElseContext) interface{} {
 	logger.Println("else:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitAddition(ctx *parser.AdditionContext) interface{} {
+func (v *RhumbVisitor) VisitAddition(ctx *P.AdditionContext) interface{} {
 	logger.Println("addition:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitDeviation(ctx *parser.DeviationContext) interface{} {
+func (v *RhumbVisitor) VisitDeviation(ctx *P.DeviationContext) interface{} {
 	logger.Println("deviation:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitSubtraction(ctx *parser.SubtractionContext) interface{} {
+func (v *RhumbVisitor) VisitSubtraction(ctx *P.SubtractionContext) interface{} {
 	logger.Println("subtraction:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitMultiplication(ctx *parser.MultiplicationContext) interface{} {
+func (v *RhumbVisitor) VisitMultiplication(ctx *P.MultiplicationContext) interface{} {
 	logger.Println("mupltication:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitDivision(ctx *parser.DivisionContext) interface{} {
+func (v *RhumbVisitor) VisitDivision(ctx *P.DivisionContext) interface{} {
 	logger.Println("division:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitIntegerDivision(ctx *parser.IntegerDivisionContext) interface{} {
+func (v *RhumbVisitor) VisitIntegerDivision(ctx *P.IntegerDivisionContext) interface{} {
 	logger.Println("int-division:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitModulo(ctx *parser.ModuloContext) interface{} {
+func (v *RhumbVisitor) VisitModulo(ctx *P.ModuloContext) interface{} {
 	logger.Println("modulo:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitBind(ctx *parser.BindContext) interface{} {
+func (v *RhumbVisitor) VisitBind(ctx *P.BindContext) interface{} {
 	logger.Println("bind:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitExponent(ctx *parser.ExponentContext) interface{} {
+func (v *RhumbVisitor) VisitExponent(ctx *P.ExponentContext) interface{} {
 	logger.Println("exponenet:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitRootExtraction(ctx *parser.RootExtractionContext) interface{} {
+func (v *RhumbVisitor) VisitRootExtraction(ctx *P.RootExtractionContext) interface{} {
 	logger.Println("root-extract:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitScientific(ctx *parser.ScientificContext) interface{} {
+func (v *RhumbVisitor) VisitScientific(ctx *P.ScientificContext) interface{} {
 	logger.Println("scientific:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitImmutablePair(ctx *parser.ImmutablePairContext) interface{} {
+func (v *RhumbVisitor) VisitImmutablePair(ctx *P.ImmutablePairContext) interface{} {
 	logger.Println("immutable-pair:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitImmutableLabel(ctx *parser.ImmutableLabelContext) interface{} {
+func (v *RhumbVisitor) VisitImmutableLabel(ctx *P.ImmutableLabelContext) interface{} {
 	logger.Println("immutable-label:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitMutablePair(ctx *parser.MutablePairContext) interface{} {
+func (v *RhumbVisitor) VisitMutablePair(ctx *P.MutablePairContext) interface{} {
 	logger.Println("mutable-pair:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNumericalNegate(ctx *parser.NumericalNegateContext) interface{} {
+func (v *RhumbVisitor) VisitNumericalNegate(ctx *P.NumericalNegateContext) interface{} {
 	logger.Println("numerical-negate:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitOuterScope(ctx *parser.OuterScopeContext) interface{} {
+func (v *RhumbVisitor) VisitOuterScope(ctx *P.OuterScopeContext) interface{} {
 	logger.Println("outer-scope:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLogicalNegate(ctx *parser.LogicalNegateContext) interface{} {
+func (v *RhumbVisitor) VisitLogicalNegate(ctx *P.LogicalNegateContext) interface{} {
 	logger.Println("logical-negate:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitAssert(ctx *parser.AssertContext) interface{} {
+func (v *RhumbVisitor) VisitAssert(ctx *P.AssertContext) interface{} {
 	logger.Println("assert:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitArgument(ctx *parser.ArgumentContext) interface{} {
+func (v *RhumbVisitor) VisitArgument(ctx *P.ArgumentContext) interface{} {
 	logger.Println("argument:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitSlurpSpread(ctx *parser.SlurpSpreadContext) interface{} {
+func (v *RhumbVisitor) VisitSlurpSpread(ctx *P.SlurpSpreadContext) interface{} {
 	logger.Println("slurp-spread:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitBaseClone(ctx *parser.BaseCloneContext) interface{} {
+func (v *RhumbVisitor) VisitBaseClone(ctx *P.BaseCloneContext) interface{} {
 	logger.Println("base-clone:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNumericalPosit(ctx *parser.NumericalPositContext) interface{} {
+func (v *RhumbVisitor) VisitNumericalPosit(ctx *P.NumericalPositContext) interface{} {
 	logger.Println("numerical-posit:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLogicalPosit(ctx *parser.LogicalPositContext) interface{} {
+func (v *RhumbVisitor) VisitLogicalPosit(ctx *P.LogicalPositContext) interface{} {
 	logger.Println("logical-posit:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitOverlay(ctx *parser.OverlayContext) interface{} {
+func (v *RhumbVisitor) VisitOverlay(ctx *P.OverlayContext) interface{} {
 	logger.Println("overlay:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitExistentialPosit(ctx *parser.ExistentialPositContext) interface{} {
+func (v *RhumbVisitor) VisitExistentialPosit(ctx *P.ExistentialPositContext) interface{} {
 	logger.Println("existential-posit:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitImmutableDestruct(ctx *parser.ImmutableDestructContext) interface{} {
+func (v *RhumbVisitor) VisitImmutableDestruct(ctx *P.ImmutableDestructContext) interface{} {
 	logger.Println("immutable-destruct:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitMutableDestruct(ctx *parser.MutableDestructContext) interface{} {
+func (v *RhumbVisitor) VisitMutableDestruct(ctx *P.MutableDestructContext) interface{} {
 	logger.Println("mutable-destruct:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNestedLabel(ctx *parser.NestedLabelContext) interface{} {
+func (v *RhumbVisitor) VisitNestedLabel(ctx *P.NestedLabelContext) interface{} {
 	logger.Println("nested-label:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNestedOverlay(ctx *parser.NestedOverlayContext) interface{} {
+func (v *RhumbVisitor) VisitNestedOverlay(ctx *P.NestedOverlayContext) interface{} {
 	logger.Println("nested-overlay:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitRange(ctx *parser.RangeContext) interface{} {
+func (v *RhumbVisitor) VisitRange(ctx *P.RangeContext) interface{} {
 	logger.Println("range:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitString(ctx *parser.StringContext) interface{} {
+func (v *RhumbVisitor) VisitString(ctx *P.StringContext) interface{} {
 	logger.Println("string:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitLabelInterp(ctx *parser.LabelInterpContext) interface{} {
+func (v *RhumbVisitor) VisitLabelInterp(ctx *P.LabelInterpContext) interface{} {
 	logger.Println("label-interp!")
 	logger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitRoutineInterp(ctx *parser.RoutineInterpContext) interface{} {
+func (v *RhumbVisitor) VisitRoutineInterp(ctx *P.RoutineInterpContext) interface{} {
 	logger.Println("routine-interp:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitSelectorInterp(ctx *parser.SelectorInterpContext) interface{} {
+func (v *RhumbVisitor) VisitSelectorInterp(ctx *P.SelectorInterpContext) interface{} {
 	logger.Println("selector-interp:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitNamedRef(ctx *parser.NamedRefContext) interface{} {
+func (v *RhumbVisitor) VisitNamedRef(ctx *P.NamedRefContext) interface{} {
 	logger.Println("named-ref:", ctx.GetText())
 	return ctx.Label().GetText()
 }
 
-func (v *RhumbVisitor) VisitFunctionRef(ctx *parser.FunctionRefContext) interface{} {
+func (v *RhumbVisitor) VisitFunctionRef(ctx *P.FunctionRefContext) interface{} {
 	logger.Println("function-ref:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitComputedRef(ctx *parser.ComputedRefContext) interface{} {
+func (v *RhumbVisitor) VisitComputedRef(ctx *P.ComputedRefContext) interface{} {
 	logger.Println("computed-ref:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
-func (v *RhumbVisitor) VisitJunctionRef(ctx *parser.JunctionRefContext) interface{} {
+func (v *RhumbVisitor) VisitJunctionRef(ctx *P.JunctionRefContext) interface{} {
 	logger.Println("junction-ref:", ctx.GetText())
 	return v.VisitChildren(ctx)
 }

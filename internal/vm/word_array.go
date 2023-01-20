@@ -1,45 +1,105 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+
+	"git.sr.ht/~madcapjake/grhumb/internal/word"
+)
+
+// type WordArray struct {
+// 	Mark   word.Word
+// 	Legend word.Word // Address
+// 	Length word.Word // Integer
+// 	Words  []word.Word
+// }
+
+const (
+	word_lgd_offset uint64 = 1
+	word_len_offset uint64 = 2
+	word_arr_offset uint64 = 3
+)
 
 type WordArray struct {
-	Mark   Word
-	Legend Word // Address
-	Length Word
-	Words  []Word // Words are normal single words
+	// address in vm's heap
+	id uint64
 }
 
-func NewWordArray(words ...Word) WordArray {
-	return WordArray{
-		Word(MAIN_ARR),
-		Word(VAL_ADDR),
-		WordFromInt(uint32(len(words))),
-		words,
+func (wa WordArray) Legend(vm *VirtualMachine, i int) word.Word {
+	return vm.heap[i]
+}
+
+func (wa WordArray) Length(vm *VirtualMachine) int {
+	return int(vm.heap[wa.id+word_arr_offset].AsInt())
+}
+
+func NewWordArray(
+	vm *VirtualMachine,
+	legAddr word.Word,
+	words ...word.Word,
+) WordArray {
+	wordsLen := uint32(len(words))
+	wordsSize := uint32(code_arr_offset) + wordsLen
+	waWords := make([]word.Word, 0, wordsSize)
+	waWords = append(waWords,
+		/* Mark:   */ word.Word(word.MAIN_ARR),
+		/* Legend: */ legAddr,
+		/* Length: */ word.FromInt(wordsLen),
+	)
+	waWords = append(waWords, words...)
+
+	loc, err := vm.ReAllocate(waWords...)
+	if err != nil {
+		panic("allocation failed")
 	}
+	return WordArray{uint64(loc)}
 }
 
-func (wa *WordArray) IndexOf(w Word) (idx int, err error) {
-	for i := range wa.Words {
-		if wa.Words[i] == w {
+func ReviveWordArray(vm *VirtualMachine, addr word.Word) WordArray {
+	i := addr.AsAddr()
+	mark := vm.heap[i]
+	if !(mark.IsMainArrayMark()) {
+		panic("not a word array mark")
+	}
+	legend := vm.heap[i+word_lgd_offset]
+	if !(legend.IsAddress()) {
+		// fmt.Println(legend.Debug())
+		panic("word array legend word is not an address")
+	}
+	length := vm.heap[i+word_len_offset]
+	if !(length.IsInteger()) {
+		panic("word array object length word is not an integer")
+	}
+	return WordArray{i}
+}
+
+func (wa WordArray) IndexOf(vm *VirtualMachine, w word.Word) (idx int, err error) {
+	len := wa.Length(vm)
+	for i := range make([]int, len) {
+		found := w.Equals(wa.Get(vm, i))
+		if found {
 			return i, nil
 		}
 	}
-	return 0, fmt.Errorf("couldn't find word")
+	return -1, fmt.Errorf("couldn't find word")
 }
 
-func (wa *WordArray) Add(w Word) {
-	wa.Words = append(wa.Words, w)
-	wa.Length = WordFromInt(uint32(len(wa.Words)))
+func (wa *WordArray) Append(vm *VirtualMachine, newWords ...word.Word) (uint64, error) {
+	id, err := vm.Allocate(int(wa.id), wa.Size(vm), newWords...)
+	if err != nil {
+		panic("word array append failed")
+	} else {
+		if id != wa.id {
+			// vm.UpdateAddresses(wa.id, id)
+			wa.id = id
+		}
+		return id, err
+	}
 }
 
-func (wa *WordArray) Get(i uint32) Word {
-	return wa.Words[i]
+func (wa WordArray) Get(vm *VirtualMachine, i int) word.Word {
+	return vm.heap[wa.id+word_arr_offset+uint64(i)]
 }
 
-func (wa *WordArray) All() []Word {
-	return wa.Words
-}
-
-func (wa *WordArray) Count() int {
-	return int(wa.Length.AsInt())
+func (wa WordArray) Size(vm *VirtualMachine) int {
+	return wa.Length(vm) + 3
 }
