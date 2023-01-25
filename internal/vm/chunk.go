@@ -46,29 +46,36 @@ func ReviveChunk(vm *VirtualMachine, addr word.Word) Chunk {
 
 func (ch *Chunk) WriteCode(vm *VirtualMachine, line int, codes []Code) {
 
-	instructions := ch.Instructions(vm)
+	instructions := ch.ReviveInstrs(vm)
 	if line > ch.line {
 		instructions.SetCodes(vm, true, codes...)
 		ch.line = line
 	} else {
 		instructions.SetCodes(vm, false, codes...)
 	}
-	caId := ch.id + chunk_ca_offset
-	if instructions.id != vm.heap[caId].AsAddr() {
-		vm.heap[caId] = word.FromAddress(int(instructions.id))
+	if instructions.id != ch.Instructions(vm).AsAddr() {
+		ch.SetInstructionsAddress(vm, instructions.id)
 	}
 }
 
+func (ch Chunk) SetInstructionsAddress(vm *VirtualMachine, addr uint64) {
+	vm.heap[ch.id+chunk_ca_offset] = word.FromAddress(int(addr))
+}
+
+func (ch Chunk) SetLiteralsAddress(vm *VirtualMachine, addr uint64) {
+	vm.heap[ch.id+chunk_wa_offset] = word.FromAddress(int(addr))
+}
+
 func (ch *Chunk) AddLiteral(vm *VirtualMachine, lit word.Word) (uint64, error) {
-	literals := ch.Literals(vm)
+	literals := ch.ReviveLits(vm)
 	existingIndex, err := literals.IndexOf(vm, lit)
 	if err != nil {
 		id, err := literals.Append(vm, lit)
 		if err != nil {
 			panic("literals append failed")
 		}
-		if id != vm.heap[ch.id+chunk_wa_offset].AsAddr() {
-			vm.heap[ch.id+chunk_wa_offset] = word.FromAddress(int(id))
+		if id != ch.Literals(vm).AsAddr() {
+			ch.SetLiteralsAddress(vm, id)
 		}
 		return id, err
 	} else {
@@ -76,23 +83,36 @@ func (ch *Chunk) AddLiteral(vm *VirtualMachine, lit word.Word) (uint64, error) {
 	}
 }
 
-func (ch Chunk) Instructions(vm *VirtualMachine) CodeArray {
-	return ReviveCodeArray(vm, vm.heap[ch.id+chunk_ca_offset])
+func (ch Chunk) Instructions(vm *VirtualMachine) word.Word {
+	return vm.heap[ch.id+chunk_ca_offset]
 }
 
-func (ch Chunk) Literals(vm *VirtualMachine) WordArray {
-	return ReviveWordArray(vm, vm.heap[ch.id+chunk_wa_offset])
+func (ch Chunk) ReviveInstrs(vm *VirtualMachine) CodeArray {
+	return ReviveCodeArray(vm, ch.Instructions(vm))
+}
+
+func (ch Chunk) Literals(vm *VirtualMachine) word.Word {
+	return vm.heap[ch.id+chunk_wa_offset]
+}
+
+func (ch Chunk) ReviveLits(vm *VirtualMachine) WordArray {
+	return ReviveWordArray(vm, ch.Literals(vm))
 }
 
 func (ch Chunk) Execute(vm *VirtualMachine) {
 	var (
-		instructions        = ch.Instructions(vm)
-		cwLen        int    = int(instructions.Length(vm))
+		instructions        = ch.ReviveInstrs(vm)
+		cwLen        int    = int(instructions.Size(vm) - code_arr_offset)
 		idx          uint64 = 0
 		buf          []byte = make([]byte, 0, cwLen*8)
 	)
 	for wordIndex := 0; wordIndex < cwLen; wordIndex++ {
-		instructions.getCodesFromWord(vm, uint64(wordIndex), &buf)
+		w := vm.heap[instructions.id+code_arr_offset+uint64(wordIndex)]
+		if w.IsSentinel() {
+			ch.line++
+			continue
+		}
+		instructions.getCodesFromWord(vm, w, &buf)
 		for b := range buf {
 			if buf[b] == 0 {
 				break
@@ -102,6 +122,7 @@ func (ch Chunk) Execute(vm *VirtualMachine) {
 			if code.IsIndexExtension() {
 				continue
 			} else {
+				// FIXME: something is wrong here
 				ch.execTagIndex(vm, code.Tag(), int(idx))
 				idx = 0
 			}
@@ -114,8 +135,9 @@ func (ch Chunk) execTagIndex(vm *VirtualMachine, b byte, idx int) {
 	var (
 		code     Code  = Code(b)
 		tag      uint8 = code.Tag()
-		literals       = ch.Literals(vm)
+		literals       = ch.ReviveLits(vm)
 	)
+	fmt.Println("Executing chunk tag:", tag)
 	switch tag {
 	case TAG_VALUE_LITERAL:
 		vm.AddLiteralToStack(literals.Get(vm, idx))
@@ -137,7 +159,7 @@ func (ch Chunk) execTagIndex(vm *VirtualMachine, b byte, idx int) {
 func (ch Chunk) Disassemble(vm *VirtualMachine) {
 	fmt.Println("============= Chunk =============")
 	var line int
-	instructions := ch.Instructions(vm)
+	instructions := ch.ReviveInstrs(vm)
 	buf := instructions.GetCodes(vm)
 	for offset := 0; offset < int(instructions.Length(vm)); {
 		if line < instructions.GetLine(vm, offset) {
@@ -169,7 +191,7 @@ func (ch Chunk) DisassembleCode(vm *VirtualMachine, currentLine, currentOffset i
 			fmt.Printf("%s %d '%v'\n",
 				Code(buf[o]).String(),
 				idx,
-				ch.Literals(vm).Get(vm, int(idx)).Debug(),
+				ch.ReviveLits(vm).Get(vm, int(idx)).Debug(),
 			)
 			return l, o + 1
 		}

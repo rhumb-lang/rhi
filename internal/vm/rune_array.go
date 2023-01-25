@@ -43,18 +43,42 @@ func RuneWords(str string) (words []word.Word) {
 func NewRuneArray(
 	vm *VirtualMachine,
 	legAddr word.Word,
-	words ...word.Word,
+	runes ...rune,
 ) RuneArray {
-	wordsLen := uint32(len(words))
-	wordsSize := uint32(code_arr_offset) + wordsLen
-	raWords := make([]word.Word, 0, wordsSize)
+	var (
+		runesLen  uint32      = uint32(len(runes))
+		runesSize uint32      = uint32(code_arr_offset) + runesLen
+		raWords   []word.Word = make([]word.Word, 0, runesSize)
+		runeBytes []byte
+		wordBytes []byte
+		offset    uint32
+	)
 	raWords = append(raWords,
 		/* Mark:   */ word.Word(word.RUNE_ARR),
 		/* Legend: */ legAddr,
-		/* Size:   */ word.FromInt(wordsSize),
-		/* Length: */ word.FromInt(wordsLen),
+		/* Size:   */ word.FromInt(runesSize),
+		/* Length: */ word.FromInt(runesLen),
 	)
-	raWords = append(raWords, words...)
+	wordBytes = make([]byte, 8)
+	for i, r := range runes {
+		offset = uint32(i) % 2
+		runeBytes = make([]byte, 4)
+		binary.LittleEndian.PutUint32(runeBytes, uint32(r))
+		if offset == 0 {
+			copy(wordBytes, runeBytes)
+			if i == len(runes)-1 {
+				raWords = append(raWords,
+					word.Word(binary.LittleEndian.Uint64(wordBytes)))
+			}
+		} else {
+			for i, rb := range runeBytes {
+				wordBytes[i+4] = rb
+			}
+			raWords = append(raWords,
+				word.Word(binary.LittleEndian.Uint64(wordBytes)))
+		}
+
+	}
 
 	loc, err := vm.ReAllocate(raWords...)
 	if err != nil {
@@ -62,6 +86,10 @@ func NewRuneArray(
 	}
 	return RuneArray{uint64(loc)}
 }
+
+// func GetOrMakeLabelRA(vm *VirtualMachine, text string) RuneArray {
+
+// }
 
 func ReviveRuneArray(vm *VirtualMachine, addr word.Word) RuneArray {
 	i := addr.AsAddr()
@@ -139,8 +167,8 @@ func (ra RuneArray) SetRune(vm *VirtualMachine, i uint32, r rune) {
 	if offset == 0 {
 		copy(wordBytes, runeBytes)
 	} else {
-		for i := range runeBytes {
-			wordBytes[i+4] = runeBytes[i]
+		for i, rb := range runeBytes {
+			wordBytes[i+4] = rb
 		}
 	}
 	vm.heap[id] = word.Word(binary.LittleEndian.Uint64(wordBytes))

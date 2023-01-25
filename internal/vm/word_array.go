@@ -24,14 +24,6 @@ type WordArray struct {
 	id uint64
 }
 
-func (wa WordArray) Legend(vm *VirtualMachine, i int) word.Word {
-	return vm.heap[i]
-}
-
-func (wa WordArray) Length(vm *VirtualMachine) int {
-	return int(vm.heap[wa.id+word_arr_offset].AsInt())
-}
-
 func NewWordArray(
 	vm *VirtualMachine,
 	legAddr word.Word,
@@ -72,32 +64,67 @@ func ReviveWordArray(vm *VirtualMachine, addr word.Word) WordArray {
 	return WordArray{i}
 }
 
-func (wa WordArray) IndexOf(vm *VirtualMachine, w word.Word) (idx int, err error) {
-	len := wa.Length(vm)
-	for i := range make([]int, len) {
-		found := w.Equals(wa.Get(vm, i))
-		if found {
-			return i, nil
+func (wa WordArray) IndexOf(vm *VirtualMachine, x word.Word) (
+	idx int,
+	err error,
+) {
+	if x.IsAddress() {
+		mkX := vm.heap[x.AsAddr()]
+		if mkX.IsRuneArrayMark() {
+			rax := ReviveRuneArray(vm, x)
+			for i := range make([]int, wa.Length(vm)) {
+				y := wa.Get(vm, i)
+				if y.IsAddress() {
+					mkY := vm.heap[y.AsAddr()]
+					if mkY.IsRuneArrayMark() {
+						ray := ReviveRuneArray(vm, y)
+						if rax.String(vm) == ray.String(vm) {
+							return i, nil
+						}
+					}
+				}
+			}
 		}
+	} else {
+		for i := range make([]int, wa.Length(vm)) {
+			if x.Equals(wa.Get(vm, i)) {
+				return i, nil
+			}
+		}
+
 	}
 	return -1, fmt.Errorf("couldn't find word")
 }
 
 func (wa *WordArray) Append(vm *VirtualMachine, newWords ...word.Word) (uint64, error) {
+	oldLen := uint32(wa.Length(vm))
+	newLen := oldLen + uint32(len(newWords))
 	id, err := vm.Allocate(int(wa.id), wa.Size(vm), newWords...)
 	if err != nil {
 		panic("word array append failed")
 	} else {
 		if id != wa.id {
-			// vm.UpdateAddresses(wa.id, id)
 			wa.id = id
 		}
+		wa.SetLength(vm, newLen)
 		return id, err
 	}
 }
 
 func (wa WordArray) Get(vm *VirtualMachine, i int) word.Word {
 	return vm.heap[wa.id+word_arr_offset+uint64(i)]
+}
+
+func (wa WordArray) Legend(vm *VirtualMachine, i int) word.Word {
+	return vm.heap[i]
+}
+
+func (wa WordArray) SetLength(vm *VirtualMachine, l uint32) {
+	vm.heap[wa.id+word_len_offset] = word.FromInt(l)
+}
+
+func (wa WordArray) Length(vm *VirtualMachine) int {
+	return int(vm.heap[wa.id+word_len_offset].AsInt())
 }
 
 func (wa WordArray) Size(vm *VirtualMachine) int {

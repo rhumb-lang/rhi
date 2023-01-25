@@ -99,11 +99,7 @@ func (v *RhumbVisitor) VisitMutableLabel(ctx *P.MutableLabelContext) interface{}
 func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{} {
 	var (
 		text string       = ctx.GetText()
-		ra   vm.RuneArray = vm.NewRuneArray(
-			&v.vm,
-			word.FromAddress(0),
-			vm.RuneWords(text)...,
-		)
+		ra   vm.RuneArray = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
 	)
 	logger.Println("label:", text)
 	v.vm.WriteCodeToMain(
@@ -127,7 +123,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 		// TODO: check for a matching subroutine and invoke
 		// TODO: check for matching outer scoped label
 
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), vm.RuneWords(text)...)
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
 
 		v.vm.WriteCodeToMain(
 			addr.GetLine(),
@@ -140,7 +136,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 		logger.Printf("addrRef.Accept(v): %v\n", addrRef.Accept(v))
 		text = addrRef.GetText()
 		logger.Println("AddressRef:", text)
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), vm.RuneWords(text)...)
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
 		v.vm.WriteCodeToMain(
 			addrRef.GetStart().GetLine(),
 			word.FromAddress(int(ra.Id())),
@@ -155,7 +151,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 	ra = vm.NewRuneArray(
 		&v.vm,
 		word.FromAddress(0),
-		vm.RuneWords(op.GetText())...,
+		[]rune(op.GetText())...,
 	)
 	v.vm.WriteCodeToMain(
 		op.GetStart().GetLine(),
@@ -234,7 +230,7 @@ func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interfa
 		ra    vm.RuneArray               = vm.NewRuneArray(
 			&v.vm,
 			word.FromAddress(0),
-			vm.RuneWords(mulOp.GetText())...,
+			[]rune(mulOp.GetText())...,
 		)
 	)
 
@@ -258,7 +254,7 @@ func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
 		ra    vm.RuneArray           = vm.NewRuneArray(
 			&v.vm,
 			word.FromAddress(0),
-			vm.RuneWords(addOp.GetText())...,
+			[]rune(addOp.GetText())...,
 		)
 	)
 
@@ -317,7 +313,7 @@ func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 		ra    vm.RuneArray               = vm.NewRuneArray(
 			&v.vm,
 			word.FromAddress(0),
-			vm.RuneWords(powOp.GetText())...,
+			[]rune(powOp.GetText())...,
 		)
 	)
 	for i := range exprs {

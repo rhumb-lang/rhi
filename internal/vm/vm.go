@@ -210,7 +210,7 @@ func (vm *VirtualMachine) Disassemble() {
 }
 
 func (vm *VirtualMachine) Execute() {
-	// vm.main.Execute(vm)
+	vm.main.Execute(vm)
 }
 
 func logAddedToStack(stack []word.Word, txt string) {
@@ -308,7 +308,16 @@ func (vm *VirtualMachine) SubmitUnderRequest(label word.Word) {
 // Used for traversing primitives and compilations
 func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
 	// FIXME: locate text
-	text := ""
+	addr, err := vm.main.ReviveLits(vm).IndexOf(vm, label)
+	if err != nil {
+		panic("unable to find word for outer request")
+	}
+	ref := vm.heap[vm.main.ReviveInstrs(vm).id+rune_arr_offset+uint64(addr)]
+	if !(ref.IsRuneArrayMark()) {
+		panic("outer request submitted with non-ra value")
+	}
+	text := ReviveRuneArray(vm, ref).String(vm)
+	fmt.Println(text)
 	switch text {
 	case ".=", ":=":
 		vm.assignLabel()
