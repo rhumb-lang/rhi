@@ -21,18 +21,64 @@ type VirtualMachine struct {
 	heap  []word.Word
 	free  []bool
 	stack []word.Word
-	scope []map[string]int
+	scope []map[string]uint64
 	main  Chunk
 }
 
+var DEBUG_WIDTH int = 10
+
+func incCheckNL(inc *int) {
+	val := *inc
+	val++
+	if val%DEBUG_WIDTH == 0 {
+		fmt.Println()
+	}
+	*inc = val
+}
+
 func (vm VirtualMachine) DebugHeap() {
-	width := 4
-	for i := range vm.heap {
-		if i%width == 0 {
+	for i := 0; i < len(vm.heap); i++ {
+		if i%DEBUG_WIDTH == 0 {
 			fmt.Println()
 		}
 		if vm.free[i] {
 			fmt.Printf("{%3v:           }", i)
+		} else if vm.heap[i].IsRuneArrayMark() {
+			j := i
+			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+			incCheckNL(&j)
+			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+			incCheckNL(&j)
+			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+			incCheckNL(&j)
+			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+			incCheckNL(&j)
+			fmt.Printf("[%3v: ", j)
+			ra := ReviveRuneArray(&vm, uint64(i))
+			runes := ra.Runes(&vm)
+			if len(runes) <= 2 {
+				for _, r := range runes {
+					fmt.Printf("'%s'", string(r))
+					fmt.Print("  ")
+				}
+			} else {
+				for i, r := range runes {
+					fmt.Printf("'%s'", string(r))
+					if i%2 == 1 {
+						fmt.Print("  |")
+						incCheckNL(&j)
+						fmt.Print("|     ")
+					} else {
+						fmt.Print("  ")
+					}
+				}
+				for range make([]int, (ra.Length(&vm) % 2)) {
+					fmt.Print("     ")
+				}
+
+			}
+			fmt.Print("]")
+			i += int(ra.Size(&vm)) - 1
 		} else {
 			fmt.Printf("[%3v: %-9s ]", i, vm.heap[i].Debug())
 		}
@@ -47,8 +93,8 @@ func NewVirtualMachine() *VirtualMachine {
 	vm.free = make([]bool, 0, init_heap_len)
 	vm.ReAllocate(word.Word(word.SENTINEL))
 	vm.stack = make([]word.Word, 0)
-	vm.scope = make([]map[string]int, 0)
-	vm.scope = append(vm.scope, make(map[string]int))
+	vm.scope = make([]map[string]uint64, 0)
+	vm.scope = append(vm.scope, make(map[string]uint64))
 	vm.main = NewChunk(vm)
 	return vm
 }
@@ -136,8 +182,8 @@ func (vm *VirtualMachine) Allocate(
 			*vm = obj
 			return uint64(loc), nil
 		} else {
-			last := i + newSize
-			for i = i + 1; i < last; i++ {
+			last := i + newSize - 1
+			for i = i + 1; i <= last; i++ {
 				if !(obj.free[i]) {
 					break
 				} else if i == last {
@@ -179,7 +225,7 @@ func appendRhumb(vm VirtualMachine, ws []word.Word) VirtualMachine {
 // Only run this if you are absolutely sure there is room
 // to allocate in the heap. Overwriting memory is possible.
 func (vm VirtualMachine) allocInPlace(x, y int, ws ...word.Word) {
-	for hID, wID := x, 0; hID < y; hID, wID = hID+1, wID+1 {
+	for hID, wID := x, 0; hID <= y; hID, wID = hID+1, wID+1 {
 		vm.heap[hID], vm.free[hID] = ws[wID], false
 	}
 }
@@ -206,7 +252,7 @@ func (vm *VirtualMachine) WriteCodeToMain(
 }
 
 func (vm *VirtualMachine) Disassemble() {
-	// vm.main.Disassemble()
+	vm.main.Disassemble(vm)
 }
 
 func (vm *VirtualMachine) Execute() {
@@ -227,9 +273,9 @@ func logAddedToStack(stack []word.Word, txt string) {
 }
 
 func locateScopeLabel(
-	scopes []map[string]int, lbl string,
+	scopes []map[string]uint64, lbl string,
 ) (
-	idx int, ok bool,
+	idx uint64, ok bool,
 ) {
 	topScope := len(scopes) - 1
 	for i := topScope; i >= 0; i-- {
@@ -275,25 +321,25 @@ func (vm *VirtualMachine) AddLiteralToStack(literal word.Word) {
 	logAddedToStack(vm.stack, literal.Debug())
 }
 
-func (vm *VirtualMachine) getStringFromRuneArray(labelAddr word.Word) {
-
-}
-
 // Currently just for lexically traversing the scope
-func (vm *VirtualMachine) SubmitLocalRequest(label word.Word) {
-	// labelValue := vm.getStringFromRuneArray(label)
-	// idx, ok := locateScopeLabel(vm.scope, label)
-	// if ok {
-	// 	// TODO: Invoke address, skip addrRef
-	// 	vm.stack = append(vm.stack, word.FromAddress(idx))
-	// 	logAddedToStack(vm.stack, ir.text)
-	// 	return
-	// }
-	// vm.heap = append(vm.heap, EmptyWord())
-	// idx = len(vm.heap) - 1
-	// vm.scope[len(vm.scope)-1][ir.text] = idx
-	// vm.stack = append(vm.stack, word.FromAddress(idx))
-	// logAddedToStack(vm.stack, ir.text)
+func (vm *VirtualMachine) SubmitLocalRequest(addr word.Word) {
+	target := vm.heap[addr.AsAddr()]
+	if target.IsRuneArrayMark() {
+		label := ReviveRuneArray(vm, addr.AsAddr()).String(vm)
+		idx, ok := locateScopeLabel(vm.scope, label)
+		if ok {
+			// TODO: Invoke address, skip addrRef
+			vm.stack = append(vm.stack, word.FromAddress(idx))
+			logAddedToStack(vm.stack, label)
+		} else {
+			vm.scope[len(vm.scope)-1][label] = addr.AsAddr()
+			vm.stack = append(vm.stack, addr)
+			logAddedToStack(vm.stack, label)
+		}
+	} else {
+		vm.stack = append(vm.stack, target)
+		logAddedToStack(vm.stack, target.Debug())
+	}
 }
 
 // Used for traversing maps and legends
@@ -308,15 +354,18 @@ func (vm *VirtualMachine) SubmitUnderRequest(label word.Word) {
 // Used for traversing primitives and compilations
 func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
 	// FIXME: locate text
-	addr, err := vm.main.ReviveLits(vm).IndexOf(vm, label)
+	lits := vm.main.ReviveLits(vm)
+	addr, err := lits.IndexOf(vm, label)
 	if err != nil {
 		panic("unable to find word for outer request")
 	}
-	ref := vm.heap[vm.main.ReviveInstrs(vm).id+rune_arr_offset+uint64(addr)]
+	refId := lits.id + word_arr_offset + uint64(addr)
+	refAddr := vm.heap[refId]
+	ref := vm.heap[refAddr.AsAddr()]
 	if !(ref.IsRuneArrayMark()) {
 		panic("outer request submitted with non-ra value")
 	}
-	text := ReviveRuneArray(vm, ref).String(vm)
+	text := ReviveRuneArray(vm, refAddr.AsAddr()).String(vm)
 	fmt.Println(text)
 	switch text {
 	case ".=", ":=":

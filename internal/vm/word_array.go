@@ -71,13 +71,13 @@ func (wa WordArray) IndexOf(vm *VirtualMachine, x word.Word) (
 	if x.IsAddress() {
 		mkX := vm.heap[x.AsAddr()]
 		if mkX.IsRuneArrayMark() {
-			rax := ReviveRuneArray(vm, x)
+			rax := ReviveRuneArray(vm, x.AsAddr())
 			for i := range make([]int, wa.Length(vm)) {
 				y := wa.Get(vm, i)
 				if y.IsAddress() {
 					mkY := vm.heap[y.AsAddr()]
 					if mkY.IsRuneArrayMark() {
-						ray := ReviveRuneArray(vm, y)
+						ray := ReviveRuneArray(vm, y.AsAddr())
 						if rax.String(vm) == ray.String(vm) {
 							return i, nil
 						}
@@ -112,6 +112,10 @@ func (wa *WordArray) Append(vm *VirtualMachine, newWords ...word.Word) (uint64, 
 }
 
 func (wa WordArray) Get(vm *VirtualMachine, i int) word.Word {
+	waLen := wa.Length(vm)
+	if i < 0 || i >= waLen {
+		panic("index out of bounds")
+	}
 	return vm.heap[wa.id+word_arr_offset+uint64(i)]
 }
 

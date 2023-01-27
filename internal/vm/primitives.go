@@ -90,7 +90,7 @@ func (vm *VirtualMachine) expTwoInts() {
 
 // New scope and add a sentinel to the stack
 func (vm *VirtualMachine) beginRoutine() {
-	vm.scope = append(vm.scope, make(map[string]int))
+	vm.scope = append(vm.scope, make(map[string]uint64))
 	vm.stack = append(vm.stack, word.Sentinel())
 }
 

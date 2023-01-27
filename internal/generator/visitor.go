@@ -104,7 +104,7 @@ func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{}
 	logger.Println("label:", text)
 	v.vm.WriteCodeToMain(
 		ctx.GetStart().GetLine(),
-		word.FromAddress(int(ra.Id())),
+		word.FromAddress(ra.Id()),
 		vm.NewLocalRequest,
 	)
 	return v.VisitChildren(ctx)
@@ -127,7 +127,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 
 		v.vm.WriteCodeToMain(
 			addr.GetLine(),
-			word.FromAddress(int(ra.Id())),
+			word.FromAddress(ra.Id()),
 			vm.NewLocalRequest,
 		)
 	} else {
@@ -139,7 +139,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
 		v.vm.WriteCodeToMain(
 			addrRef.GetStart().GetLine(),
-			word.FromAddress(int(ra.Id())),
+			word.FromAddress(ra.Id()),
 			vm.NewLocalRequest,
 		)
 	}
@@ -155,7 +155,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 	)
 	v.vm.WriteCodeToMain(
 		op.GetStart().GetLine(),
-		word.FromAddress(int(ra.Id())),
+		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest,
 	)
 	return nil
@@ -240,7 +240,7 @@ func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interfa
 
 	v.vm.WriteCodeToMain(
 		mulOp.GetStart().GetLine(),
-		word.FromAddress(int(ra.Id())),
+		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 	return nil
@@ -264,7 +264,7 @@ func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
 
 	v.vm.WriteCodeToMain(
 		addOp.GetStart().GetLine(),
-		word.FromAddress(int(ra.Id())),
+		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 	return nil
@@ -321,7 +321,7 @@ func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 	}
 	v.vm.WriteCodeToMain(
 		powOp.GetStart().GetLine(),
-		word.FromAddress(int(ra.Id())),
+		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 	return nil

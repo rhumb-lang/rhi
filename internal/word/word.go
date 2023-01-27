@@ -117,10 +117,10 @@ func FromBool(b bool) Word {
 		return Word(VAL_FALS)
 	}
 }
-func FromInt(i uint32) Word  { return Word(VAL_NUMB | uint64(i)) }
-func FromRune(r rune) Word   { return Word(VAL_RUNE | uint64(r)) }
-func FromSym(a int) Word     { return Word(VAL_SYMB | uint64(a)) }
-func FromAddress(a int) Word { return Word(VAL_ADDR | uint64(a)) }
+func FromInt(i uint32) Word     { return Word(VAL_NUMB | uint64(i)) }
+func FromRune(r rune) Word      { return Word(VAL_RUNE | uint64(r)) }
+func FromSym(a int) Word        { return Word(VAL_SYMB | uint64(a)) }
+func FromAddress(a uint64) Word { return Word(VAL_ADDR | a) }
 
 func (w Word) isVal(v uint64) bool { return uint64(w)&MASK_ONE == v }
 
@@ -191,7 +191,7 @@ func (w Word) Debug() string {
 	} else if w.IsSym() {
 		return "S" // FIXME: Implement symbols
 	} else if w.IsAddress() { // must trigger before IsFloat for unknown reasons
-		return fmt.Sprint("A ", w.AsAddr(), "    ")
+		return fmt.Sprint("A  ", w.AsAddr(), "   ")
 	} else if w.IsFloat() {
 		// return fmt.Sprintf("F %.1e", w.AsFloat())
 		return ". . . . ."
@@ -215,7 +215,7 @@ func (w Word) Debug() string {
 }
 
 func (x Word) Equals(y Word) bool {
-	if x.IsNAN() {
+	if x.IsNAN() || x.IsSentinel() {
 		return false
 	} else if x.IsTrue() {
 		return y.IsTrue()

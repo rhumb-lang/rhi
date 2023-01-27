@@ -47,35 +47,33 @@ func NewRuneArray(
 ) RuneArray {
 	var (
 		runesLen  uint32      = uint32(len(runes))
-		runesSize uint32      = uint32(code_arr_offset) + runesLen
-		raWords   []word.Word = make([]word.Word, 0, runesSize)
+		runesRem  uint32      = uint32(runesLen % 2)
+		runesCap  uint32      = uint32(code_arr_offset) + (runesLen / 2) + runesRem
+		raWords   []word.Word = make([]word.Word, 0, runesCap)
 		runeBytes []byte
 		wordBytes []byte
-		offset    uint32
 	)
 	raWords = append(raWords,
 		/* Mark:   */ word.Word(word.RUNE_ARR),
 		/* Legend: */ legAddr,
-		/* Size:   */ word.FromInt(runesSize),
+		/* Size:   */ word.FromInt(runesCap),
 		/* Length: */ word.FromInt(runesLen),
 	)
 	wordBytes = make([]byte, 8)
 	for i, r := range runes {
-		offset = uint32(i) % 2
 		runeBytes = make([]byte, 4)
 		binary.LittleEndian.PutUint32(runeBytes, uint32(r))
-		if offset == 0 {
+		if i%2 == 0 {
 			copy(wordBytes, runeBytes)
 			if i == len(runes)-1 {
-				raWords = append(raWords,
-					word.Word(binary.LittleEndian.Uint64(wordBytes)))
+				newWord := word.Word(binary.BigEndian.Uint64(wordBytes))
+				raWords = append(raWords, word.Word(newWord))
 			}
 		} else {
-			for i, rb := range runeBytes {
-				wordBytes[i+4] = rb
-			}
-			raWords = append(raWords,
-				word.Word(binary.LittleEndian.Uint64(wordBytes)))
+			copy(wordBytes[4:], runeBytes)
+			newWord := word.Word(binary.BigEndian.Uint64(wordBytes))
+			raWords = append(raWords, newWord)
+			wordBytes = make([]byte, 8)
 		}
 
 	}
@@ -91,21 +89,20 @@ func NewRuneArray(
 
 // }
 
-func ReviveRuneArray(vm *VirtualMachine, addr word.Word) RuneArray {
-	i := addr.AsAddr()
-	mark := vm.heap[i]
+func ReviveRuneArray(vm *VirtualMachine, addr uint64) RuneArray {
+	mark := vm.heap[addr]
 	if !(mark.IsRuneArrayMark()) {
 		panic("not a rune array mark")
 	}
-	legend := vm.heap[i+rune_lgd_offset]
+	legend := vm.heap[addr+rune_lgd_offset]
 	if !(legend.IsAddress()) {
 		panic("rune array legend word is not an address")
 	}
-	size := vm.heap[i+rune_sze_offset]
+	size := vm.heap[addr+rune_sze_offset]
 	if !(size.IsInteger()) {
 		panic("rune array object size word is not an integer")
 	}
-	return RuneArray{i}
+	return RuneArray{addr}
 }
 
 func (ra RuneArray) Id() uint64 { return ra.id }
@@ -120,12 +117,17 @@ func (ra RuneArray) Length(vm *VirtualMachine) uint32 {
 	return vm.heap[ra.id+rune_len_offset].AsInt()
 }
 func (ra RuneArray) Runes(vm *VirtualMachine) []rune {
-	buf := make([]rune, 0, ra.Length(vm))
-	for i := range vm.heap[ra.id+rune_arr_offset:] {
+	raLen := uint64(ra.Length(vm))
+	buf := make([]rune, 0, raLen)
+	start := ra.id + rune_arr_offset
+	for i := range vm.heap[start : ra.id+ra.Size(vm)] {
 		bytes := make([]byte, 8)
-		binary.LittleEndian.PutUint64(bytes, uint64(vm.heap[ra.id+uint64(i)]))
+		binary.BigEndian.PutUint64(bytes, uint64(vm.heap[start+uint64(i)]))
 		buf = append(buf, rune(binary.LittleEndian.Uint32(bytes[:4])))
-		buf = append(buf, rune(binary.LittleEndian.Uint32(bytes[4:])))
+		secondRune := rune(binary.LittleEndian.Uint32(bytes[4:]))
+		if secondRune != 0 {
+			buf = append(buf, secondRune)
+		}
 	}
 	return buf
 }

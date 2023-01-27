@@ -119,27 +119,33 @@ func (ca *CodeArray) SetCodes(
 	cs ...Code,
 ) {
 	var (
-		origLen  uint64 = uint64(ca.Length(vm))
-		newLen   uint32 = uint32(len(cs))
-		byteSz   uint32 = 8
-		codeID   int
-		code     Code
-		initSz   uint32
-		bs       []byte      = make([]byte, 0, byteSz)
-		ws       []word.Word = make([]word.Word, 0, newLen/8)
-		lastWord word.Word   = vm.heap[ca.id+uint64(ca.Size(vm))-1]
+		origLen    uint64 = uint64(ca.Length(vm))
+		origSz     uint32 = uint32(ca.Size(vm))
+		newLen     uint32 = uint32(len(cs))
+		byteSz     uint32 = 8
+		codeID     int
+		code       Code
+		initSz     uint32
+		bs         []byte      = make([]byte, 0, byteSz)
+		ws         []word.Word = make([]word.Word, 0, newLen/8)
+		lastWordID uint64      = ca.id + uint64(ca.Size(vm)) - 1
 	)
 	if newLine {
 		ws = append(ws, word.Sentinel())
 	} else {
 		if ca.lastWordVacancy(vm) {
-			ca.getCodesFromWord(vm, lastWord, &bs)
+			ca.getCodesFromWord(vm, vm.heap[lastWordID], &bs)
+			vm.free[lastWordID] = true
+			origSz--
 			initSz = uint32(len(bs))
-			for codeID, code = range cs {
+			tempCS := make([]Code, len(cs))
+			copy(tempCS, cs)
+			for codeID, code = range tempCS {
 				bs = append(bs, byte(code))
+				cs = cs[codeID+1:] // shift from main cs var
 				if initSz+uint32(codeID)+1 == byteSz {
-					vm.heap[ca.id+ca.Size(vm)] = word.Word(
-						binary.BigEndian.Uint64(bs))
+					ws = append(ws,
+						word.Word(binary.BigEndian.Uint64(bs)))
 					bs = make([]byte, 0, byteSz)
 					break
 				}
@@ -160,15 +166,16 @@ func (ca *CodeArray) SetCodes(
 		for range bs[len(bs):byteSz] {
 			bs = append(bs, 0x0)
 		}
-		ws = append(ws, word.Word(binary.BigEndian.Uint64(bs)))
+		bsWord := word.Word(binary.BigEndian.Uint64(bs))
+		ws = append(ws, bsWord)
 	}
 	wordsLen := uint32(len(ws))
-	finalLength := uint32(origLen) + wordsLen
-	ca.SetSize(vm, finalLength+4)
-	ca.SetLength(vm, wordsLen)
+	finalLength := uint32(origLen) + newLen
+	ca.SetSize(vm, origSz+wordsLen)
+	ca.SetLength(vm, finalLength)
 	newId, _ := vm.Allocate(
 		int(ca.id),
-		int(origLen)+int(code_arr_offset),
+		int(origSz),
 		ws...,
 	)
 	if newId != ca.id {
@@ -179,9 +186,8 @@ func (ca *CodeArray) SetCodes(
 
 func (ca *CodeArray) lastWordVacancy(vm *VirtualMachine) bool {
 	var (
-		lastIndex uint64    = uint64(ca.Length(vm) - 1)
-		id        uint64    = ca.id + code_arr_offset + lastIndex
-		word      word.Word = vm.heap[id]
+		lastIndex uint64    = uint64(ca.Size(vm) - 1)
+		word      word.Word = vm.heap[ca.id+lastIndex]
 	)
 	if word.IsSentinel() {
 		return false
@@ -230,7 +236,7 @@ func (ca CodeArray) getWordCodeCount(vm *VirtualMachine, word word.Word) (count 
 
 func (ca CodeArray) GetCodes(vm *VirtualMachine) []byte {
 	var (
-		cwLen uint64 = uint64(ca.Length(vm))
+		cwLen uint64 = uint64(ca.Size(vm))
 		buf   []byte = make([]byte, 0, cwLen*8)
 	)
 	for wIndex := code_arr_offset; wIndex < cwLen; wIndex++ {
