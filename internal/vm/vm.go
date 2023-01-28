@@ -13,7 +13,7 @@ var vmLogger = log.New(io.Discard, "", log.LstdFlags)
 
 func init() {
 	if os.Getenv("RHUMB_VM_DEBUG") == "1" {
-		vmLogger = log.New(os.Stdout, "{VM} ", log.LstdFlags)
+		vmLogger = log.New(os.Stdout, "{VM} ", log.Ltime)
 	}
 }
 
@@ -37,53 +37,56 @@ func incCheckNL(inc *int) {
 }
 
 func (vm VirtualMachine) DebugHeap() {
-	for i := 0; i < len(vm.heap); i++ {
-		if i%DEBUG_WIDTH == 0 {
-			fmt.Println()
-		}
-		if vm.free[i] {
-			fmt.Printf("{%3v:           }", i)
-		} else if vm.heap[i].IsRuneArrayMark() {
-			j := i
-			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
-			incCheckNL(&j)
-			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
-			incCheckNL(&j)
-			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
-			incCheckNL(&j)
-			fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
-			incCheckNL(&j)
-			fmt.Printf("[%3v: ", j)
-			ra := ReviveRuneArray(&vm, uint64(i))
-			runes := ra.Runes(&vm)
-			if len(runes) <= 2 {
-				for _, r := range runes {
-					fmt.Printf("'%s'", string(r))
-					fmt.Print("  ")
-				}
-			} else {
-				for i, r := range runes {
-					fmt.Printf("'%s'", string(r))
-					if i%2 == 1 {
-						fmt.Print("  |")
-						incCheckNL(&j)
-						fmt.Print("|     ")
-					} else {
+	if os.Getenv("RHUMB_VM_DEBUG") == "1" {
+		vmLogger.Println("Dumping memory...")
+		for i := 0; i < len(vm.heap); i++ {
+			if i > 0 && i%DEBUG_WIDTH == 0 {
+				fmt.Println()
+			}
+			if vm.free[i] {
+				fmt.Printf("{%3v:           }", i)
+			} else if vm.heap[i].IsRuneArrayMark() {
+				j := i
+				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				incCheckNL(&j)
+				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				incCheckNL(&j)
+				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				incCheckNL(&j)
+				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				incCheckNL(&j)
+				fmt.Printf("[%3v: ", j)
+				ra := ReviveRuneArray(&vm, uint64(i))
+				runes := ra.Runes(&vm)
+				if len(runes) <= 2 {
+					for _, r := range runes {
+						fmt.Printf("'%s'", string(r))
 						fmt.Print("  ")
 					}
-				}
-				for range make([]int, (ra.Length(&vm) % 2)) {
-					fmt.Print("     ")
-				}
+				} else {
+					for i, r := range runes {
+						fmt.Printf("'%s'", string(r))
+						if i%2 == 1 {
+							fmt.Print("  |")
+							incCheckNL(&j)
+							fmt.Print("|     ")
+						} else {
+							fmt.Print("  ")
+						}
+					}
+					for range make([]int, (ra.Length(&vm) % 2)) {
+						fmt.Print("     ")
+					}
 
+				}
+				fmt.Print("]")
+				i += int(ra.Size(&vm)) - 1
+			} else {
+				fmt.Printf("[%3v: %-9s ]", i, vm.heap[i].Debug())
 			}
-			fmt.Print("]")
-			i += int(ra.Size(&vm)) - 1
-		} else {
-			fmt.Printf("[%3v: %-9s ]", i, vm.heap[i].Debug())
 		}
+		fmt.Println()
 	}
-	fmt.Println()
 }
 
 func NewVirtualMachine() *VirtualMachine {
@@ -255,8 +258,15 @@ func (vm *VirtualMachine) Disassemble() {
 	vm.main.Disassemble(vm)
 }
 
-func (vm *VirtualMachine) Execute() {
+func (vm *VirtualMachine) Execute(lastValueFlag bool) {
 	vm.main.Execute(vm)
+	if lastValueFlag {
+		if len(vm.stack) == 0 {
+			fmt.Println("()")
+		} else {
+			fmt.Println(vm.stack[len(vm.stack)-1].AsInt())
+		}
+	}
 }
 
 func logAddedToStack(stack []word.Word, txt string) {

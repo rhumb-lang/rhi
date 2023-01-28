@@ -125,7 +125,6 @@ func (ca *CodeArray) SetCodes(
 		byteSz     uint32 = 8
 		codeID     int
 		code       Code
-		initSz     uint32
 		bs         []byte      = make([]byte, 0, byteSz)
 		ws         []word.Word = make([]word.Word, 0, newLen/8)
 		lastWordID uint64      = ca.id + uint64(ca.Size(vm)) - 1
@@ -133,24 +132,24 @@ func (ca *CodeArray) SetCodes(
 	if newLine {
 		ws = append(ws, word.Sentinel())
 	} else {
-		if ca.lastWordVacancy(vm) {
-			ca.getCodesFromWord(vm, vm.heap[lastWordID], &bs)
+		ca.getCodesFromWord(vm, vm.heap[lastWordID], &bs)
+		if len(bs) < 8 {
 			vm.free[lastWordID] = true
 			origSz--
-			initSz = uint32(len(bs))
 			tempCS := make([]Code, len(cs))
 			copy(tempCS, cs)
 			for codeID, code = range tempCS {
 				bs = append(bs, byte(code))
 				cs = cs[codeID+1:] // shift from main cs var
-				if initSz+uint32(codeID)+1 == byteSz {
+				if len(bs) == int(byteSz) {
 					ws = append(ws,
 						word.Word(binary.BigEndian.Uint64(bs)))
 					bs = make([]byte, 0, byteSz)
 					break
 				}
 			}
-
+		} else {
+			bs = make([]byte, 0, byteSz)
 		}
 	}
 	for codeID, code = range cs {
@@ -169,10 +168,8 @@ func (ca *CodeArray) SetCodes(
 		bsWord := word.Word(binary.BigEndian.Uint64(bs))
 		ws = append(ws, bsWord)
 	}
-	wordsLen := uint32(len(ws))
-	finalLength := uint32(origLen) + newLen
-	ca.SetSize(vm, origSz+wordsLen)
-	ca.SetLength(vm, finalLength)
+	ca.SetSize(vm, origSz+uint32(len(ws)))
+	ca.SetLength(vm, uint32(origLen)+newLen)
 	newId, _ := vm.Allocate(
 		int(ca.id),
 		int(origSz),

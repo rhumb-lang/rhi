@@ -19,7 +19,7 @@ var viLogger = log.New(io.Discard, "", log.LstdFlags)
 
 func init() {
 	if os.Getenv("RHUMB_VISITOR_DEBUG") == "1" {
-		viLogger = log.New(os.Stdout, "{VI} ", log.LstdFlags)
+		viLogger = log.New(os.Stdout, "{VI} ", log.Ltime)
 	}
 }
 

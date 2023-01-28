@@ -17,14 +17,18 @@ import (
 
 type visitorContextKey int
 type disassembleContextKey int
+type lastValueContextKey int
 
 const VisitorCK visitorContextKey = iota
 const DisassembleCK disassembleContextKey = iota
+const LastValueCK lastValueContextKey = iota
 
-func disassembleFlag(ctx *context.Context, args *[]string) ([]string, error) {
+func setupFlags(ctx *context.Context, args *[]string) ([]string, error) {
 	flags := flag.NewFlagSet("rhumb", flag.ContinueOnError)
 	var disassemble bool
 	flags.BoolVar(&disassemble, "disassemble", false, "Disassemble the chunk of code")
+	var lastValue bool
+	flags.BoolVar(&lastValue, "last-value", false, "Print the last value of the main routine")
 	if err := flags.Parse(*args); err != nil {
 		return []string{}, err
 	}
@@ -33,6 +37,11 @@ func disassembleFlag(ctx *context.Context, args *[]string) ([]string, error) {
 		*ctx = context.WithValue(*ctx, DisassembleCK, true)
 	} else {
 		*ctx = context.WithValue(*ctx, DisassembleCK, false)
+	}
+	if lastValue {
+		*ctx = context.WithValue(*ctx, LastValueCK, true)
+	} else {
+		*ctx = context.WithValue(*ctx, LastValueCK, false)
 	}
 	return flags.Args(), nil
 }
@@ -53,12 +62,12 @@ func parse(ctx context.Context, chars antlr.CharStream) {
 	if ctx.Value(DisassembleCK).(bool) {
 		vm.Disassemble()
 	}
-	vm.Execute()
+	vm.Execute(ctx.Value(LastValueCK).(bool))
 }
 
 func ParseFile(ctx context.Context, args []string) error {
 	var err error
-	if args, err = disassembleFlag(&ctx, &args); err != nil {
+	if args, err = setupFlags(&ctx, &args); err != nil {
 		return err
 	}
 	input, err := antlr.NewFileStream(args[1])
@@ -72,7 +81,7 @@ func ParseFile(ctx context.Context, args []string) error {
 
 func ParseLines(ctx context.Context, args []string) error {
 	var err error
-	if args, err = disassembleFlag(&ctx, &args); err != nil {
+	if args, err = setupFlags(&ctx, &args); err != nil {
 		return err
 	}
 	input := antlr.NewInputStream(strings.Join(args, "\n"))
@@ -82,7 +91,7 @@ func ParseLines(ctx context.Context, args []string) error {
 
 func ReadEvalPrintLoop(ctx context.Context, args []string) error {
 	var err error
-	if args, err = disassembleFlag(&ctx, &args); err != nil {
+	if args, err = setupFlags(&ctx, &args); err != nil {
 		return err
 	}
 	for {

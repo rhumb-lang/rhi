@@ -19,15 +19,20 @@
             "program": "cmd/rhumb/main.go",
             "args": [
                 "line",
-                "--disassemble",
+                // "--disassemble",
+                "--last-value",
+
+                // "foo := 1; bar .= 2; foo ++ bar",
+
+
                 "foo .= 10",
                 "bar .= 3",
                 "foo ** bar // 6"
             ],
             "env": {
                 "RHUMB_VISITOR_DEBUG": "0",
-                "RHUMB_CODE_ARRAY_DEBUG": "1",
-                "RHUMB_VM_DEBUG": "1"
+                "RHUMB_CODE_ARRAY_DEBUG": "0",
+                "RHUMB_VM_DEBUG": "0"
             }
         }
 
