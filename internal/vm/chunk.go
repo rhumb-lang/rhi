@@ -123,7 +123,6 @@ func (ch Chunk) Execute(vm *VirtualMachine) {
 			if code.IsIndexExtension() {
 				continue
 			} else {
-				// FIXME: something is wrong here
 				ch.execTagIndex(vm, code.Tag(), int(idx))
 				idx = 0
 			}
@@ -134,7 +133,7 @@ func (ch Chunk) Execute(vm *VirtualMachine) {
 
 func (ch Chunk) execTagIndex(vm *VirtualMachine, tag byte, idx int) {
 	literals := ch.ReviveLits(vm)
-	fmt.Println("Executing chunk tag:", tag)
+	// fmt.Println("Executing chunk tag:", tag)
 	switch tag {
 	case TAG_VALUE_LITERAL:
 		vm.AddLiteralToStack(literals.Get(vm, idx))

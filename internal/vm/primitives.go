@@ -73,7 +73,7 @@ func (vm *VirtualMachine) subTwoInts() {
 func (vm *VirtualMachine) mulTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
 	vm.stack = append(vm.stack, word.FromInt(val1*val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2))
+	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2, "  "))
 }
 
 func (vm *VirtualMachine) divTwoInts() {

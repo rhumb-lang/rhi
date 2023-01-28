@@ -225,7 +225,7 @@ func (x Word) Equals(y Word) bool {
 		return y.IsEmpty()
 	} else if x.IsInteger() {
 		if y.IsInteger() {
-			return x.IsInteger() == y.IsInteger()
+			return x.AsInt() == y.AsInt()
 		} else {
 			return false
 		}

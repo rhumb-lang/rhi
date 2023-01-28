@@ -366,7 +366,6 @@ func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
 		panic("outer request submitted with non-ra value")
 	}
 	text := ReviveRuneArray(vm, refAddr.AsAddr()).String(vm)
-	fmt.Println(text)
 	switch text {
 	case ".=", ":=":
 		vm.assignLabel()
