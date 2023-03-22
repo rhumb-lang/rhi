@@ -18,11 +18,11 @@ func init() {
 }
 
 type VirtualMachine struct {
-	heap    []word.Word
-	free    []bool
-	stack   []word.Word
-	scope   []map[string]uint64
-	Routine Chunk
+	heap         []word.Word
+	free         []bool
+	stack        []word.Word
+	scope        []map[string]uint64
+	CurrentChunk Chunk
 }
 
 var DEBUG_WIDTH int = 10
@@ -100,7 +100,12 @@ func NewVirtualMachine() *VirtualMachine {
 	vm.scope = append(vm.scope, make(map[string]uint64))
 
 	// TODO: convert to actual routine
-	vm.Routine = NewChunk(vm)
+	vm.ResetCurrentChunk()
+	return vm
+}
+
+func (vm *VirtualMachine) ResetCurrentChunk() *VirtualMachine {
+	vm.CurrentChunk = NewChunk(vm)
 	return vm
 }
 
@@ -119,7 +124,7 @@ func (vm *VirtualMachine) ReAllocate(ws ...word.Word) (uint64, error) {
 		next = 0
 		if obj.free[first] {
 			if size == 1 {
-				vmLogger.Println("adding word to index:", first)
+				vmLogger.Println("moving word to index:", first)
 				obj.heap[first] = ws[0]
 				obj.free[first] = false
 				obj.DebugHeap()
@@ -132,7 +137,7 @@ func (vm *VirtualMachine) ReAllocate(ws ...word.Word) (uint64, error) {
 						next++
 						break
 					} else if next == last {
-						vmLogger.Println("appending words to index:", first)
+						vmLogger.Println("moving words to index:", first)
 						obj.allocInPlace(first, last, ws...)
 						obj.DebugHeap()
 						*vm = obj
@@ -146,7 +151,7 @@ func (vm *VirtualMachine) ReAllocate(ws ...word.Word) (uint64, error) {
 	}
 	// no available chunk in existing memory locations.
 	first = len(obj.heap)
-	vmLogger.Println("appending words to end:", first)
+	vmLogger.Println("moving words to end:", first)
 	obj = appendRhumb(obj, ws)
 	*vm = obj
 	return uint64(first), nil
@@ -246,22 +251,22 @@ func (vm VirtualMachine) allocInPlace(x, y int, ws ...word.Word) {
 // 	}
 // }
 
-func (vm *VirtualMachine) WriteCodeToCurrentRoutine(
+func (vm *VirtualMachine) WriteCodeToCurrentChunk(
 	line int,
 	lit word.Word,
 	codeFactory func(i uint64) []Code,
 ) {
-	id, _ := vm.Routine.AddLiteral(vm, lit)
+	id, _ := vm.CurrentChunk.AddLiteral(vm, lit)
 	codes := codeFactory(id)
-	vm.Routine.WriteCode(vm, line, codes)
+	vm.CurrentChunk.WriteCode(vm, line, codes)
 }
 
 func (vm *VirtualMachine) Disassemble() {
-	vm.Routine.Disassemble(vm)
+	vm.CurrentChunk.Disassemble(vm)
 }
 
 func (vm *VirtualMachine) Execute(lastValueFlag bool) {
-	vm.Routine.Execute(vm)
+	vm.CurrentChunk.Execute(vm)
 	if lastValueFlag {
 		if len(vm.stack) == 0 {
 			fmt.Println("()")
@@ -366,7 +371,7 @@ func (vm *VirtualMachine) SubmitUnderRequest(label word.Word) {
 // Used for traversing primitives and compilations
 func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
 	// FIXME: locate text
-	lits := vm.Routine.ReviveLits(vm)
+	lits := vm.CurrentChunk.ReviveLits(vm)
 	addr, err := lits.IndexOf(vm, label)
 	if err != nil {
 		panic("unable to find word for outer request")

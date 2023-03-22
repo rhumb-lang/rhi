@@ -99,7 +99,7 @@ func (v *RhumbVisitor) VisitMutableLabel(ctx *P.MutableLabelContext) interface{}
 func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{} {
 	var (
 		text       string       = ctx.GetText()
-		lits       vm.WordArray = v.vm.Routine.ReviveLits(&v.vm)
+		lits       vm.WordArray = v.vm.CurrentChunk.ReviveLits(&v.vm)
 		lblIdx     uint64
 		lblFindErr error
 		ra         vm.RuneArray
@@ -110,7 +110,7 @@ func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{}
 		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
 		lblIdx = ra.Id()
 	}
-	v.vm.WriteCodeToCurrentRoutine(
+	v.vm.WriteCodeToCurrentChunk(
 		ctx.GetStart().GetLine(),
 		word.FromAddress(lblIdx),
 		vm.NewLocalRequest,
@@ -126,7 +126,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 		ra                    vm.RuneArray
 		lblIdx, opIdx         uint64
 		lblFindErr, opFindErr error
-		lits                  vm.WordArray = v.vm.Routine.ReviveLits(&v.vm)
+		lits                  vm.WordArray = v.vm.CurrentChunk.ReviveLits(&v.vm)
 	)
 	if addr := ctx.GetAddress(); addr != nil {
 		text = addr.GetText()
@@ -139,7 +139,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 			lblIdx = ra.Id()
 		}
 
-		v.vm.WriteCodeToCurrentRoutine(
+		v.vm.WriteCodeToCurrentChunk(
 			addr.GetLine(),
 			word.FromAddress(lblIdx),
 			vm.NewLocalRequest,
@@ -155,7 +155,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 			ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
 			lblIdx = ra.Id()
 		}
-		v.vm.WriteCodeToCurrentRoutine(
+		v.vm.WriteCodeToCurrentChunk(
 			addrRef.GetStart().GetLine(),
 			word.FromAddress(lblIdx),
 			vm.NewLocalRequest,
@@ -171,7 +171,7 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(op.GetText())...)
 		opIdx = ra.Id()
 	}
-	v.vm.WriteCodeToCurrentRoutine(
+	v.vm.WriteCodeToCurrentChunk(
 		op.GetStart().GetLine(),
 		word.FromAddress(opIdx),
 		vm.NewOuterRequest,
@@ -192,7 +192,7 @@ func (v *RhumbVisitor) VisitIntegerLiteral(ctx *P.IntegerLiteralContext) interfa
 		return RhumbReturn{nil, fmt.Errorf("unable to parse int")}
 	}
 	viLogger.Println("VALUE:", val)
-	v.vm.WriteCodeToCurrentRoutine(
+	v.vm.WriteCodeToCurrentChunk(
 		ctx.GetStart().GetLine(),
 		word.FromInt(uint32(val)),
 		vm.NewValueLiteral,
@@ -256,7 +256,7 @@ func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interfa
 		exprs[i].Accept(v)
 	}
 
-	v.vm.WriteCodeToCurrentRoutine(
+	v.vm.WriteCodeToCurrentChunk(
 		mulOp.GetStart().GetLine(),
 		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
@@ -280,7 +280,7 @@ func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
 		exprs[i].Accept(v)
 	}
 
-	v.vm.WriteCodeToCurrentRoutine(
+	v.vm.WriteCodeToCurrentChunk(
 		addOp.GetStart().GetLine(),
 		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
@@ -337,7 +337,7 @@ func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
-	v.vm.WriteCodeToCurrentRoutine(
+	v.vm.WriteCodeToCurrentChunk(
 		powOp.GetStart().GetLine(),
 		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
