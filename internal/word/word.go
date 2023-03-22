@@ -34,7 +34,7 @@ const MARK_MAP uint64 = 0x7F_FE_40_00_00_00_00_00
 const MAIN_MAP uint64 = 0x7F_FE_40_10_00_00_00_00
 const LIST_MAP uint64 = 0x7F_FE_40_20_00_00_00_00
 const TEXT_MAP uint64 = 0x7F_FE_40_30_00_00_00_00
-const FUNC_MAP uint64 = 0x7F_FE_40_40_00_00_00_00
+const ROUT_MAP uint64 = 0x7F_FE_40_40_00_00_00_00
 const META_MAP uint64 = 0x7F_FE_40_F0_00_00_00_00
 
 const MARK_ARR uint64 = 0x7F_FE_80_00_00_00_00_00
@@ -49,7 +49,7 @@ const MARK_LGD uint64 = 0x7F_FE_C0_00_00_00_00_00
 const MAIN_LGD uint64 = 0x7F_FE_C0_10_00_00_00_00
 const LIST_LGD uint64 = 0x7F_FE_C0_20_00_00_00_00
 const TEXT_LGD uint64 = 0x7F_FE_C0_30_00_00_00_00
-const FUNC_LGD uint64 = 0x7F_FE_C0_40_00_00_00_00
+const ROUT_LGD uint64 = 0x7F_FE_C0_40_00_00_00_00
 const ARRA_LGD uint64 = 0x7F_FE_C0_50_00_00_00_00
 const META_LGD uint64 = 0x7F_FE_C0_F0_00_00_00_00
 
@@ -147,7 +147,7 @@ func (w Word) IsMapMark() bool     { return w.isMark(MARK_MAP) }
 func (w Word) IsMainMapMark() bool { return w.isMark2(MAIN_MAP) }
 func (w Word) IsListMapMark() bool { return w.isMark2(LIST_MAP) }
 func (w Word) IsTextMapMark() bool { return w.isMark2(TEXT_MAP) }
-func (w Word) IsFuncMapMark() bool { return w.isMark2(FUNC_MAP) }
+func (w Word) IsFuncMapMark() bool { return w.isMark2(ROUT_MAP) }
 func (w Word) IsMetaMapMark() bool { return w.isMark2(META_MAP) }
 
 func (w Word) IsArrayMark() bool     { return w.isMark(MARK_ARR) }
@@ -160,7 +160,7 @@ func (w Word) IsLegendMark() bool     { return w.isMark(MARK_LGD) }
 func (w Word) IsMainLegendMark() bool { return w.isMark2(MAIN_LGD) }
 func (w Word) IsListLegendMark() bool { return w.isMark2(LIST_LGD) }
 func (w Word) IsTextLegendMark() bool { return w.isMark2(TEXT_LGD) }
-func (w Word) IsFuncLegendMark() bool { return w.isMark2(FUNC_LGD) }
+func (w Word) IsFuncLegendMark() bool { return w.isMark2(ROUT_LGD) }
 func (w Word) IsArraLegendMark() bool { return w.isMark2(ARRA_LGD) }
 func (w Word) IsMetaLegendMark() bool { return w.isMark2(META_LGD) }
 

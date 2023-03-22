@@ -64,6 +64,29 @@ func ReviveWordArray(vm *VirtualMachine, addr word.Word) WordArray {
 	return WordArray{i}
 }
 
+func (wa WordArray) Find(vm *VirtualMachine, s string) (
+	idx uint64,
+	err error,
+) {
+	for i := range make([]int, wa.Length(vm)) {
+		waVal := wa.Get(vm, i)
+		if waVal.IsAddress() {
+			heapVal := vm.heap[waVal.AsAddr()]
+			if heapVal.IsRuneArrayMark() {
+				heapRA := ReviveRuneArray(vm, waVal.AsAddr())
+				strVal := heapRA.String(vm)
+				if strVal == s {
+					heapIdx := wa.id + word_arr_offset + uint64(i)
+					idx = vm.heap[heapIdx].AsAddr()
+					return
+				}
+			}
+		}
+	}
+	err = fmt.Errorf("unable to find '%s'", s)
+	return
+}
+
 func (wa WordArray) IndexOf(vm *VirtualMachine, x word.Word) (
 	idx int,
 	err error,
@@ -71,14 +94,14 @@ func (wa WordArray) IndexOf(vm *VirtualMachine, x word.Word) (
 	if x.IsAddress() {
 		mkX := vm.heap[x.AsAddr()]
 		if mkX.IsRuneArrayMark() {
-			rax := ReviveRuneArray(vm, x.AsAddr())
+			raX := ReviveRuneArray(vm, x.AsAddr())
 			for i := range make([]int, wa.Length(vm)) {
 				y := wa.Get(vm, i)
 				if y.IsAddress() {
 					mkY := vm.heap[y.AsAddr()]
 					if mkY.IsRuneArrayMark() {
 						ray := ReviveRuneArray(vm, y.AsAddr())
-						if rax.String(vm) == ray.String(vm) {
+						if raX.String(vm) == ray.String(vm) {
 							return i, nil
 						}
 					}

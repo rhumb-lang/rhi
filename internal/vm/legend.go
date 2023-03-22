@@ -54,16 +54,14 @@ const (
 	base_lgd_offset uint64 = 1
 	base_swp_offset uint64 = 2
 	base_sze_offset uint64 = 3
-	base_len_offset uint64 = 3
-	base_req_offset uint64 = 4
-	base_dep_offset uint64 = 5
-	main_fld_offset uint64 = 6
-	list_arr_offset uint64 = 6
-	list_fld_offset uint64 = 7
-	text_arr_offset uint64 = 6
-	text_fld_offset uint64 = 7
-	func_chu_offset uint64 = 6
-	func_fld_offset uint64 = 7
+	base_len_offset uint64 = 4
+	base_req_offset uint64 = 5
+	base_dep_offset uint64 = 6
+	main_fld_offset uint64 = 7
+	text_arr_offset uint64 = 8
+	text_fld_offset uint64 = 9
+	rout_chu_offset uint64 = 10
+	rout_fld_offset uint64 = 11
 )
 
 func NewBaseMapLegend(
@@ -90,7 +88,7 @@ func wordsFromDescriptors(
 	d ...Descriptor,
 ) (buf []word.Word) {
 	// buf = make([]word.Word, 0, len(d)*3)
-	// for descIndex := range d {
+	// for _, desc := range d {
 	// 	buf = append(buf, d[descIndex]...)
 	// }
 	return
@@ -104,20 +102,6 @@ func NewMainMapLegend(
 	dWords := wordsFromDescriptors(descs...)
 	return NewBaseMapLegend(
 		word.Word(word.MAIN_LGD),
-		legAddr,
-		descCount,
-		dWords,
-	)
-}
-
-func NewListMapLegend(
-	legAddr word.Word,
-	descs ...Descriptor,
-) ListMapLegend {
-	descCount := uint32(len(descs))
-	dWords := wordsFromDescriptors(descs...)
-	return NewBaseMapLegend(
-		word.Word(word.LIST_LGD),
 		legAddr,
 		descCount,
 		dWords,
@@ -138,14 +122,14 @@ func NewTextMapLegend(
 	)
 }
 
-func NewFuncMapLegend(
+func NewRoutMapLegend(
 	legAddr word.Word,
 	descs ...Descriptor,
 ) FuncMapLegend {
 	descCount := uint32(len(descs))
 	dWords := wordsFromDescriptors(descs...)
 	return NewBaseMapLegend(
-		word.Word(word.FUNC_LGD),
+		word.Word(word.ROUT_LGD),
 		legAddr,
 		descCount,
 		dWords,

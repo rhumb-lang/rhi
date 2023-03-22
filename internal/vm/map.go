@@ -29,8 +29,8 @@ func NewTextMap(count uint32, legAddr word.Word) RhumbMap {
 	return NewMap(word.Word(word.TEXT_MAP), legAddr)
 }
 
-func NewFuncMap(count uint32, legAddr word.Word) RhumbMap {
-	return NewMap(word.Word(word.FUNC_MAP), legAddr)
+func NewRoutMap(count uint32, legAddr word.Word) RhumbMap {
+	return NewMap(word.Word(word.ROUT_MAP), legAddr)
 }
 
 func NewMetaMap(count uint32, legAddr word.Word) RhumbMap {

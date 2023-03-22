@@ -59,7 +59,7 @@ func (v *RhumbVisitor) GetVM() *vm.VirtualMachine {
 }
 
 func (v *RhumbVisitor) Visit(tree antlr.ParseTree) interface{} {
-	viLogger.Printf("input type: %s\n", reflect.TypeOf(tree))
+	viLogger.Printf("Visit[tree type: %s]\n", reflect.TypeOf(tree))
 
 	switch t := tree.(type) {
 	case *antlr.ErrorNodeImpl:
@@ -74,7 +74,7 @@ func (v *RhumbVisitor) Visit(tree antlr.ParseTree) interface{} {
 
 func (v *RhumbVisitor) VisitChildren(node antlr.RuleNode) interface{} {
 	for _, n := range node.GetChildren() {
-		viLogger.Println("Visit child:", reflect.TypeOf(n))
+		viLogger.Printf("VisitChildren[node type: %s]\n", reflect.TypeOf(n))
 		v.Visit(n.(antlr.ParseTree))
 	}
 	return nil
@@ -98,13 +98,21 @@ func (v *RhumbVisitor) VisitMutableLabel(ctx *P.MutableLabelContext) interface{}
 
 func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{} {
 	var (
-		text string       = ctx.GetText()
-		ra   vm.RuneArray = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
+		text       string       = ctx.GetText()
+		lits       vm.WordArray = v.vm.Routine.ReviveLits(&v.vm)
+		lblIdx     uint64
+		lblFindErr error
+		ra         vm.RuneArray
 	)
 	viLogger.Println("label:", text)
-	v.vm.WriteCodeToMain(
+	lblIdx, lblFindErr = lits.Find(&v.vm, text)
+	if lblFindErr != nil {
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
+		lblIdx = ra.Id()
+	}
+	v.vm.WriteCodeToCurrentRoutine(
 		ctx.GetStart().GetLine(),
-		word.FromAddress(ra.Id()),
+		word.FromAddress(lblIdx),
 		vm.NewLocalRequest,
 	)
 	return v.VisitChildren(ctx)
@@ -114,20 +122,26 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 	viLogger.Println("assignment!")
 	// TODO: implement map assignment
 	var (
-		text string
-		ra   vm.RuneArray
+		text                  string
+		ra                    vm.RuneArray
+		lblIdx, opIdx         uint64
+		lblFindErr, opFindErr error
+		lits                  vm.WordArray = v.vm.Routine.ReviveLits(&v.vm)
 	)
 	if addr := ctx.GetAddress(); addr != nil {
 		text = addr.GetText()
 		viLogger.Println("Address:", text)
 		// TODO: check for a matching subroutine and invoke
 		// TODO: check for matching outer scoped label
+		lblIdx, lblFindErr = lits.Find(&v.vm, text)
+		if lblFindErr != nil {
+			ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
+			lblIdx = ra.Id()
+		}
 
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-
-		v.vm.WriteCodeToMain(
+		v.vm.WriteCodeToCurrentRoutine(
 			addr.GetLine(),
-			word.FromAddress(ra.Id()),
+			word.FromAddress(lblIdx),
 			vm.NewLocalRequest,
 		)
 	} else {
@@ -136,10 +150,14 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 		viLogger.Printf("addrRef.Accept(v): %v\n", addrRef.Accept(v))
 		text = addrRef.GetText()
 		viLogger.Println("AddressRef:", text)
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-		v.vm.WriteCodeToMain(
+		lblIdx, lblFindErr = lits.Find(&v.vm, text)
+		if lblFindErr != nil {
+			ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
+			lblIdx = ra.Id()
+		}
+		v.vm.WriteCodeToCurrentRoutine(
 			addrRef.GetStart().GetLine(),
-			word.FromAddress(ra.Id()),
+			word.FromAddress(lblIdx),
 			vm.NewLocalRequest,
 		)
 	}
@@ -148,14 +166,14 @@ func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 	viLogger.Println("ctx.Expression().Accept:", ctx.Expression().Accept(v))
 	viLogger.Println("INNER:")
 	op := ctx.AssignmentOp()
-	ra = vm.NewRuneArray(
-		&v.vm,
-		word.FromAddress(0),
-		[]rune(op.GetText())...,
-	)
-	v.vm.WriteCodeToMain(
+	opIdx, opFindErr = lits.Find(&v.vm, op.GetText())
+	if opFindErr != nil {
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(op.GetText())...)
+		opIdx = ra.Id()
+	}
+	v.vm.WriteCodeToCurrentRoutine(
 		op.GetStart().GetLine(),
-		word.FromAddress(ra.Id()),
+		word.FromAddress(opIdx),
 		vm.NewOuterRequest,
 	)
 	return nil
@@ -174,7 +192,7 @@ func (v *RhumbVisitor) VisitIntegerLiteral(ctx *P.IntegerLiteralContext) interfa
 		return RhumbReturn{nil, fmt.Errorf("unable to parse int")}
 	}
 	viLogger.Println("VALUE:", val)
-	v.vm.WriteCodeToMain(
+	v.vm.WriteCodeToCurrentRoutine(
 		ctx.GetStart().GetLine(),
 		word.FromInt(uint32(val)),
 		vm.NewValueLiteral,
@@ -238,7 +256,7 @@ func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interfa
 		exprs[i].Accept(v)
 	}
 
-	v.vm.WriteCodeToMain(
+	v.vm.WriteCodeToCurrentRoutine(
 		mulOp.GetStart().GetLine(),
 		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
@@ -262,7 +280,7 @@ func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
 		exprs[i].Accept(v)
 	}
 
-	v.vm.WriteCodeToMain(
+	v.vm.WriteCodeToCurrentRoutine(
 		addOp.GetStart().GetLine(),
 		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
@@ -319,7 +337,7 @@ func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
-	v.vm.WriteCodeToMain(
+	v.vm.WriteCodeToCurrentRoutine(
 		powOp.GetStart().GetLine(),
 		word.FromAddress(ra.Id()),
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
