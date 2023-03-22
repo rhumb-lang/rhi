@@ -27,12 +27,28 @@
 
                 "foo .= 10",
                 "bar .= 3",
-                "foo ** bar // 6"
+                "foo ++ 5"
             ],
             "env": {
                 "RHUMB_VISITOR_DEBUG": "0",
                 "RHUMB_CODE_ARRAY_DEBUG": "0",
-                "RHUMB_VM_DEBUG": "0"
+                "RHUMB_VM_DEBUG": "1"
+            }
+        },
+        {
+            "name": "Launch rhumb REPL",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "console": "integratedTerminal",
+            "program": "cmd/rhumb/main.go",
+            "args": [
+                "repl"
+            ],
+            "env": {
+                "RHUMB_VISITOR_DEBUG": "1",
+                "RHUMB_CODE_ARRAY_DEBUG": "1",
+                "RHUMB_VM_DEBUG": "1"
             }
         }
 
