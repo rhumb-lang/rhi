@@ -46,7 +46,7 @@ func setupFlags(ctx *context.Context, args *[]string) ([]string, error) {
 	return flags.Args(), nil
 }
 
-func parse(ctx context.Context, chars antlr.CharStream) {
+func interpret(ctx context.Context, chars antlr.CharStream) {
 	lexer := parser.NewRhumbLexer(chars)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewRhumbParser(stream)
@@ -65,7 +65,7 @@ func parse(ctx context.Context, chars antlr.CharStream) {
 	vm.Execute(ctx.Value(LastValueCK).(bool))
 }
 
-func ParseFile(ctx context.Context, args []string) error {
+func InterpretFile(ctx context.Context, args []string) error {
 	var err error
 	if args, err = setupFlags(&ctx, &args); err != nil {
 		return err
@@ -75,18 +75,22 @@ func ParseFile(ctx context.Context, args []string) error {
 		fmt.Fprintf(os.Stderr, "Error creating filestream: %s\n", err)
 		os.Exit(1)
 	}
-	parse(ctx, input)
+	interpret(ctx, input)
 	return nil
 }
 
-func ParseLines(ctx context.Context, args []string) error {
+func InterpretLines(ctx context.Context, args []string) error {
 	var err error
 	if args, err = setupFlags(&ctx, &args); err != nil {
 		return err
 	}
-	input := antlr.NewInputStream(strings.Join(args, "\n"))
-	parse(ctx, input)
+	interpretMany(ctx, args)
 	return nil
+}
+
+func interpretMany(ctx context.Context, args []string) {
+	input := antlr.NewInputStream(strings.Join(args, "\n"))
+	interpret(ctx, input)
 }
 
 func ReadEvalPrintLoop(ctx context.Context, args []string) error {
@@ -106,8 +110,6 @@ func ReadEvalPrintLoop(ctx context.Context, args []string) error {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			os.Exit(1)
 		}
-		if err = ParseLines(ctx, []string{text}); err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-		}
+		interpretMany(ctx, []string{text})
 	}
 }

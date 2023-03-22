@@ -18,12 +18,12 @@ func main() {
 		{
 			Name:        "file",
 			Description: "evaluates file and any connected files",
-			ExecFunc:    cli.ParseFile,
+			ExecFunc:    cli.InterpretFile,
 		},
 		{
 			Name:        "line",
 			Description: "evaluates lines and any connected files",
-			ExecFunc:    cli.ParseLines,
+			ExecFunc:    cli.InterpretLines,
 		},
 		{
 			Name:        "repl",
