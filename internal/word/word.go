@@ -31,37 +31,39 @@ const SENTINEL uint64 = 0x7F_FE_00_00_00_00_00_00
 
 const MARK_MAP uint64 = 0x7F_FE_40_00_00_00_00_00
 
-const MAIN_MAP uint64 = 0x7F_FE_40_10_00_00_00_00
-const LIST_MAP uint64 = 0x7F_FE_40_20_00_00_00_00
-const TEXT_MAP uint64 = 0x7F_FE_40_30_00_00_00_00
-const ROUT_MAP uint64 = 0x7F_FE_40_40_00_00_00_00
+const LIST_MAP uint64 = 0x7F_FE_40_10_00_00_00_00
+const TEXT_MAP uint64 = 0x7F_FE_40_20_00_00_00_00
+const ROUT_MAP uint64 = 0x7F_FE_40_30_00_00_00_00
+const SELE_MAP uint64 = 0x7F_FE_40_40_00_00_00_00
 const META_MAP uint64 = 0x7F_FE_40_F0_00_00_00_00
 
 const MARK_ARR uint64 = 0x7F_FE_80_00_00_00_00_00
 
-const MAIN_ARR uint64 = 0x7F_FE_80_20_00_00_00_00
+const LIST_ARR uint64 = 0x7F_FE_80_20_00_00_00_00
 const RUNE_ARR uint64 = 0x7F_FE_80_30_00_00_00_00
 const CODE_ARR uint64 = 0x7F_FE_80_40_00_00_00_00
 const META_ARR uint64 = 0x7F_FE_80_F0_00_00_00_00
 
 const MARK_LGD uint64 = 0x7F_FE_C0_00_00_00_00_00
 
-const MAIN_LGD uint64 = 0x7F_FE_C0_10_00_00_00_00
-const LIST_LGD uint64 = 0x7F_FE_C0_20_00_00_00_00
-const TEXT_LGD uint64 = 0x7F_FE_C0_30_00_00_00_00
-const ROUT_LGD uint64 = 0x7F_FE_C0_40_00_00_00_00
-const ARRA_LGD uint64 = 0x7F_FE_C0_50_00_00_00_00
+const LIST_LGD uint64 = 0x7F_FE_C0_10_00_00_00_00
+const TEXT_LGD uint64 = 0x7F_FE_C0_20_00_00_00_00
+const ROUT_LGD uint64 = 0x7F_FE_C0_30_00_00_00_00
+const SELE_LGD uint64 = 0x7F_FE_C0_40_00_00_00_00
 const META_LGD uint64 = 0x7F_FE_C0_F0_00_00_00_00
 
 const MARK_DES uint64 = 0x7F_FF_00_00_00_00_00_00
 
-const DES_NUMB uint64 = 0x7F_FF_00_10_00_00_00_00
-const DES_FLOA uint64 = 0x7F_FF_00_20_00_00_00_00
-const DES_BOOL uint64 = 0x7F_FF_00_30_00_00_00_00
-const DES_RUNE uint64 = 0x7F_FF_00_40_00_00_00_00
-const DES_SYMB uint64 = 0x7F_FF_00_50_00_00_00_00
-const DES_DATE uint64 = 0x7F_FF_00_60_00_00_00_00
-const DES_ADDR uint64 = 0x7F_FF_00_70_00_00_00_00
+const DESC_BLE uint64 = 0x7F_FF_00_10_00_00_00_00
+const DESC_ETY uint64 = 0x7F_FF_00_20_00_00_00_00
+const DESC_INT uint64 = 0x7F_FF_00_30_00_00_00_00
+const DESC_RNE uint64 = 0x7F_FF_00_40_00_00_00_00
+const DESC_SYM uint64 = 0x7F_FF_00_50_00_00_00_00
+const DESC_VER uint64 = 0x7F_FF_00_60_00_00_00_00
+const DESC_DTE uint64 = 0x7F_FF_00_70_00_00_00_00
+const DESC_ADD uint64 = 0x7F_FF_00_80_00_00_00_00
+const DESC_MAP uint64 = 0x7F_FF_00_90_00_00_00_00
+const DESC_FLT uint64 = 0x7F_FF_00_F0_00_00_00_00
 
 const CMP_UNIT uint64 = 0x7F_FF_40_00_00_00_00_00
 
@@ -69,6 +71,8 @@ const TAG_IMMU uint64 = 0x00_00_08_00_00_00_00_00
 const TAG_MUTA uint64 = 0x00_00_0C_00_00_00_00_00
 const TAG_GREY uint64 = 0x00_00_02_00_00_00_00_00
 const TAG_BLAK uint64 = 0x00_00_03_00_00_00_00_00
+
+const LINE_NUM uint64 = 0x7F_FF_80_00_00_00_00_00
 
 const MASK_ONE uint64 = 0x7F_FF_C0_00_00_00_00_00
 const MASK_TWO uint64 = 0x7F_FF_C0_F0_00_00_00_00
@@ -134,6 +138,7 @@ func (w Word) IsInteger() bool { return w.isVal(VAL_NUMB) }
 func (w Word) IsRune() bool    { return w.isVal(VAL_RUNE) }
 func (w Word) IsDate() bool    { return w.isVal(VAL_DATE) }
 func (w Word) IsSym() bool     { return w.isVal(VAL_SYMB) }
+func (w Word) IsLineNum() bool { return w.isVal(LINE_NUM) }
 
 func (w Word) IsSentinel() bool { return uint64(w) == SENTINEL }
 
@@ -144,34 +149,36 @@ func (w Word) IsNAN() bool { return w.isMark(ERR_NUMB) }
 
 func (w Word) IsAnyMark() bool     { return uint64(w)&MASK_ONE > MARK_MAP }
 func (w Word) IsMapMark() bool     { return w.isMark(MARK_MAP) }
-func (w Word) IsMainMapMark() bool { return w.isMark2(MAIN_MAP) }
 func (w Word) IsListMapMark() bool { return w.isMark2(LIST_MAP) }
 func (w Word) IsTextMapMark() bool { return w.isMark2(TEXT_MAP) }
-func (w Word) IsFuncMapMark() bool { return w.isMark2(ROUT_MAP) }
+func (w Word) IsRoutMapMark() bool { return w.isMark2(ROUT_MAP) }
+func (w Word) IsSeleMapMark() bool { return w.isMark2(SELE_MAP) }
 func (w Word) IsMetaMapMark() bool { return w.isMark2(META_MAP) }
 
 func (w Word) IsArrayMark() bool     { return w.isMark(MARK_ARR) }
-func (w Word) IsMainArrayMark() bool { return w.isMark2(MAIN_ARR) }
+func (w Word) IsListArrayMark() bool { return w.isMark2(LIST_ARR) }
 func (w Word) IsRuneArrayMark() bool { return w.isMark2(RUNE_ARR) }
 func (w Word) IsCodeArrayMark() bool { return w.isMark2(CODE_ARR) }
 func (w Word) IsMetaArrayMark() bool { return w.isMark2(META_ARR) }
 
 func (w Word) IsLegendMark() bool     { return w.isMark(MARK_LGD) }
-func (w Word) IsMainLegendMark() bool { return w.isMark2(MAIN_LGD) }
 func (w Word) IsListLegendMark() bool { return w.isMark2(LIST_LGD) }
 func (w Word) IsTextLegendMark() bool { return w.isMark2(TEXT_LGD) }
-func (w Word) IsFuncLegendMark() bool { return w.isMark2(ROUT_LGD) }
-func (w Word) IsArraLegendMark() bool { return w.isMark2(ARRA_LGD) }
+func (w Word) IsRoutLegendMark() bool { return w.isMark2(ROUT_LGD) }
+func (w Word) IsSeleLegendMark() bool { return w.isMark2(SELE_LGD) }
 func (w Word) IsMetaLegendMark() bool { return w.isMark2(META_LGD) }
 
 func (w Word) IsDescMark() bool        { return w.isMark(MARK_DES) }
-func (w Word) IsIntegerDescMark() bool { return w.isMark2(DES_NUMB) }
-func (w Word) IsFloatDescMark() bool   { return w.isMark2(DES_FLOA) }
-func (w Word) IsBoolDescMark() bool    { return w.isMark2(DES_BOOL) }
-func (w Word) IsRuneDescMark() bool    { return w.isMark2(DES_RUNE) }
-func (w Word) IsSymbolDescMark() bool  { return w.isMark2(DES_SYMB) }
-func (w Word) IsDateDescMark() bool    { return w.isMark2(DES_DATE) }
-func (w Word) IsAddressDescMark() bool { return w.isMark2(DES_ADDR) }
+func (w Word) IsBooleanDescMark() bool { return w.isMark2(DESC_BLE) }
+func (w Word) IsEmptyDescMark() bool   { return w.isMark2(DESC_ETY) }
+func (w Word) IsIntegerDescMark() bool { return w.isMark2(DESC_INT) }
+func (w Word) IsRuneDescMark() bool    { return w.isMark2(DESC_RNE) }
+func (w Word) IsSymbolDescMark() bool  { return w.isMark2(DESC_SYM) }
+func (w Word) IsVersionDescMark() bool { return w.isMark2(DESC_VER) }
+func (w Word) IsDateDescMark() bool    { return w.isMark2(DESC_DTE) }
+func (w Word) IsAddressDescMark() bool { return w.isMark2(DESC_ADD) }
+func (w Word) IsMapDescMark() bool     { return w.isMark2(DESC_MAP) }
+func (w Word) IsFloatDescMark() bool   { return w.isMark2(DESC_FLT) }
 
 func (w Word) IsCmpUnit() bool { return w.isMark(CMP_UNIT) }
 
@@ -199,11 +206,11 @@ func (w Word) Debug() string {
 		return "MAP MARK"
 	} else if w.IsCodeArrayMark() {
 		return "CODE MARK"
-	} else if w.IsMainArrayMark() {
+	} else if w.IsListArrayMark() {
 		return "LIST MARK"
 	} else if w.IsRuneArrayMark() {
 		return "RUNE MARK"
-	} else if w.IsFuncMapMark() {
+	} else if w.IsRoutMapMark() {
 		return "ROUTINE"
 	} else if w.IsCmpUnit() {
 		return "CMPUNIT"
@@ -264,6 +271,38 @@ func (x Word) Equals(y Word) bool {
 // func (w Word) IsGrey() bool  { return w.isSwpT(TAG_OBJ_MAP | TAG_SWP_GRY) }
 // func (w Word) IsBlack() bool { return w.isSwpT(TAG_OBJ_MAP | TAG_SWP_BLK) }
 
+func (w Word) AsDesc() uint64 {
+	if w.IsNAN() {
+		return DESC_FLT
+	} else if w.IsTrue() {
+		return DESC_BLE
+	} else if w.IsFalse() {
+		return DESC_BLE
+	} else if w.IsEmpty() {
+		return DESC_ETY
+	} else if w.IsInteger() {
+		return DESC_INT
+	} else if w.IsRune() {
+		return DESC_RNE
+	} else if w.IsSym() {
+		return DESC_SYM
+	} else if w.IsAddress() { // must trigger before IsFloat for unknown reasons
+		return DESC_ADD
+	} else if w.IsFloat() {
+		return DESC_FLT
+	} else if w.IsMapMark() {
+		return DESC_MAP
+	} else if w.IsArrayMark() {
+		panic("Array mark cannot be placed as value")
+	} else if w.IsCmpUnit() {
+		panic("CompUnit cannot be placed as value")
+	} else if w.IsSentinel() {
+		panic("Sentinel cannot be placed as value")
+	} else {
+		panic("Unknown value provided")
+	}
+}
+
 func (w Word) AsBool() bool {
 	switch uint64(w) {
 	case VAL_TRUE:
@@ -288,3 +327,5 @@ func (w Word) AsInt() uint32  { return uint32(uint64(w) & ^VAL_NUMB) }
 func (w Word) AsRune() rune   { return rune(uint64(w) & ^VAL_RUNE) }
 func (w Word) AsSym() uint64  { return uint64(w) & ^VAL_SYMB }
 func (w Word) AsAddr() uint64 { return uint64(w) & ^VAL_ADDR }
+
+func (w Word) AsLineNum() uint32 { return uint32(uint64(w) & ^LINE_NUM) }

@@ -11,7 +11,7 @@ const (
 	chunk_wa_offset uint64 = 2
 )
 
-type Chunk struct {
+type RhumbChunk struct {
 	// address in vm's heap
 	id uint64
 
@@ -19,7 +19,7 @@ type Chunk struct {
 	line int
 }
 
-func NewChunk(vm *VirtualMachine) Chunk {
+func NewChunk(vm *VirtualMachine) RhumbChunk {
 	var (
 		ch [3]word.Word = [3]word.Word{}
 		ca CodeArray    = NewCodeArray(vm, word.FromAddress(0))
@@ -32,19 +32,19 @@ func NewChunk(vm *VirtualMachine) Chunk {
 	if err != nil {
 		panic("failed to reallocate onto heap")
 	}
-	return Chunk{id, 0}
+	return RhumbChunk{id, 0}
 }
 
-func ReviveChunk(vm *VirtualMachine, addr word.Word) Chunk {
+func ReviveChunk(vm *VirtualMachine, addr word.Word) RhumbChunk {
 	i := addr.AsAddr()
-	mark := vm.heap[i]
+	mark := vm.Heap[i]
 	if !(mark.IsCodeArrayMark()) {
 		panic("not a chunk mark")
 	}
-	return Chunk{i, 0}
+	return RhumbChunk{i, 0}
 }
 
-func (ch *Chunk) WriteCode(vm *VirtualMachine, line int, codes []Code) {
+func (ch *RhumbChunk) WriteCode(vm *VirtualMachine, line int, codes []Code) {
 
 	instructions := ch.ReviveInstrs(vm)
 	if line > ch.line {
@@ -58,15 +58,15 @@ func (ch *Chunk) WriteCode(vm *VirtualMachine, line int, codes []Code) {
 	}
 }
 
-func (ch Chunk) SetInstructionsAddress(vm *VirtualMachine, addr uint64) {
-	vm.heap[ch.id+chunk_ca_offset] = word.FromAddress(addr)
+func (ch RhumbChunk) SetInstructionsAddress(vm *VirtualMachine, addr uint64) {
+	vm.Heap[ch.id+chunk_ca_offset] = word.FromAddress(addr)
 }
 
-func (ch Chunk) SetLiteralsAddress(vm *VirtualMachine, addr uint64) {
-	vm.heap[ch.id+chunk_wa_offset] = word.FromAddress(addr)
+func (ch RhumbChunk) SetLiteralsAddress(vm *VirtualMachine, addr uint64) {
+	vm.Heap[ch.id+chunk_wa_offset] = word.FromAddress(addr)
 }
 
-func (ch *Chunk) AddLiteral(vm *VirtualMachine, lit word.Word) (uint64, error) {
+func (ch *RhumbChunk) AddLiteral(vm *VirtualMachine, lit word.Word) (uint64, error) {
 	literals := ch.ReviveLits(vm)
 	existingIndex, err := literals.IndexOf(vm, lit)
 	if err != nil {
@@ -84,23 +84,23 @@ func (ch *Chunk) AddLiteral(vm *VirtualMachine, lit word.Word) (uint64, error) {
 	}
 }
 
-func (ch Chunk) Instructions(vm *VirtualMachine) word.Word {
-	return vm.heap[ch.id+chunk_ca_offset]
+func (ch RhumbChunk) Instructions(vm *VirtualMachine) word.Word {
+	return vm.Heap[ch.id+chunk_ca_offset]
 }
 
-func (ch Chunk) ReviveInstrs(vm *VirtualMachine) CodeArray {
+func (ch RhumbChunk) ReviveInstrs(vm *VirtualMachine) CodeArray {
 	return ReviveCodeArray(vm, ch.Instructions(vm))
 }
 
-func (ch Chunk) Literals(vm *VirtualMachine) word.Word {
-	return vm.heap[ch.id+chunk_wa_offset]
+func (ch RhumbChunk) Literals(vm *VirtualMachine) word.Word {
+	return vm.Heap[ch.id+chunk_wa_offset]
 }
 
-func (ch Chunk) ReviveLits(vm *VirtualMachine) WordArray {
+func (ch RhumbChunk) ReviveLits(vm *VirtualMachine) WordArray {
 	return ReviveWordArray(vm, ch.Literals(vm))
 }
 
-func (ch Chunk) Execute(vm *VirtualMachine) {
+func (ch RhumbChunk) Execute(vm *VirtualMachine) {
 	var (
 		instructions        = ch.ReviveInstrs(vm)
 		cwLen        int    = int(instructions.Size(vm) - code_arr_offset)
@@ -108,7 +108,7 @@ func (ch Chunk) Execute(vm *VirtualMachine) {
 		buf          []byte = make([]byte, 0, cwLen*8)
 	)
 	for wordIndex := 0; wordIndex < cwLen; wordIndex++ {
-		w := vm.heap[instructions.id+code_arr_offset+uint64(wordIndex)]
+		w := vm.Heap[instructions.id+code_arr_offset+uint64(wordIndex)]
 		if w.IsSentinel() {
 			ch.line++
 			continue
@@ -131,20 +131,32 @@ func (ch Chunk) Execute(vm *VirtualMachine) {
 	}
 }
 
-func (ch Chunk) execTagIndex(vm *VirtualMachine, tag byte, idx int) {
-	literals := ch.ReviveLits(vm)
-	// fmt.Println("Executing chunk tag:", tag)
+func (ch RhumbChunk) execTagIndex(vm *VirtualMachine, tag byte, idx int) {
+	var (
+		literals WordArray = ch.ReviveLits(vm)
+		lit      word.Word
+	)
 	switch tag {
 	case TAG_VALUE_LITERAL:
-		vm.AddLiteralToStack(literals.Get(vm, idx))
+		lit = literals.Get(vm, idx)
+		fmt.Println("Executing literal tag:", lit.Debug())
+		vm.AddLiteralToStack(lit)
 	case TAG_LOCAL_REQUEST:
-		vm.SubmitLocalRequest(literals.Get(vm, idx))
+		lit = literals.Get(vm, idx)
+		fmt.Println("Executing local tag:", lit.Debug())
+		vm.SubmitLocalRequest(lit)
 	case TAG_INNER_REQUEST:
-		vm.SubmitInnerRequest(literals.Get(vm, idx))
+		lit = literals.Get(vm, idx)
+		fmt.Println("Executing inner tag:", lit.Debug())
+		vm.SubmitInnerRequest(lit)
 	case TAG_UNDER_REQUEST:
-		vm.SubmitUnderRequest(literals.Get(vm, idx))
+		lit = literals.Get(vm, idx)
+		fmt.Println("Executing under tag:", lit.Debug())
+		vm.SubmitUnderRequest(lit)
 	case TAG_OUTER_REQUEST:
-		vm.SubmitOuterRequest(literals.Get(vm, idx))
+		lit = literals.Get(vm, idx)
+		fmt.Println("Executing outer tag:", lit.Debug())
+		vm.SubmitOuterRequest(lit)
 	// case TAG_EVENT_REQUEST:
 	// 	vm.SubmitEventRequest(literals.Get(idx))
 	// case TAG_REPLY_REQUEST:
@@ -154,7 +166,7 @@ func (ch Chunk) execTagIndex(vm *VirtualMachine, tag byte, idx int) {
 	}
 }
 
-func (ch Chunk) Disassemble(vm *VirtualMachine) {
+func (ch RhumbChunk) Disassemble(vm *VirtualMachine) {
 	fmt.Println("============= Chunk =============")
 	var line int
 	instructions := ch.ReviveInstrs(vm)
@@ -170,7 +182,7 @@ func (ch Chunk) Disassemble(vm *VirtualMachine) {
 	}
 }
 
-func (ch Chunk) DisassembleCode(vm *VirtualMachine, currentLine, currentOffset int, bufPtr *[]byte) (int, int) {
+func (ch RhumbChunk) DisassembleCode(vm *VirtualMachine, currentLine, currentOffset int, bufPtr *[]byte) (int, int) {
 	buf := *bufPtr
 	fmt.Printf("%04d ", currentOffset)
 	var recurse func(l, o, i int) (int, int)

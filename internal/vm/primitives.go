@@ -30,9 +30,9 @@ func expBySquaring(x, n uint32) uint32 {
 }
 
 func (vm *VirtualMachine) popStack() (popped word.Word) {
-	idx := len(vm.stack) - 1
-	popped = vm.stack[idx]
-	vm.stack = vm.stack[:idx]
+	idx := len(vm.Stack) - 1
+	popped = vm.Stack[idx]
+	vm.Stack = vm.Stack[:idx]
 	return
 }
 
@@ -40,69 +40,81 @@ func (vm *VirtualMachine) gatherTwoInts() (val1, val2 uint32) {
 	stackVal2 := vm.popStack()
 	stackVal1 := vm.popStack()
 	if stackVal1.IsAddress() {
-		val1 = vm.heap[stackVal1.AsAddr()].AsInt()
+		val1 = vm.Heap[stackVal1.AsAddr()].AsInt()
 	} else if stackVal1.IsInteger() {
 		val1 = stackVal1.AsInt()
 	}
 	if stackVal2.IsAddress() {
-		val2 = vm.heap[stackVal2.AsAddr()].AsInt()
+		val2 = vm.Heap[stackVal2.AsAddr()].AsInt()
 	} else if stackVal2.IsInteger() {
 		val2 = stackVal2.AsInt()
 	}
 	return
 }
 
-func (vm *VirtualMachine) assignLabel() {
+func (vm *VirtualMachine) assignScopeLabel(mut bool) {
 	valWord := vm.popStack()
 	addrWord := vm.popStack()
-	vm.heap[addrWord.AsAddr()] = valWord
+	vm.Heap[addrWord.AsAddr()] = valWord
+}
+
+func (vm *VirtualMachine) assignMapLabel(mut bool) {
+	valWord := vm.popStack()
+	lblWord := vm.popStack()
+	label := ReviveRuneArray(vm, lblWord.AsAddr())
+	lastMap := len(vm.MapScope) - 1
+	vm.MapScope[lastMap] = vm.MapScope[lastMap].Set(vm, label, valWord)
+	logAddedToStack(vm.Stack, fmt.Sprint(label, " set to '", valWord))
 }
 
 func (vm *VirtualMachine) addTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, word.FromInt(val1+val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " + ", val2))
+	vm.Stack = append(vm.Stack, word.FromInt(val1+val2))
+	logAddedToStack(vm.Stack, fmt.Sprint(val1, " + ", val2))
 }
 
 func (vm *VirtualMachine) subTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, word.FromInt(val1-val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " - ", val2))
+	vm.Stack = append(vm.Stack, word.FromInt(val1-val2))
+	logAddedToStack(vm.Stack, fmt.Sprint(val1, " - ", val2))
 }
 
 func (vm *VirtualMachine) mulTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, word.FromInt(val1*val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " x ", val2, "  "))
+	vm.Stack = append(vm.Stack, word.FromInt(val1*val2))
+	logAddedToStack(vm.Stack, fmt.Sprint(val1, " x ", val2, "  "))
 }
 
 func (vm *VirtualMachine) divTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, word.FromInt(val1/val2))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " / ", val2))
+	vm.Stack = append(vm.Stack, word.FromInt(val1/val2))
+	logAddedToStack(vm.Stack, fmt.Sprint(val1, " / ", val2))
 }
 
 func (vm *VirtualMachine) expTwoInts() {
 	val1, val2 := vm.gatherTwoInts()
-	vm.stack = append(vm.stack, word.FromInt(expBySquaring(val1, val2)))
-	logAddedToStack(vm.stack, fmt.Sprint(val1, " ^ ", val2))
+	vm.Stack = append(vm.Stack, word.FromInt(expBySquaring(val1, val2)))
+	logAddedToStack(vm.Stack, fmt.Sprint(val1, " ^ ", val2))
 }
 
 // New scope and add a sentinel to the stack
 func (vm *VirtualMachine) beginRoutine() {
-	vm.scope = append(vm.scope, make(map[string]uint64))
-	vm.stack = append(vm.stack, word.Sentinel())
+	vm.LexScope = append(vm.LexScope, make(map[string]uint64))
+	vm.Stack = append(vm.Stack, word.Sentinel())
+	logAddedToStack(vm.Stack, "'('")
 }
 
-// Same as routine
+// New CurrentMap
 func (vm *VirtualMachine) beginMap() {
-	vm.beginRoutine()
+	vm.MapScope = append(vm.MapScope, NewListMap(vm))
+	vm.Stack = append(vm.Stack, word.Sentinel())
+	logAddedToStack(vm.Stack, "*Map")
 }
 
 func (vm *VirtualMachine) unwindToSentinel() error {
-	for back := len(vm.stack); back > 0; back-- {
-		if vm.stack[back].IsSentinel() {
-			vm.stack = vm.stack[:back-1]
+	for back := len(vm.Stack) - 1; back > 0; back-- {
+		if vm.Stack[back].IsSentinel() {
+			vm.Stack = vm.Stack[:back]
 			return nil
 		}
 	}
@@ -111,34 +123,35 @@ func (vm *VirtualMachine) unwindToSentinel() error {
 
 // Replace all sub stack values with one final result
 func (vm *VirtualMachine) endRoutine() {
-	stackLen := len(vm.stack)
-	last := vm.stack[stackLen-1]
+	stackLen := len(vm.Stack)
+	last := vm.Stack[stackLen-1]
 
-	vm.scope = vm.scope[:len(vm.scope)-1]
+	vm.LexScope = vm.LexScope[:len(vm.LexScope)-1]
 
 	if err := vm.unwindToSentinel(); err != nil {
 		panic(err)
 	}
 
-	vm.stack = append(vm.stack, last)
+	vm.Stack = append(vm.Stack, last)
+	logAddedToStack(vm.Stack, last.Debug())
 }
 
-// Delete all sub stack values and turn scope into map
+// Delete all sub stack values and place map address on stack
 func (vm *VirtualMachine) endMap() {
-	scopeCount := len(vm.scope)
-	// mapScope := vm.scope[scopeCount-1]
-
-	vm.scope = vm.scope[:scopeCount-1]
+	last := len(vm.MapScope) - 1
+	currMap := vm.MapScope[last]
+	if last == 0 {
+		vm.MapScope = nil
+	} else {
+		vm.MapScope = vm.MapScope[:last-1]
+	}
 
 	if err := vm.unwindToSentinel(); err != nil {
 		panic(err)
 	}
 
-	// mapLeg := NewMapLegend(mapScope)
-	// legAddr := vm.heap[len(vm.heap)-1]
-	// vm.heap = append(vm.heap, mapLeg.AsWords())
-	// mapObj := NewMapObject(legAddr, mapScope)
-	// vm.heap = append(vm.heap)
+	vm.Stack = append(vm.Stack, word.FromAddress(currMap.Id))
+	logAddedToStack(vm.Stack, fmt.Sprint("Map@", currMap.Id))
 }
 
 /* Phase 2

@@ -57,20 +57,20 @@ func NewCodeArray(
 	if err != nil {
 		panic("allocation failed")
 	}
-	return CodeArray{uint64(loc)}
+	return CodeArray{loc}
 }
 
 func ReviveCodeArray(vm *VirtualMachine, addr word.Word) CodeArray {
 	i := addr.AsAddr()
-	mark := vm.heap[i]
+	mark := vm.Heap[i]
 	if !(mark.IsCodeArrayMark()) {
 		panic("not a code array mark")
 	}
-	legend := vm.heap[i+code_lgd_offset]
+	legend := vm.Heap[i+code_lgd_offset]
 	if !(legend.IsAddress()) {
 		panic("code array legend word is not an address")
 	}
-	size := vm.heap[i+code_sze_offset]
+	size := vm.Heap[i+code_sze_offset]
 	if !(size.IsInteger()) {
 		panic("code array object size word is not an integer")
 	}
@@ -99,7 +99,7 @@ func (ca CodeArray) NewSize(vm *VirtualMachine, newLine bool, cs ...Code) (size 
 	} else {
 		size = origSize
 		id := ca.id + code_arr_offset + uint64(ca.Size(vm)-1)
-		word := vm.heap[id]
+		word := vm.Heap[id]
 		remainder = ca.getWordCodeCount(vm, word)
 		freshLength = newLength - remainder
 		wholeWords = freshLength / 8
@@ -132,9 +132,9 @@ func (ca *CodeArray) SetCodes(
 	if newLine {
 		ws = append(ws, word.Sentinel())
 	} else {
-		ca.getCodesFromWord(vm, vm.heap[lastWordID], &bs)
+		ca.getCodesFromWord(vm, vm.Heap[lastWordID], &bs)
 		if len(bs) < 8 {
-			vm.free[lastWordID] = true
+			vm.Free[lastWordID] = true
 			origSz--
 			tempCS := make([]Code, len(cs))
 			copy(tempCS, cs)
@@ -176,29 +176,9 @@ func (ca *CodeArray) SetCodes(
 		ws...,
 	)
 	if newId != ca.id {
-		// vm.UpdateAddresses(ca.id, newId)
 		ca.id = newId
 	}
 }
-
-func (ca *CodeArray) lastWordVacancy(vm *VirtualMachine) bool {
-	var (
-		lastIndex uint64    = uint64(ca.Size(vm) - 1)
-		word      word.Word = vm.heap[ca.id+lastIndex]
-	)
-	if word.IsSentinel() {
-		return false
-	}
-	return ca.getWordCodeCount(vm, word) != 0
-}
-
-// func (ca *CodeArray) currentIndex(vm *VirtualMachine) int {
-// 	if ca.lastWordVacancy(vm) {
-// 		return int(ca.Length(vm)) - 1
-// 	} else {
-// 		return int(ca.Length(vm))
-// 	}
-// }
 
 func (ca CodeArray) getCodesFromWord(vm *VirtualMachine, word word.Word, b *[]byte) {
 	var buf []byte = *b
@@ -237,7 +217,7 @@ func (ca CodeArray) GetCodes(vm *VirtualMachine) []byte {
 		buf   []byte = make([]byte, 0, cwLen*8)
 	)
 	for wIndex := code_arr_offset; wIndex < cwLen; wIndex++ {
-		w := vm.heap[ca.id+wIndex]
+		w := vm.Heap[ca.id+wIndex]
 		if !(w.IsSentinel()) {
 			ca.getCodesFromWord(vm, w, &buf)
 		}
@@ -251,12 +231,12 @@ func (ca *CodeArray) GetLine(vm *VirtualMachine, codeIndex int) (lines int) {
 		panic("index greater than length")
 	}
 	for i := uint64(0); i < cwSize && codes <= codeIndex; i++ {
-		if vm.heap[ca.id+code_arr_offset+i].IsSentinel() {
+		if vm.Heap[ca.id+code_arr_offset+i].IsSentinel() {
 			lines += 1
 		} else {
 			var (
 				id   uint64    = ca.id + code_arr_offset + i
-				word word.Word = vm.heap[id]
+				word word.Word = vm.Heap[id]
 			)
 			codes += ca.getWordCodeCount(vm, word)
 		}
@@ -265,19 +245,19 @@ func (ca *CodeArray) GetLine(vm *VirtualMachine, codeIndex int) (lines int) {
 }
 
 func (ca CodeArray) Legend(vm *VirtualMachine) uint64 {
-	return vm.heap[ca.id+code_lgd_offset].AsAddr()
+	return vm.Heap[ca.id+code_lgd_offset].AsAddr()
 }
 func (ca CodeArray) Size(vm *VirtualMachine) uint64 {
-	return uint64(vm.heap[ca.id+code_sze_offset].AsInt())
+	return uint64(vm.Heap[ca.id+code_sze_offset].AsInt())
 }
 func (ca CodeArray) Length(vm *VirtualMachine) uint32 {
-	return vm.heap[ca.id+code_len_offset].AsInt()
+	return vm.Heap[ca.id+code_len_offset].AsInt()
 }
 
 func (ca *CodeArray) SetSize(vm *VirtualMachine, s uint32) {
-	vm.heap[ca.id+code_sze_offset] = word.FromInt(s)
+	vm.Heap[ca.id+code_sze_offset] = word.FromInt(s)
 }
 
 func (ca *CodeArray) SetLength(vm *VirtualMachine, l uint32) {
-	vm.heap[ca.id+code_len_offset] = word.FromInt(l)
+	vm.Heap[ca.id+code_len_offset] = word.FromInt(l)
 }

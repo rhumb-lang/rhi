@@ -347,7 +347,48 @@ func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 
 func (v *RhumbVisitor) VisitMap(ctx *P.MapContext) interface{} {
 	viLogger.Println("map:", ctx.GetText())
-	return v.VisitChildren(ctx)
+	var (
+		ra                           vm.RuneArray
+		oBrcktIdx, cBrcktIdx         uint64
+		oBrcktFindErr, cBrcktFindErr error
+		lits                         vm.WordArray = v.vm.CurrentChunk.ReviveLits(&v.vm)
+		bracket                      antlr.Token
+		line                         int
+		text                         string
+	)
+	bracket = ctx.OpenBracket().GetSymbol()
+	text = bracket.GetText()
+	line = bracket.GetLine()
+	oBrcktIdx, oBrcktFindErr = lits.Find(&v.vm, text)
+	if oBrcktFindErr != nil {
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
+		oBrcktIdx = ra.Id()
+	}
+
+	v.vm.WriteCodeToCurrentChunk(
+		line,
+		word.FromAddress(oBrcktIdx),
+		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+	)
+
+	v.VisitChildren(ctx.Sequence())
+
+	bracket = ctx.CloseBracket().GetSymbol()
+	text = bracket.GetText()
+	line = bracket.GetLine()
+	cBrcktIdx, cBrcktFindErr = lits.Find(&v.vm, text)
+	if cBrcktFindErr != nil {
+		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
+		cBrcktIdx = ra.Id()
+	}
+
+	v.vm.WriteCodeToCurrentChunk(
+		line,
+		word.FromAddress(cBrcktIdx),
+		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+	)
+
+	return nil
 }
 
 func (v *RhumbVisitor) VisitFreeze(ctx *P.FreezeContext) interface{} {

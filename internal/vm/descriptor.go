@@ -5,43 +5,53 @@ import "git.sr.ht/~madcapjake/grhumb/internal/word"
 //	type Descriptor struct {
 //		Mark Word // immutable, mutable, submap
 //		Name Word // address to TextMap
+//      Req  Word // requirement linked list
+//      Dep  Word // dependency linked list
 //		Data Word // constant, field offset, or
 //	}
 
 const (
-	desc_name_offset uint64 = 1
-	desc_data_offset uint64 = 2
+	desc_nme_offset uint64 = 1
+	desc_req_offset uint64 = 2
+	desc_dep_offset uint64 = 3
+	desc_dat_offset uint64 = 4
 )
 
 type Descriptor struct {
-	vm *VirtualMachine
-	id uint64
-	at []word.Word
-}
-
-func NewDescriptor(
-	vm *VirtualMachine,
-	name word.Word, // string address
-	kind uint64,
-	value word.Word,
-) Descriptor {
-	descWords := make([]word.Word, 0, 2)
-	descWords = append(descWords, word.Word(kind))
-	descWords = append(descWords, name)
-	descWords = append(descWords, value)
-	loc, _ := vm.ReAllocate(descWords...)
-	return Descriptor{vm, loc, vm.heap[loc : loc+2]}
+	Id uint64
 }
 
 func ReviveDescriptor(vm *VirtualMachine, addr word.Word) Descriptor {
 	i := addr.AsAddr()
-	mark := vm.heap[i]
+	mark := vm.Heap[i]
 	if !(mark.IsDescMark()) {
 		panic("not a descriptor mark")
 	}
-	name := vm.heap[i+desc_name_offset]
-	if !(name.IsAddress()) {
+	nameAddr := vm.Heap[i+desc_nme_offset]
+	if !(nameAddr.IsAddress()) {
 		panic("desciptor name word is not an address")
 	}
-	return Descriptor{vm, i, vm.heap[i : i+2]}
+	if !(vm.Heap[nameAddr].IsRuneArrayMark()) {
+		panic("descriptor name address does not point to rune array")
+	}
+
+	return Descriptor{i}
+}
+
+func (d Descriptor) Name(vm *VirtualMachine) string {
+	nameAddr := vm.Heap[d.Id+desc_nme_offset]
+	if !(nameAddr.IsAddress()) {
+		panic("desciptor name word is not an address")
+	}
+	addr := nameAddr.AsAddr()
+	pointedAt := vm.Heap[addr]
+	if !(pointedAt.IsRuneArrayMark()) {
+		panic("word provided does not point to a rune array")
+	}
+	name := ReviveRuneArray(vm, addr)
+	return name.String(vm)
+}
+
+func (d Descriptor) Data(vm *VirtualMachine) word.Word {
+	return vm.Heap[d.Id+desc_dat_offset]
 }

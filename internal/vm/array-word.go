@@ -6,13 +6,6 @@ import (
 	"git.sr.ht/~madcapjake/grhumb/internal/word"
 )
 
-// type WordArray struct {
-// 	Mark   word.Word
-// 	Legend word.Word // Address
-// 	Length word.Word // Integer
-// 	Words  []word.Word
-// }
-
 const (
 	word_lgd_offset uint64 = 1
 	word_len_offset uint64 = 2
@@ -33,7 +26,7 @@ func NewWordArray(
 	wordsSize := uint32(code_arr_offset) + wordsLen
 	waWords := make([]word.Word, 0, wordsSize)
 	waWords = append(waWords,
-		/* Mark:   */ word.Word(word.MAIN_ARR),
+		/* Mark:   */ word.Word(word.LIST_ARR),
 		/* Legend: */ legAddr,
 		/* Length: */ word.FromInt(wordsLen),
 	)
@@ -48,16 +41,16 @@ func NewWordArray(
 
 func ReviveWordArray(vm *VirtualMachine, addr word.Word) WordArray {
 	i := addr.AsAddr()
-	mark := vm.heap[i]
-	if !(mark.IsMainArrayMark()) {
+	mark := vm.Heap[i]
+	if !(mark.IsListArrayMark()) {
 		panic("not a word array mark")
 	}
-	legend := vm.heap[i+word_lgd_offset]
+	legend := vm.Heap[i+word_lgd_offset]
 	if !(legend.IsAddress()) {
 		// fmt.Println(legend.Debug())
 		panic("word array legend word is not an address")
 	}
-	length := vm.heap[i+word_len_offset]
+	length := vm.Heap[i+word_len_offset]
 	if !(length.IsInteger()) {
 		panic("word array object length word is not an integer")
 	}
@@ -71,13 +64,13 @@ func (wa WordArray) Find(vm *VirtualMachine, s string) (
 	for i := range make([]int, wa.Length(vm)) {
 		waVal := wa.Get(vm, i)
 		if waVal.IsAddress() {
-			heapVal := vm.heap[waVal.AsAddr()]
+			heapVal := vm.Heap[waVal.AsAddr()]
 			if heapVal.IsRuneArrayMark() {
 				heapRA := ReviveRuneArray(vm, waVal.AsAddr())
 				strVal := heapRA.String(vm)
 				if strVal == s {
 					heapIdx := wa.id + word_arr_offset + uint64(i)
-					idx = vm.heap[heapIdx].AsAddr()
+					idx = vm.Heap[heapIdx].AsAddr()
 					return
 				}
 			}
@@ -92,16 +85,16 @@ func (wa WordArray) IndexOf(vm *VirtualMachine, x word.Word) (
 	err error,
 ) {
 	if x.IsAddress() {
-		mkX := vm.heap[x.AsAddr()]
+		mkX := vm.Heap[x.AsAddr()]
 		if mkX.IsRuneArrayMark() {
 			raX := ReviveRuneArray(vm, x.AsAddr())
 			for i := range make([]int, wa.Length(vm)) {
 				y := wa.Get(vm, i)
 				if y.IsAddress() {
-					mkY := vm.heap[y.AsAddr()]
+					mkY := vm.Heap[y.AsAddr()]
 					if mkY.IsRuneArrayMark() {
-						ray := ReviveRuneArray(vm, y.AsAddr())
-						if raX.String(vm) == ray.String(vm) {
+						raY := ReviveRuneArray(vm, y.AsAddr())
+						if raX.String(vm) == raY.String(vm) {
 							return i, nil
 						}
 					}
@@ -139,19 +132,19 @@ func (wa WordArray) Get(vm *VirtualMachine, i int) word.Word {
 	if i < 0 || i >= waLen {
 		panic("index out of bounds")
 	}
-	return vm.heap[wa.id+word_arr_offset+uint64(i)]
+	return vm.Heap[wa.id+word_arr_offset+uint64(i)]
 }
 
 func (wa WordArray) Legend(vm *VirtualMachine, i int) word.Word {
-	return vm.heap[i]
+	return vm.Heap[i]
 }
 
 func (wa WordArray) SetLength(vm *VirtualMachine, l uint32) {
-	vm.heap[wa.id+word_len_offset] = word.FromInt(l)
+	vm.Heap[wa.id+word_len_offset] = word.FromInt(l)
 }
 
 func (wa WordArray) Length(vm *VirtualMachine) int {
-	return int(vm.heap[wa.id+word_len_offset].AsInt())
+	return int(vm.Heap[wa.id+word_len_offset].AsInt())
 }
 
 func (wa WordArray) Size(vm *VirtualMachine) int {

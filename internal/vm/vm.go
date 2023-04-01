@@ -18,11 +18,12 @@ func init() {
 }
 
 type VirtualMachine struct {
-	heap         []word.Word
-	free         []bool
-	stack        []word.Word
-	scope        []map[string]uint64
-	CurrentChunk Chunk
+	Heap         []word.Word
+	Free         []bool
+	Stack        []word.Word
+	LexScope     []map[string]uint64
+	MapScope     []Map
+	CurrentChunk RhumbChunk
 }
 
 var DEBUG_WIDTH int = 10
@@ -39,21 +40,21 @@ func incCheckNL(inc *int) {
 func (vm VirtualMachine) DebugHeap() {
 	if os.Getenv("RHUMB_VM_DEBUG") == "1" {
 		vmLogger.Println("Dumping memory...")
-		for i := 0; i < len(vm.heap); i++ {
+		for i := 0; i < len(vm.Heap); i++ {
 			if i > 0 && i%DEBUG_WIDTH == 0 {
 				fmt.Println()
 			}
-			if vm.free[i] {
+			if vm.Free[i] {
 				fmt.Printf("{%3v:           }", i)
-			} else if vm.heap[i].IsRuneArrayMark() {
+			} else if vm.Heap[i].IsRuneArrayMark() {
 				j := i
-				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				fmt.Printf("[%3v: %-9s ]", j, vm.Heap[j].Debug())
 				incCheckNL(&j)
-				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				fmt.Printf("[%3v: %-9s ]", j, vm.Heap[j].Debug())
 				incCheckNL(&j)
-				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				fmt.Printf("[%3v: %-9s ]", j, vm.Heap[j].Debug())
 				incCheckNL(&j)
-				fmt.Printf("[%3v: %-9s ]", j, vm.heap[j].Debug())
+				fmt.Printf("[%3v: %-9s ]", j, vm.Heap[j].Debug())
 				incCheckNL(&j)
 				fmt.Printf("[%3v: ", j)
 				ra := ReviveRuneArray(&vm, uint64(i))
@@ -82,7 +83,7 @@ func (vm VirtualMachine) DebugHeap() {
 				fmt.Print("]")
 				i += int(ra.Size(&vm)) - 1
 			} else {
-				fmt.Printf("[%3v: %-9s ]", i, vm.heap[i].Debug())
+				fmt.Printf("[%3v: %-9s ]", i, vm.Heap[i].Debug())
 			}
 		}
 		fmt.Println()
@@ -92,12 +93,12 @@ func (vm VirtualMachine) DebugHeap() {
 func NewVirtualMachine() *VirtualMachine {
 	vm := new(VirtualMachine)
 	const init_heap_len int = 10
-	vm.heap = make([]word.Word, 0, init_heap_len)
-	vm.free = make([]bool, 0, init_heap_len)
+	vm.Heap = make([]word.Word, 0, init_heap_len)
+	vm.Free = make([]bool, 0, init_heap_len)
 	vm.ReAllocate(word.Word(word.SENTINEL))
-	vm.stack = make([]word.Word, 0)
-	vm.scope = make([]map[string]uint64, 0)
-	vm.scope = append(vm.scope, make(map[string]uint64))
+	vm.Stack = make([]word.Word, 0)
+	vm.LexScope = make([]map[string]uint64, 0)
+	vm.LexScope = append(vm.LexScope, make(map[string]uint64))
 
 	// TODO: convert to actual routine
 	vm.ResetCurrentChunk()
@@ -120,20 +121,20 @@ func (vm *VirtualMachine) ReAllocate(ws ...word.Word) (uint64, error) {
 		return 0, fmt.Errorf("no words provided")
 	}
 	var first, next int
-	for first = 0; first < len(obj.free); first += next {
+	for first = 0; first < len(obj.Free); first += next {
 		next = 0
-		if obj.free[first] {
+		if obj.Free[first] {
 			if size == 1 {
 				vmLogger.Println("moving word to index:", first)
-				obj.heap[first] = ws[0]
-				obj.free[first] = false
+				obj.Heap[first] = ws[0]
+				obj.Free[first] = false
 				obj.DebugHeap()
 				*vm = obj
 				return uint64(first), nil
 			} else {
 				last := first + size
-				for next = range obj.free[first+1 : last] {
-					if !(obj.free[next]) {
+				for next = range obj.Free[first+1 : last] {
+					if !(obj.Free[next]) {
 						next++
 						break
 					} else if next == last {
@@ -150,7 +151,7 @@ func (vm *VirtualMachine) ReAllocate(ws ...word.Word) (uint64, error) {
 		}
 	}
 	// no available chunk in existing memory locations.
-	first = len(obj.heap)
+	first = len(obj.Heap)
 	vmLogger.Println("moving words to end:", first)
 	obj = appendRhumb(obj, ws)
 	*vm = obj
@@ -176,25 +177,25 @@ func (vm *VirtualMachine) Allocate(
 		return 0, fmt.Errorf("no words provided")
 	}
 	var i int = lastOldId
-	if i == len(obj.free) {
+	if i == len(obj.Free) {
 		vmLogger.Println("appending words to end:", i)
 		obj = appendRhumb(obj, ws)
 		*vm = obj
 		return uint64(loc), nil
 	}
 
-	if obj.free[i] {
+	if obj.Free[i] {
 		if newSize == 1 {
 			vmLogger.Println("appending word to index:", i)
-			obj.heap[i] = ws[0]
-			obj.free[i] = false
+			obj.Heap[i] = ws[0]
+			obj.Free[i] = false
 			obj.DebugHeap()
 			*vm = obj
 			return uint64(loc), nil
 		} else {
 			last := i + newSize - 1
 			for i = i + 1; i <= last; i++ {
-				if !(obj.free[i]) {
+				if !(obj.Free[i]) {
 					break
 				} else if i == last {
 					first := lastOldId
@@ -210,11 +211,11 @@ func (vm *VirtualMachine) Allocate(
 	// Subsequent memory spots unavailable, search for any
 	// available memory spot across heap
 	totalWords := make([]word.Word, 0, oldSize+newSize)
-	totalWords = append(totalWords, obj.heap[loc:lastOldId]...)
+	totalWords = append(totalWords, obj.Heap[loc:lastOldId]...)
 	totalWords = append(totalWords, ws...)
 
-	for f := range obj.free[loc:lastOldId] {
-		obj.free[loc+f] = true
+	for f := range obj.Free[loc:lastOldId] {
+		obj.Free[loc+f] = true
 	}
 
 	id, err := obj.ReAllocate(totalWords...)
@@ -225,8 +226,8 @@ func (vm *VirtualMachine) Allocate(
 // Appends to heap and free slices, used in allocate and reallocate
 func appendRhumb(vm VirtualMachine, ws []word.Word) VirtualMachine {
 	for i := range ws {
-		vm.heap = append(vm.heap, ws[i])
-		vm.free = append(vm.free, false)
+		vm.Heap = append(vm.Heap, ws[i])
+		vm.Free = append(vm.Free, false)
 	}
 	vm.DebugHeap()
 	return vm
@@ -236,7 +237,7 @@ func appendRhumb(vm VirtualMachine, ws []word.Word) VirtualMachine {
 // to allocate in the heap. Overwriting memory is possible.
 func (vm VirtualMachine) allocInPlace(x, y int, ws ...word.Word) {
 	for hID, wID := x, 0; hID <= y; hID, wID = hID+1, wID+1 {
-		vm.heap[hID], vm.free[hID] = ws[wID], false
+		vm.Heap[hID], vm.Free[hID] = ws[wID], false
 	}
 }
 
@@ -268,10 +269,10 @@ func (vm *VirtualMachine) Disassemble() {
 func (vm *VirtualMachine) Execute(lastValueFlag bool) {
 	vm.CurrentChunk.Execute(vm)
 	if lastValueFlag {
-		if len(vm.stack) == 0 {
+		if len(vm.Stack) == 0 {
 			fmt.Println("()")
 		} else {
-			fmt.Println(vm.stack[len(vm.stack)-1].AsInt())
+			fmt.Println(vm.Stack[len(vm.Stack)-1].AsInt())
 		}
 	}
 }
@@ -334,28 +335,28 @@ func locateScopeLabel(
 // }
 
 func (vm *VirtualMachine) AddLiteralToStack(literal word.Word) {
-	vm.stack = append(vm.stack, literal)
-	logAddedToStack(vm.stack, literal.Debug())
+	vm.Stack = append(vm.Stack, literal)
+	logAddedToStack(vm.Stack, literal.Debug())
 }
 
 // Currently just for lexically traversing the scope
 func (vm *VirtualMachine) SubmitLocalRequest(addr word.Word) {
-	target := vm.heap[addr.AsAddr()]
+	target := vm.Heap[addr.AsAddr()]
 	if target.IsRuneArrayMark() {
 		label := ReviveRuneArray(vm, addr.AsAddr()).String(vm)
-		idx, ok := locateScopeLabel(vm.scope, label)
+		idx, ok := locateScopeLabel(vm.LexScope, label)
 		if ok {
 			// TODO: Invoke address, skip addrRef
-			vm.stack = append(vm.stack, word.FromAddress(idx))
-			logAddedToStack(vm.stack, label)
+			vm.Stack = append(vm.Stack, word.FromAddress(idx))
+			logAddedToStack(vm.Stack, label)
 		} else {
-			vm.scope[len(vm.scope)-1][label] = addr.AsAddr()
-			vm.stack = append(vm.stack, addr)
-			logAddedToStack(vm.stack, label)
+			vm.LexScope[len(vm.LexScope)-1][label] = addr.AsAddr()
+			vm.Stack = append(vm.Stack, addr)
+			logAddedToStack(vm.Stack, label)
 		}
 	} else {
-		vm.stack = append(vm.stack, target)
-		logAddedToStack(vm.stack, target.Debug())
+		vm.Stack = append(vm.Stack, target)
+		logAddedToStack(vm.Stack, target.Debug())
 	}
 }
 
@@ -377,15 +378,17 @@ func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
 		panic("unable to find word for outer request")
 	}
 	refId := lits.id + word_arr_offset + uint64(addr)
-	refAddr := vm.heap[refId]
-	ref := vm.heap[refAddr.AsAddr()]
+	refAddr := vm.Heap[refId]
+	ref := vm.Heap[refAddr.AsAddr()]
 	if !(ref.IsRuneArrayMark()) {
 		panic("outer request submitted with non-ra value")
 	}
 	text := ReviveRuneArray(vm, refAddr.AsAddr()).String(vm)
 	switch text {
 	case ".=", ":=":
-		vm.assignLabel()
+		vm.assignScopeLabel(text[0] != '.')
+	case "..", "::":
+		vm.assignMapLabel(text[0] != '.')
 	case "++":
 		vm.addTwoInts()
 	case "--":
@@ -396,13 +399,13 @@ func (vm *VirtualMachine) SubmitOuterRequest(label word.Word) {
 		vm.divTwoInts()
 	case "^^":
 		vm.expTwoInts()
-	case "[[":
+	case "[":
 		vm.beginMap()
-	case "]]":
+	case "]":
 		vm.endMap()
-	case "((":
+	case "(":
 		vm.beginRoutine()
-	case "))":
+	case ")":
 		vm.endRoutine()
 
 	default:
