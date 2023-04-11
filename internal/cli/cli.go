@@ -110,6 +110,7 @@ func ReadEvalPrintLoop(ctx context.Context, args []string) error {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			os.Exit(1)
 		}
+		ctx = context.WithValue(ctx, LastValueCK, true)
 		interpretMany(ctx, []string{text})
 	}
 }

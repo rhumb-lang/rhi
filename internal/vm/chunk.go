@@ -139,23 +139,23 @@ func (ch RhumbChunk) execTagIndex(vm *VirtualMachine, tag byte, idx int) {
 	switch tag {
 	case TAG_VALUE_LITERAL:
 		lit = literals.Get(vm, idx)
-		fmt.Println("Executing literal tag:", lit.Debug())
+		// fmt.Println("Executing literal tag:", lit.Debug())
 		vm.AddLiteralToStack(lit)
 	case TAG_LOCAL_REQUEST:
 		lit = literals.Get(vm, idx)
-		fmt.Println("Executing local tag:", lit.Debug())
+		// fmt.Println("Executing local tag:", lit.Debug())
 		vm.SubmitLocalRequest(lit)
 	case TAG_INNER_REQUEST:
 		lit = literals.Get(vm, idx)
-		fmt.Println("Executing inner tag:", lit.Debug())
+		// fmt.Println("Executing inner tag:", lit.Debug())
 		vm.SubmitInnerRequest(lit)
 	case TAG_UNDER_REQUEST:
-		lit = literals.Get(vm, idx)
+		// lit = literals.Get(vm, idx)
 		fmt.Println("Executing under tag:", lit.Debug())
 		vm.SubmitUnderRequest(lit)
 	case TAG_OUTER_REQUEST:
 		lit = literals.Get(vm, idx)
-		fmt.Println("Executing outer tag:", lit.Debug())
+		// fmt.Println("Executing outer tag:", lit.Debug())
 		vm.SubmitOuterRequest(lit)
 	// case TAG_EVENT_REQUEST:
 	// 	vm.SubmitEventRequest(literals.Get(idx))
