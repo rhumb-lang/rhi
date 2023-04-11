@@ -60,7 +60,7 @@ func (l Legend) NewDescriptor(
 		word.FromAddress(name.id),
 		word.FromAddress(0), // TODO: Req link
 		word.FromAddress(0), // TODO: Dep link
-		word.FromInt(uint32(offset)),
+		word.FromInt(int32(offset)),
 	}
 	loc, _ := vm.Allocate(int(l.Id), int(l.Size(vm)), descWords...)
 	if loc != l.Id {
@@ -92,19 +92,19 @@ func (l Legend) Get(vm *VirtualMachine, name RuneArray) (
 	return -1, fmt.Errorf("couldn't find word")
 }
 
-func (l Legend) Length(vm *VirtualMachine) uint32 {
+func (l Legend) Length(vm *VirtualMachine) int32 {
 	return vm.Heap[l.Id+lgd_len_offset].AsInt()
 }
 
-func (l Legend) SetLength(vm *VirtualMachine, i uint32) {
+func (l Legend) SetLength(vm *VirtualMachine, i int32) {
 	vm.Heap[l.Id+lgd_len_offset] = word.FromInt(i)
 }
 
-func (l Legend) Size(vm *VirtualMachine) uint32 {
+func (l Legend) Size(vm *VirtualMachine) int32 {
 	return vm.Heap[l.Id+lgd_sze_offset].AsInt()
 }
 
-func (l Legend) SetSize(vm *VirtualMachine, i uint32) {
+func (l Legend) SetSize(vm *VirtualMachine, i int32) {
 	vm.Heap[l.Id+lgd_sze_offset] = word.FromInt(i)
 }
 

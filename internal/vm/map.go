@@ -73,7 +73,7 @@ func (m Map) Locate(vm *VirtualMachine, i int) uint64 {
 
 func (m Map) At(vm *VirtualMachine, i int) word.Word {
 	mLen := m.Length(vm)
-	if i < 0 || uint32(i) >= mLen {
+	if i < 0 || int32(i) >= mLen {
 		panic("index out of bounds")
 	}
 	return vm.Heap[m.Locate(vm, i)]
@@ -87,22 +87,22 @@ func (m Map) SetLegend(vm *VirtualMachine, l uint64) {
 	vm.Heap[m.Id+map_lgd_offset] = word.FromAddress(l)
 }
 
-func (m Map) Length(vm *VirtualMachine) uint32 {
+func (m Map) Length(vm *VirtualMachine) int32 {
 	legend := m.ReviveLegend(vm)
 	return legend.Length(vm)
 }
 
-func (m Map) SetLength(vm *VirtualMachine, i uint32) {
+func (m Map) SetLength(vm *VirtualMachine, i int32) {
 	legend := m.ReviveLegend(vm)
 	legend.SetLength(vm, i)
 }
 
-func (m Map) Size(vm *VirtualMachine) uint32 {
+func (m Map) Size(vm *VirtualMachine) int32 {
 	legend := m.ReviveLegend(vm)
 	return legend.Size(vm)
 }
 
-func (m Map) SetSize(vm *VirtualMachine, i uint32) {
+func (m Map) SetSize(vm *VirtualMachine, i int32) {
 	legend := m.ReviveLegend(vm)
 	legend.SetSize(vm, i)
 }

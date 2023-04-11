@@ -11,11 +11,11 @@ import (
  * _-/_
  */
 
-func expBySquaring(x, n uint32) uint32 {
+func expBySquaring(x, n int32) int32 {
 	if n == 0 {
 		return 1
 	}
-	var y uint32 = 1
+	var y int32 = 1
 	for n > 1 {
 		if n%2 == 0 {
 			x = x * x
@@ -36,20 +36,23 @@ func (vm *VirtualMachine) popStack() (popped word.Word) {
 	return
 }
 
-func (vm *VirtualMachine) gatherTwoInts() (val1, val2 uint32) {
+func (vm *VirtualMachine) gatherTwoIntegers() (
+	val1, val2 int32, err error,
+) {
 	stackVal2 := vm.popStack()
 	stackVal1 := vm.popStack()
 	if stackVal1.IsAddress() {
-		val1 = vm.Heap[stackVal1.AsAddr()].AsInt()
-	} else if stackVal1.IsInteger() {
-		val1 = stackVal1.AsInt()
+		stackVal1 = vm.Heap[stackVal1.AsAddr()]
 	}
 	if stackVal2.IsAddress() {
-		val2 = vm.Heap[stackVal2.AsAddr()].AsInt()
-	} else if stackVal2.IsInteger() {
-		val2 = stackVal2.AsInt()
+		stackVal2 = vm.Heap[stackVal2.AsAddr()]
 	}
-	return
+	if !(stackVal1.IsInteger()) || !(stackVal2.IsInteger()) {
+		err = fmt.Errorf("values are not integers")
+		return
+	} else {
+		return stackVal1.AsInt(), stackVal2.AsInt(), nil
+	}
 }
 
 func (vm *VirtualMachine) assignScopeLabel(mut bool) {
@@ -68,33 +71,53 @@ func (vm *VirtualMachine) assignMapLabel(mut bool) {
 }
 
 func (vm *VirtualMachine) addTwoInts() {
-	val1, val2 := vm.gatherTwoInts()
-	vm.Stack = append(vm.Stack, word.FromInt(val1+val2))
-	logAddedToStack(vm.Stack, fmt.Sprint(val1, " + ", val2))
+	if val1, val2, err := vm.gatherTwoIntegers(); err != nil {
+		panic("Implement floats")
+	} else {
+		vm.Stack = append(vm.Stack, word.FromInt(val1+val2))
+		logAddedToStack(vm.Stack, fmt.Sprint(val1, " + ", val2))
+	}
+
 }
 
 func (vm *VirtualMachine) subTwoInts() {
-	val1, val2 := vm.gatherTwoInts()
-	vm.Stack = append(vm.Stack, word.FromInt(val1-val2))
-	logAddedToStack(vm.Stack, fmt.Sprint(val1, " - ", val2))
+	if val1, val2, err := vm.gatherTwoIntegers(); err != nil {
+		panic("Implement floats")
+	} else {
+		vm.Stack = append(vm.Stack, word.FromInt(val1-val2))
+		logAddedToStack(vm.Stack, fmt.Sprint(val1, " - ", val2))
+	}
+
 }
 
 func (vm *VirtualMachine) mulTwoInts() {
-	val1, val2 := vm.gatherTwoInts()
-	vm.Stack = append(vm.Stack, word.FromInt(val1*val2))
-	logAddedToStack(vm.Stack, fmt.Sprint(val1, " x ", val2, "  "))
+	if val1, val2, err := vm.gatherTwoIntegers(); err != nil {
+		panic("Implement floats")
+	} else {
+		vm.Stack = append(vm.Stack, word.FromInt(val1*val2))
+		logAddedToStack(vm.Stack, fmt.Sprint(val1, " x ", val2, "  "))
+	}
+
 }
 
 func (vm *VirtualMachine) divTwoInts() {
-	val1, val2 := vm.gatherTwoInts()
-	vm.Stack = append(vm.Stack, word.FromInt(val1/val2))
-	logAddedToStack(vm.Stack, fmt.Sprint(val1, " / ", val2))
+	if val1, val2, err := vm.gatherTwoIntegers(); err != nil {
+		panic("Implement floats")
+	} else {
+		vm.Stack = append(vm.Stack, word.FromInt(val1/val2))
+		logAddedToStack(vm.Stack, fmt.Sprint(val1, " / ", val2))
+	}
+
 }
 
 func (vm *VirtualMachine) expTwoInts() {
-	val1, val2 := vm.gatherTwoInts()
-	vm.Stack = append(vm.Stack, word.FromInt(expBySquaring(val1, val2)))
-	logAddedToStack(vm.Stack, fmt.Sprint(val1, " ^ ", val2))
+	if val1, val2, err := vm.gatherTwoIntegers(); err != nil {
+		panic("Implement floats")
+	} else {
+		vm.Stack = append(vm.Stack, word.FromInt(expBySquaring(val1, val2)))
+		logAddedToStack(vm.Stack, fmt.Sprint(val1, " ^ ", val2))
+	}
+
 }
 
 // New scope and add a sentinel to the stack

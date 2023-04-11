@@ -6,7 +6,7 @@ import (
 
 func NewListLegend(virtualMachine *VirtualMachine) Legend {
 	words := make([]word.Word, 0, 8)
-	init_size := uint32(lgd_fld_offset)
+	init_size := int32(lgd_fld_offset)
 	dataArray := NewWordArray(virtualMachine, word.FromAddress(0))
 	words = append(words,
 		/* Mark:    */ word.Word(word.LIST_LGD),

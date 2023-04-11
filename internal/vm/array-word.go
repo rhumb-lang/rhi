@@ -22,8 +22,8 @@ func NewWordArray(
 	legAddr word.Word,
 	words ...word.Word,
 ) WordArray {
-	wordsLen := uint32(len(words))
-	wordsSize := uint32(code_arr_offset) + wordsLen
+	wordsLen := int32(len(words))
+	wordsSize := int32(code_arr_offset) + wordsLen
 	waWords := make([]word.Word, 0, wordsSize)
 	waWords = append(waWords,
 		/* Mark:   */ word.Word(word.LIST_ARR),
@@ -112,8 +112,8 @@ func (wa WordArray) IndexOf(vm *VirtualMachine, x word.Word) (
 }
 
 func (wa *WordArray) Append(vm *VirtualMachine, newWords ...word.Word) (uint64, error) {
-	oldLen := uint32(wa.Length(vm))
-	newLen := oldLen + uint32(len(newWords))
+	oldLen := int32(wa.Length(vm))
+	newLen := oldLen + int32(len(newWords))
 	id, err := vm.Allocate(int(wa.id), wa.Size(vm), newWords...)
 	if err != nil {
 		panic("word array append failed")
@@ -138,7 +138,7 @@ func (wa WordArray) Legend(vm *VirtualMachine, i int) word.Word {
 	return vm.Heap[i]
 }
 
-func (wa WordArray) SetLength(vm *VirtualMachine, l uint32) {
+func (wa WordArray) SetLength(vm *VirtualMachine, l int32) {
 	vm.Heap[wa.id+word_len_offset] = word.FromInt(l)
 }
 

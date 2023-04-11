@@ -38,9 +38,9 @@ func NewRuneArray(
 	runes ...rune,
 ) RuneArray {
 	var (
-		runesLen  uint32      = uint32(len(runes))
-		runesRem  uint32      = uint32(runesLen % 2)
-		runesCap  uint32      = uint32(code_arr_offset) + (runesLen / 2) + runesRem
+		runesLen  int32       = int32(len(runes))
+		runesRem  int32       = int32(runesLen % 2)
+		runesCap  int32       = int32(code_arr_offset) + (runesLen / 2) + runesRem
 		raWords   []word.Word = make([]word.Word, 0, runesCap)
 		runeBytes []byte
 		wordBytes []byte
@@ -101,7 +101,7 @@ func (ra RuneArray) Legend(vm *VirtualMachine) uint64 {
 func (ra RuneArray) Size(vm *VirtualMachine) uint64 {
 	return uint64(vm.Heap[ra.id+rune_sze_offset].AsInt())
 }
-func (ra RuneArray) Length(vm *VirtualMachine) uint32 {
+func (ra RuneArray) Length(vm *VirtualMachine) int32 {
 	return vm.Heap[ra.id+rune_len_offset].AsInt()
 }
 func (ra RuneArray) Runes(vm *VirtualMachine) []rune {
@@ -124,7 +124,7 @@ func (ra RuneArray) String(vm *VirtualMachine) string {
 	return string(ra.Runes(vm))
 }
 
-func (ra RuneArray) Rune(vm *VirtualMachine, i uint32) rune {
+func (ra RuneArray) Rune(vm *VirtualMachine, i int32) rune {
 	addr := i / 2
 	offset := i % 2
 	bytes := make([]byte, 8)
@@ -136,19 +136,19 @@ func (ra RuneArray) Rune(vm *VirtualMachine, i uint32) rune {
 	}
 }
 
-func (ra RuneArray) SetSize(vm *VirtualMachine, s uint32) {
+func (ra RuneArray) SetSize(vm *VirtualMachine, s int32) {
 	vm.Heap[ra.id+rune_sze_offset] = word.FromInt(s)
 }
 
-func (ra RuneArray) SetLength(vm *VirtualMachine, l uint32) {
+func (ra RuneArray) SetLength(vm *VirtualMachine, l int32) {
 	vm.Heap[ra.id+rune_len_offset] = word.FromInt(l)
 }
 
-func (ra RuneArray) SetRune(vm *VirtualMachine, i uint32, r rune) {
+func (ra RuneArray) SetRune(vm *VirtualMachine, i int32, r rune) {
 	var (
 		addr      uint64 = uint64(i) / 2
 		id        uint64 = ra.id + addr
-		offset    uint32 = i % 2
+		offset    int32  = i % 2
 		runeBytes []byte = make([]byte, 4)
 		wordBytes []byte = make([]byte, 8)
 	)

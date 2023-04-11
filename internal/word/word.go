@@ -86,9 +86,9 @@ func NewWord(a any) Word {
 	case bool:
 		return FromBool(a)
 	case int:
-		return FromInt(uint32(a))
+		return FromInt(int32(a))
 	case int64:
-		return FromInt(uint32(a))
+		return FromInt(int32(a))
 	case rune:
 		return FromRune(a)
 	default:
@@ -121,7 +121,7 @@ func FromBool(b bool) Word {
 		return Word(VAL_FALS)
 	}
 }
-func FromInt(i uint32) Word     { return Word(VAL_NUMB | uint64(i)) }
+func FromInt(i int32) Word      { return Word(VAL_NUMB | uint64(i)) }
 func FromRune(r rune) Word      { return Word(VAL_RUNE | uint64(r)) }
 func FromSym(a int) Word        { return Word(VAL_SYMB | uint64(a)) }
 func FromAddress(a uint64) Word { return Word(VAL_ADDR | a) }
@@ -323,7 +323,7 @@ func (w Word) AsFloat() float64 {
 	float := math.Float64frombits(bits)
 	return float
 }
-func (w Word) AsInt() uint32  { return uint32(uint64(w) & ^VAL_NUMB) }
+func (w Word) AsInt() int32   { return int32(uint64(w) & ^VAL_NUMB) }
 func (w Word) AsRune() rune   { return rune(uint64(w) & ^VAL_RUNE) }
 func (w Word) AsSym() uint64  { return uint64(w) & ^VAL_SYMB }
 func (w Word) AsAddr() uint64 { return uint64(w) & ^VAL_ADDR }

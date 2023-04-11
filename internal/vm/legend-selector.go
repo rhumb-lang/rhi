@@ -6,7 +6,7 @@ import (
 
 func NewSeleLegend(virtualMachine *VirtualMachine) Legend {
 	words := make([]word.Word, 0, 8)
-	init_size := uint32(lgd_fld_offset)
+	init_size := int32(lgd_fld_offset)
 	words = append(words,
 		/* Mark:    */ word.Word(word.LIST_LGD),
 		/* Legend:  */ word.FromAddress(0), // TODO: Implement Meta Legend

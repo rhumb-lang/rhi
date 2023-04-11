@@ -42,8 +42,8 @@ func NewCodeArray(
 	legAddr word.Word,
 	words ...word.Word,
 ) CodeArray {
-	wordsLen := uint32(len(words))
-	wordsSize := uint32(code_arr_offset) + wordsLen
+	wordsLen := int32(len(words))
+	wordsSize := int32(code_arr_offset) + wordsLen
 	caWords := make([]word.Word, 0, wordsSize)
 	caWords = append(caWords,
 		/* Mark:   */ word.Word(word.CODE_ARR),
@@ -120,9 +120,9 @@ func (ca *CodeArray) SetCodes(
 ) {
 	var (
 		origLen    uint64 = uint64(ca.Length(vm))
-		origSz     uint32 = uint32(ca.Size(vm))
-		newLen     uint32 = uint32(len(cs))
-		byteSz     uint32 = 8
+		origSz     int32  = int32(ca.Size(vm))
+		newLen     int32  = int32(len(cs))
+		byteSz     int32  = 8
 		codeID     int
 		code       Code
 		bs         []byte      = make([]byte, 0, byteSz)
@@ -168,8 +168,8 @@ func (ca *CodeArray) SetCodes(
 		bsWord := word.Word(binary.BigEndian.Uint64(bs))
 		ws = append(ws, bsWord)
 	}
-	ca.SetSize(vm, origSz+uint32(len(ws)))
-	ca.SetLength(vm, uint32(origLen)+newLen)
+	ca.SetSize(vm, origSz+int32(len(ws)))
+	ca.SetLength(vm, int32(origLen)+newLen)
 	newId, _ := vm.Allocate(
 		int(ca.id),
 		int(origSz),
@@ -227,7 +227,7 @@ func (ca CodeArray) GetCodes(vm *VirtualMachine) []byte {
 
 func (ca *CodeArray) GetLine(vm *VirtualMachine, codeIndex int) (lines int) {
 	codes, cwLen, cwSize := 0, ca.Length(vm), ca.Size(vm)
-	if uint32(codeIndex) > cwLen {
+	if int32(codeIndex) > cwLen {
 		panic("index greater than length")
 	}
 	for i := uint64(0); i < cwSize && codes <= codeIndex; i++ {
@@ -250,14 +250,14 @@ func (ca CodeArray) Legend(vm *VirtualMachine) uint64 {
 func (ca CodeArray) Size(vm *VirtualMachine) uint64 {
 	return uint64(vm.Heap[ca.id+code_sze_offset].AsInt())
 }
-func (ca CodeArray) Length(vm *VirtualMachine) uint32 {
+func (ca CodeArray) Length(vm *VirtualMachine) int32 {
 	return vm.Heap[ca.id+code_len_offset].AsInt()
 }
 
-func (ca *CodeArray) SetSize(vm *VirtualMachine, s uint32) {
+func (ca *CodeArray) SetSize(vm *VirtualMachine, s int32) {
 	vm.Heap[ca.id+code_sze_offset] = word.FromInt(s)
 }
 
-func (ca *CodeArray) SetLength(vm *VirtualMachine, l uint32) {
+func (ca *CodeArray) SetLength(vm *VirtualMachine, l int32) {
 	vm.Heap[ca.id+code_len_offset] = word.FromInt(l)
 }

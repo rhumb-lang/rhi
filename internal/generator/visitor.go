@@ -194,7 +194,7 @@ func (v *RhumbVisitor) VisitIntegerLiteral(ctx *P.IntegerLiteralContext) interfa
 	viLogger.Println("VALUE:", val)
 	v.vm.WriteCodeToCurrentChunk(
 		ctx.GetStart().GetLine(),
-		word.FromInt(uint32(val)),
+		word.FromInt(int32(val)),
 		vm.NewValueLiteral,
 	)
 	return RhumbReturn{val, nil}
