@@ -9,13 +9,13 @@ func NewListMap(virtualMachine *VirtualMachine) Map {
 	words := make([]word.Word, 0, map_fld_offset)
 	words = append(words,
 		/* Mark:   */ word.Word(word.LIST_MAP),
-		/* Legend: */ word.Word(legend.Id),
+		/* Legend: */ word.FromAddress(legend.Id),
 	)
-	loc, err := virtualMachine.ReAllocate(words...)
-	if err != nil {
+	if loc, err := virtualMachine.ReAllocate(words...); err != nil {
 		panic("allocation failed")
+	} else {
+		return Map{Id: loc}
 	}
-	return Map{Id: loc}
 }
 
 func ReviveListMap(virtualMachine *VirtualMachine, addr word.Word) Map {

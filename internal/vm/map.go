@@ -24,20 +24,13 @@ func CheckMapWords(
 	}
 }
 
-func (m Map) Append(vm *VirtualMachine, newWord word.Word) Map {
-	oldLen := m.Length(vm)
-	oldSze := m.Size(vm)
-	id, err := vm.Allocate(int(m.Id), int(m.Size(vm)), newWord)
-	if err != nil {
-		panic("word array append failed")
-	} else {
-		if id != m.Id {
-			m.Id = id
-		}
-		m.SetLength(vm, oldLen+1)
-		m.SetSize(vm, oldSze+1)
-		return m
+func (m Map) Append(vm *VirtualMachine, newWords ...word.Word) Map {
+	legend := m.ReviveLegend(vm)
+	legend.Append(vm, newWords...)
+	if legend.Id != m.Legend(vm) {
+		m.SetLegend(vm, legend.Id)
 	}
+	return m
 }
 
 func (m Map) Get(vm *VirtualMachine, name RuneArray) word.Word {

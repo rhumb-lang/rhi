@@ -111,11 +111,16 @@ func (vm *VirtualMachine) beginMap() {
 	logAddedToStack(vm.Stack, "*Map")
 }
 
-func (vm *VirtualMachine) unwindToSentinel() error {
+func (vm *VirtualMachine) unwindToSentinel(each ...func(w word.Word)) error {
 	for back := len(vm.Stack) - 1; back > 0; back-- {
-		if vm.Stack[back].IsSentinel() {
+		currentWord := vm.Stack[back]
+		if currentWord.IsSentinel() {
 			vm.Stack = vm.Stack[:back]
 			return nil
+		} else {
+			for _, fn := range each {
+				fn(currentWord)
+			}
 		}
 	}
 	return fmt.Errorf("no sentinel found")
@@ -138,17 +143,28 @@ func (vm *VirtualMachine) endRoutine() {
 
 // Delete all sub stack values and place map address on stack
 func (vm *VirtualMachine) endMap() {
-	last := len(vm.MapScope) - 1
-	currMap := vm.MapScope[last]
+	var (
+		last               int             = len(vm.MapScope) - 1
+		currMap            Map             = vm.MapScope[last]
+		unwoundVals        []word.Word     = make([]word.Word, 0)
+		storePositionalVal func(word.Word) = func(w word.Word) {
+			unwoundVals = append(unwoundVals, w)
+		}
+	)
+
 	if last == 0 {
 		vm.MapScope = nil
 	} else {
 		vm.MapScope = vm.MapScope[:last-1]
 	}
 
-	if err := vm.unwindToSentinel(); err != nil {
+	if err := vm.unwindToSentinel(storePositionalVal); err != nil {
 		panic(err)
 	}
+	for i, j := 0, len(unwoundVals)-1; i < j; i, j = i+1, j-1 {
+		unwoundVals[i], unwoundVals[j] = unwoundVals[j], unwoundVals[i]
+	}
+	currMap.Append(vm, unwoundVals...)
 
 	vm.Stack = append(vm.Stack, word.FromAddress(currMap.Id))
 	logAddedToStack(vm.Stack, fmt.Sprint("Map@", currMap.Id))

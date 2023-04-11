@@ -10,11 +10,11 @@ const (
 	lgd_lgd_offset uint64 = 1
 	lgd_swp_offset uint64 = 2
 	lgd_sze_offset uint64 = 3
-	lgd_len_offset uint64 = 3
-	lgd_req_offset uint64 = 4
-	lgd_dep_offset uint64 = 5
-	lgd_dat_offset uint64 = 6
-	lgd_fld_offset uint64 = 7
+	lgd_len_offset uint64 = 4
+	lgd_req_offset uint64 = 5
+	lgd_dep_offset uint64 = 6
+	lgd_dat_offset uint64 = 7
+	lgd_fld_offset uint64 = 8
 )
 
 type Legend struct{ Id uint64 }
@@ -106,4 +106,21 @@ func (l Legend) Size(vm *VirtualMachine) uint32 {
 
 func (l Legend) SetSize(vm *VirtualMachine, i uint32) {
 	vm.Heap[l.Id+lgd_sze_offset] = word.FromInt(i)
+}
+
+func (l Legend) Data(vm *VirtualMachine) uint64 {
+	return vm.Heap[l.Id+lgd_dat_offset].AsAddr()
+}
+
+func (l Legend) Append(vm *VirtualMachine, newWords ...word.Word) {
+	mark := vm.Heap[l.Id]
+	if mark.IsListLegendMark() {
+		data := ReviveWordArray(vm, l.Data(vm))
+		data.Append(vm, newWords...)
+		// } else if mark.IsTextLegendMark() {
+		// 	data := ReviveRuneArray(vm, l.Data(vm))
+		// 	data.Append(vm, newWords...)
+	} else {
+		panic("no other append type implemented at this time")
+	}
 }

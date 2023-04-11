@@ -371,7 +371,10 @@ func (v *RhumbVisitor) VisitMap(ctx *P.MapContext) interface{} {
 		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
 	)
 
-	v.VisitChildren(ctx.Sequence())
+	for i, n := range ctx.Sequence().GetChildren() {
+		viLogger.Printf("map{%d} -> %s\n", i, reflect.TypeOf(n))
+		v.Visit(n.(antlr.ParseTree))
+	}
 
 	bracket = ctx.CloseBracket().GetSymbol()
 	text = bracket.GetText()

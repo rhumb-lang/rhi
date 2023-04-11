@@ -97,7 +97,7 @@ func (ch RhumbChunk) Literals(vm *VirtualMachine) word.Word {
 }
 
 func (ch RhumbChunk) ReviveLits(vm *VirtualMachine) WordArray {
-	return ReviveWordArray(vm, ch.Literals(vm))
+	return ReviveWordArray(vm, ch.Literals(vm).AsAddr())
 }
 
 func (ch RhumbChunk) Execute(vm *VirtualMachine) {

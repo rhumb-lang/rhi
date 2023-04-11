@@ -39,22 +39,21 @@ func NewWordArray(
 	return WordArray{uint64(loc)}
 }
 
-func ReviveWordArray(vm *VirtualMachine, addr word.Word) WordArray {
-	i := addr.AsAddr()
-	mark := vm.Heap[i]
+func ReviveWordArray(vm *VirtualMachine, addr uint64) WordArray {
+	mark := vm.Heap[addr]
 	if !(mark.IsListArrayMark()) {
 		panic("not a word array mark")
 	}
-	legend := vm.Heap[i+word_lgd_offset]
+	legend := vm.Heap[addr+word_lgd_offset]
 	if !(legend.IsAddress()) {
 		// fmt.Println(legend.Debug())
 		panic("word array legend word is not an address")
 	}
-	length := vm.Heap[i+word_len_offset]
+	length := vm.Heap[addr+word_len_offset]
 	if !(length.IsInteger()) {
 		panic("word array object length word is not an integer")
 	}
-	return WordArray{i}
+	return WordArray{addr}
 }
 
 func (wa WordArray) Find(vm *VirtualMachine, s string) (

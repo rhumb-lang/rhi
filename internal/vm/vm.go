@@ -59,11 +59,13 @@ func (vm VirtualMachine) DebugHeap() {
 				fmt.Printf("[%3v: ", j)
 				ra := ReviveRuneArray(&vm, uint64(i))
 				runes := ra.Runes(&vm)
-				if len(runes) <= 2 {
-					for _, r := range runes {
-						fmt.Printf("'%s'", string(r))
-						fmt.Print("  ")
-					}
+				if len(runes) == 1 {
+					fmt.Printf("'%s'       ",
+						string(runes[0]))
+				} else if len(runes) == 2 {
+					fmt.Printf("'%s'  '%s'  ",
+						string(runes[0]),
+						string(runes[1]))
 				} else {
 					for i, r := range runes {
 						fmt.Printf("'%s'", string(r))
