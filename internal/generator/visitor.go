@@ -9,9 +9,10 @@ import (
 	"reflect"
 	"strconv"
 
+	"git.sr.ht/~madcapjake/grhumb/internal/code"
+	"git.sr.ht/~madcapjake/grhumb/internal/object"
 	P "git.sr.ht/~madcapjake/grhumb/internal/parser"
-	"git.sr.ht/~madcapjake/grhumb/internal/vm"
-	"git.sr.ht/~madcapjake/grhumb/internal/word"
+	virtual "git.sr.ht/~madcapjake/grhumb/internal/vm"
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
@@ -45,17 +46,13 @@ type RhumbReturn struct {
 
 type RhumbVisitor struct {
 	P.BaseRhumbParserVisitor
-	vm vm.VirtualMachine
+	VM *virtual.VirtualMachine
 }
 
-func NewRhumbVisitor(vm vm.VirtualMachine) *RhumbVisitor {
+func NewRhumbVisitor(vm *virtual.VirtualMachine) *RhumbVisitor {
 	visitor := new(RhumbVisitor)
-	visitor.vm = vm
+	visitor.VM = vm
 	return visitor
-}
-
-func (v *RhumbVisitor) GetVM() *vm.VirtualMachine {
-	return &v.vm
 }
 
 func (v *RhumbVisitor) Visit(tree antlr.ParseTree) interface{} {
@@ -98,84 +95,58 @@ func (v *RhumbVisitor) VisitMutableLabel(ctx *P.MutableLabelContext) interface{}
 
 func (v *RhumbVisitor) VisitLabelLiteral(ctx *P.LabelLiteralContext) interface{} {
 	var (
-		text       string       = ctx.GetText()
-		lits       vm.WordArray = v.vm.CurrentChunk.ReviveLits(&v.vm)
-		lblIdx     uint64
-		lblFindErr error
-		ra         vm.RuneArray
+		text  string = ctx.GetText()
+		aCode code.Any
 	)
 	viLogger.Println("label:", text)
-	lblIdx, lblFindErr = lits.Find(&v.vm, text)
-	if lblFindErr != nil {
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-		lblIdx = ra.Id()
-	}
-	v.vm.WriteCodeToCurrentChunk(
+	aCode = code.NewLocal(
 		ctx.GetStart().GetLine(),
-		word.FromAddress(lblIdx),
-		vm.NewLocalRequest,
+		ctx.GetStart().GetColumn(),
+		object.LabelSymbol{text},
 	)
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	return v.VisitChildren(ctx)
 }
 
 func (v *RhumbVisitor) VisitAssignment(ctx *P.AssignmentContext) interface{} {
 	viLogger.Println("assignment!")
-	// TODO: implement map assignment
 	var (
-		text                  string
-		ra                    vm.RuneArray
-		lblIdx, opIdx         uint64
-		lblFindErr, opFindErr error
-		lits                  vm.WordArray = v.vm.CurrentChunk.ReviveLits(&v.vm)
+		text  string
+		aCode code.Any
 	)
 	if addr := ctx.GetAddress(); addr != nil {
 		text = addr.GetText()
 		viLogger.Println("Address:", text)
-		// TODO: check for a matching subroutine and invoke
-		// TODO: check for matching outer scoped label
-		lblIdx, lblFindErr = lits.Find(&v.vm, text)
-		if lblFindErr != nil {
-			ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-			lblIdx = ra.Id()
-		}
-
-		v.vm.WriteCodeToCurrentChunk(
+		aCode = code.NewLocal(
 			addr.GetLine(),
-			word.FromAddress(lblIdx),
-			vm.NewLocalRequest,
+			addr.GetColumn(),
+			object.LabelSymbol{text},
 		)
+		virtual.WriteCode(v.VM, v.VM.Main, aCode)
+
 	} else {
-		// FIXME: make this work as a reference
 		addrRef := ctx.GetAddressRef()
 		viLogger.Printf("addrRef.Accept(v): %v\n", addrRef.Accept(v))
 		text = addrRef.GetText()
 		viLogger.Println("AddressRef:", text)
-		lblIdx, lblFindErr = lits.Find(&v.vm, text)
-		if lblFindErr != nil {
-			ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-			lblIdx = ra.Id()
-		}
-		v.vm.WriteCodeToCurrentChunk(
+		aCode = code.NewValue(
 			addrRef.GetStart().GetLine(),
-			word.FromAddress(lblIdx),
-			vm.NewLocalRequest,
+			addrRef.GetStart().GetColumn(),
+			object.LabelSymbol{text},
 		)
+		virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	}
 	viLogger.Println("LOCAL:", text)
 	viLogger.Println("ctx.Expression().Accept...")
 	viLogger.Println("ctx.Expression().Accept:", ctx.Expression().Accept(v))
 	viLogger.Println("INNER:")
 	op := ctx.AssignmentOp()
-	opIdx, opFindErr = lits.Find(&v.vm, op.GetText())
-	if opFindErr != nil {
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(op.GetText())...)
-		opIdx = ra.Id()
-	}
-	v.vm.WriteCodeToCurrentChunk(
+	aCode = code.NewOuter(
 		op.GetStart().GetLine(),
-		word.FromAddress(opIdx),
-		vm.NewOuterRequest,
+		op.GetStart().GetColumn(),
+		object.LabelSymbol{op.GetText()},
 	)
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	return nil
 }
 
@@ -186,17 +157,21 @@ func (v *RhumbVisitor) VisitFloatLiteral(ctx *P.FloatLiteralContext) interface{}
 }
 
 func (v *RhumbVisitor) VisitIntegerLiteral(ctx *P.IntegerLiteralContext) interface{} {
-	text := ctx.GetText()
+	var (
+		text  string = ctx.GetText()
+		aCode code.Any
+	)
 	val, err := strconv.ParseInt(text, 10, 32)
 	if err != nil {
 		return RhumbReturn{nil, fmt.Errorf("unable to parse int")}
 	}
 	viLogger.Println("VALUE:", val)
-	v.vm.WriteCodeToCurrentChunk(
+	aCode = code.NewValue(
 		ctx.GetStart().GetLine(),
-		word.FromInt(int32(val)),
-		vm.NewValueLiteral,
+		ctx.GetStart().GetColumn(),
+		object.WholeNumber{val},
 	)
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	return RhumbReturn{val, nil}
 }
 
@@ -245,22 +220,19 @@ func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interfa
 	var (
 		exprs []P.IExpressionContext     = ctx.AllExpression()
 		mulOp P.IMultiplicativeOpContext = ctx.MultiplicativeOp()
-		ra    vm.RuneArray               = vm.NewRuneArray(
-			&v.vm,
-			word.FromAddress(0),
-			[]rune(mulOp.GetText())...,
-		)
+		aCode code.Any
 	)
 
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
 
-	v.vm.WriteCodeToCurrentChunk(
+	aCode = code.NewOuter(
 		mulOp.GetStart().GetLine(),
-		word.FromAddress(ra.Id()),
-		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+		mulOp.GetStart().GetColumn(),
+		object.LabelSymbol{mulOp.GetText()},
 	)
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	return nil
 }
 
@@ -269,22 +241,19 @@ func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
 	var (
 		exprs []P.IExpressionContext = ctx.AllExpression()
 		addOp P.IAdditiveOpContext   = ctx.AdditiveOp()
-		ra    vm.RuneArray           = vm.NewRuneArray(
-			&v.vm,
-			word.FromAddress(0),
-			[]rune(addOp.GetText())...,
-		)
+		aCode code.Any
 	)
 
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
 
-	v.vm.WriteCodeToCurrentChunk(
+	aCode = code.NewOuter(
 		addOp.GetStart().GetLine(),
-		word.FromAddress(ra.Id()),
-		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+		addOp.GetStart().GetColumn(),
+		object.LabelSymbol{addOp.GetText()},
 	)
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	return nil
 }
 
@@ -328,48 +297,36 @@ func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
 	var (
 		exprs []P.IExpressionContext     = ctx.AllExpression()
 		powOp P.IExponentiationOpContext = ctx.ExponentiationOp()
-		ra    vm.RuneArray               = vm.NewRuneArray(
-			&v.vm,
-			word.FromAddress(0),
-			[]rune(powOp.GetText())...,
-		)
+		aCode code.Any
 	)
 	for i := range exprs {
 		exprs[i].Accept(v)
 	}
-	v.vm.WriteCodeToCurrentChunk(
+
+	aCode = code.NewOuter(
 		powOp.GetStart().GetLine(),
-		word.FromAddress(ra.Id()),
-		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+		powOp.GetStart().GetColumn(),
+		object.LabelSymbol{powOp.GetText()},
 	)
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 	return nil
 }
 
 func (v *RhumbVisitor) VisitMap(ctx *P.MapContext) interface{} {
 	viLogger.Println("map:", ctx.GetText())
 	var (
-		ra                           vm.RuneArray
-		oBrcktIdx, cBrcktIdx         uint64
-		oBrcktFindErr, cBrcktFindErr error
-		lits                         vm.WordArray = v.vm.CurrentChunk.ReviveLits(&v.vm)
-		bracket                      antlr.Token
-		line                         int
-		text                         string
+		bracket antlr.Token
+		aCode   code.Any
 	)
 	bracket = ctx.OpenBracket().GetSymbol()
-	text = bracket.GetText()
-	line = bracket.GetLine()
-	oBrcktIdx, oBrcktFindErr = lits.Find(&v.vm, text)
-	if oBrcktFindErr != nil {
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-		oBrcktIdx = ra.Id()
-	}
 
-	v.vm.WriteCodeToCurrentChunk(
-		line,
-		word.FromAddress(oBrcktIdx),
-		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+	aCode = code.NewOuter(
+		bracket.GetLine(),
+		bracket.GetColumn(),
+		object.LabelSymbol{bracket.GetText()},
 	)
+
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 
 	for i, n := range ctx.Sequence().GetChildren() {
 		viLogger.Printf("map{%d} -> %s\n", i, reflect.TypeOf(n))
@@ -377,19 +334,14 @@ func (v *RhumbVisitor) VisitMap(ctx *P.MapContext) interface{} {
 	}
 
 	bracket = ctx.CloseBracket().GetSymbol()
-	text = bracket.GetText()
-	line = bracket.GetLine()
-	cBrcktIdx, cBrcktFindErr = lits.Find(&v.vm, text)
-	if cBrcktFindErr != nil {
-		ra = vm.NewRuneArray(&v.vm, word.FromAddress(0), []rune(text)...)
-		cBrcktIdx = ra.Id()
-	}
 
-	v.vm.WriteCodeToCurrentChunk(
-		line,
-		word.FromAddress(cBrcktIdx),
-		vm.NewOuterRequest, // FIXME: re-implement as NewInnerRequest
+	aCode = code.NewOuter(
+		bracket.GetLine(),
+		bracket.GetColumn(),
+		object.LabelSymbol{bracket.GetText()},
 	)
+
+	virtual.WriteCode(v.VM, v.VM.Main, aCode)
 
 	return nil
 }

@@ -36,7 +36,7 @@ func main() {
 	ctx = context.WithValue(
 		ctx,
 		cli.VisitorCK,
-		generator.NewRhumbVisitor(*vm.NewVirtualMachine()),
+		generator.NewRhumbVisitor(vm.NewVirtualMachine()),
 	)
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()

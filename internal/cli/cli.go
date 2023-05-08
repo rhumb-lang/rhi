@@ -12,6 +12,7 @@ import (
 
 	"git.sr.ht/~madcapjake/grhumb/internal/generator"
 	"git.sr.ht/~madcapjake/grhumb/internal/parser"
+	"git.sr.ht/~madcapjake/grhumb/internal/vm"
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
@@ -57,12 +58,11 @@ func interpret(ctx context.Context, chars antlr.CharStream) {
 	// p.BuildParseTrees = true
 
 	visitor := ctx.Value(VisitorCK).(*generator.RhumbVisitor)
-	vm := visitor.GetVM().ResetCurrentChunk()
 	visitor.Visit(p.Sequence())
 	if ctx.Value(DisassembleCK).(bool) {
-		vm.Disassemble()
+		vm.DisassembleMain(visitor.VM)
 	}
-	vm.Execute(ctx.Value(LastValueCK).(bool))
+	vm.RunMain(visitor.VM)
 }
 
 func InterpretFile(ctx context.Context, args []string) error {
