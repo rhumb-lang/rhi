@@ -58,7 +58,7 @@ func interpret(ctx context.Context, chars antlr.CharStream) {
 	// p.BuildParseTrees = true
 
 	visitor := ctx.Value(VisitorCK).(*generator.RhumbVisitor)
-	visitor.Visit(p.Sequence())
+	visitor.Visit(p.Expressions())
 	if ctx.Value(DisassembleCK).(bool) {
 		vm.DisassembleMain(visitor.VM)
 	}

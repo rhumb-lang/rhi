@@ -1,4 +1,4 @@
-// Code generated from java-escape by ANTLR 4.11.1. DO NOT EDIT.
+// Code generated from /home/jake/Code/rhumb-grammar/grammar/RhumbParser.g4 by ANTLR 4.10.1. DO NOT EDIT.
 
 package parser // RhumbParser
 
@@ -21,11 +21,23 @@ func (s *BaseRhumbParserListener) EnterEveryRule(ctx antlr.ParserRuleContext) {}
 // ExitEveryRule is called when any rule is exited.
 func (s *BaseRhumbParserListener) ExitEveryRule(ctx antlr.ParserRuleContext) {}
 
-// EnterSequence is called when production sequence is entered.
-func (s *BaseRhumbParserListener) EnterSequence(ctx *SequenceContext) {}
+// EnterExpressions is called when production expressions is entered.
+func (s *BaseRhumbParserListener) EnterExpressions(ctx *ExpressionsContext) {}
 
-// ExitSequence is called when production sequence is exited.
-func (s *BaseRhumbParserListener) ExitSequence(ctx *SequenceContext) {}
+// ExitExpressions is called when production expressions is exited.
+func (s *BaseRhumbParserListener) ExitExpressions(ctx *ExpressionsContext) {}
+
+// EnterFields is called when production fields is entered.
+func (s *BaseRhumbParserListener) EnterFields(ctx *FieldsContext) {}
+
+// ExitFields is called when production fields is exited.
+func (s *BaseRhumbParserListener) ExitFields(ctx *FieldsContext) {}
+
+// EnterPatterns is called when production patterns is entered.
+func (s *BaseRhumbParserListener) EnterPatterns(ctx *PatternsContext) {}
+
+// ExitPatterns is called when production patterns is exited.
+func (s *BaseRhumbParserListener) ExitPatterns(ctx *PatternsContext) {}
 
 // EnterTerminator is called when production terminator is entered.
 func (s *BaseRhumbParserListener) EnterTerminator(ctx *TerminatorContext) {}
@@ -33,35 +45,59 @@ func (s *BaseRhumbParserListener) EnterTerminator(ctx *TerminatorContext) {}
 // ExitTerminator is called when production terminator is exited.
 func (s *BaseRhumbParserListener) ExitTerminator(ctx *TerminatorContext) {}
 
-// EnterFloatLiteral is called when production FloatLiteral is entered.
-func (s *BaseRhumbParserListener) EnterFloatLiteral(ctx *FloatLiteralContext) {}
+// EnterRationalNumber is called when production rationalNumber is entered.
+func (s *BaseRhumbParserListener) EnterRationalNumber(ctx *RationalNumberContext) {}
 
-// ExitFloatLiteral is called when production FloatLiteral is exited.
-func (s *BaseRhumbParserListener) ExitFloatLiteral(ctx *FloatLiteralContext) {}
+// ExitRationalNumber is called when production rationalNumber is exited.
+func (s *BaseRhumbParserListener) ExitRationalNumber(ctx *RationalNumberContext) {}
 
-// EnterIntegerLiteral is called when production IntegerLiteral is entered.
-func (s *BaseRhumbParserListener) EnterIntegerLiteral(ctx *IntegerLiteralContext) {}
+// EnterDateNumber is called when production dateNumber is entered.
+func (s *BaseRhumbParserListener) EnterDateNumber(ctx *DateNumberContext) {}
 
-// ExitIntegerLiteral is called when production IntegerLiteral is exited.
-func (s *BaseRhumbParserListener) ExitIntegerLiteral(ctx *IntegerLiteralContext) {}
+// ExitDateNumber is called when production dateNumber is exited.
+func (s *BaseRhumbParserListener) ExitDateNumber(ctx *DateNumberContext) {}
 
-// EnterStringLiteral is called when production StringLiteral is entered.
-func (s *BaseRhumbParserListener) EnterStringLiteral(ctx *StringLiteralContext) {}
+// EnterZeroNumber is called when production zeroNumber is entered.
+func (s *BaseRhumbParserListener) EnterZeroNumber(ctx *ZeroNumberContext) {}
 
-// ExitStringLiteral is called when production StringLiteral is exited.
-func (s *BaseRhumbParserListener) ExitStringLiteral(ctx *StringLiteralContext) {}
+// ExitZeroNumber is called when production zeroNumber is exited.
+func (s *BaseRhumbParserListener) ExitZeroNumber(ctx *ZeroNumberContext) {}
 
-// EnterReferenceLiteral is called when production ReferenceLiteral is entered.
+// EnterWholeNumber is called when production wholeNumber is entered.
+func (s *BaseRhumbParserListener) EnterWholeNumber(ctx *WholeNumberContext) {}
+
+// ExitWholeNumber is called when production wholeNumber is exited.
+func (s *BaseRhumbParserListener) ExitWholeNumber(ctx *WholeNumberContext) {}
+
+// EnterKeySymbol is called when production keySymbol is entered.
+func (s *BaseRhumbParserListener) EnterKeySymbol(ctx *KeySymbolContext) {}
+
+// ExitKeySymbol is called when production keySymbol is exited.
+func (s *BaseRhumbParserListener) ExitKeySymbol(ctx *KeySymbolContext) {}
+
+// EnterTextSymbol is called when production textSymbol is entered.
+func (s *BaseRhumbParserListener) EnterTextSymbol(ctx *TextSymbolContext) {}
+
+// ExitTextSymbol is called when production textSymbol is exited.
+func (s *BaseRhumbParserListener) ExitTextSymbol(ctx *TextSymbolContext) {}
+
+// EnterReferenceLiteral is called when production referenceLiteral is entered.
 func (s *BaseRhumbParserListener) EnterReferenceLiteral(ctx *ReferenceLiteralContext) {}
 
-// ExitReferenceLiteral is called when production ReferenceLiteral is exited.
+// ExitReferenceLiteral is called when production referenceLiteral is exited.
 func (s *BaseRhumbParserListener) ExitReferenceLiteral(ctx *ReferenceLiteralContext) {}
 
-// EnterLabelLiteral is called when production LabelLiteral is entered.
-func (s *BaseRhumbParserListener) EnterLabelLiteral(ctx *LabelLiteralContext) {}
+// EnterLabelSymbol is called when production labelSymbol is entered.
+func (s *BaseRhumbParserListener) EnterLabelSymbol(ctx *LabelSymbolContext) {}
 
-// ExitLabelLiteral is called when production LabelLiteral is exited.
-func (s *BaseRhumbParserListener) ExitLabelLiteral(ctx *LabelLiteralContext) {}
+// ExitLabelSymbol is called when production labelSymbol is exited.
+func (s *BaseRhumbParserListener) ExitLabelSymbol(ctx *LabelSymbolContext) {}
+
+// EnterFieldLiteral is called when production fieldLiteral is entered.
+func (s *BaseRhumbParserListener) EnterFieldLiteral(ctx *FieldLiteralContext) {}
+
+// ExitFieldLiteral is called when production fieldLiteral is exited.
+func (s *BaseRhumbParserListener) ExitFieldLiteral(ctx *FieldLiteralContext) {}
 
 // EnterConjunctive is called when production conjunctive is entered.
 func (s *BaseRhumbParserListener) EnterConjunctive(ctx *ConjunctiveContext) {}
@@ -93,23 +129,17 @@ func (s *BaseRhumbParserListener) EnterPrefix(ctx *PrefixContext) {}
 // ExitPrefix is called when production prefix is exited.
 func (s *BaseRhumbParserListener) ExitPrefix(ctx *PrefixContext) {}
 
-// EnterAssignment is called when production assignment is entered.
-func (s *BaseRhumbParserListener) EnterAssignment(ctx *AssignmentContext) {}
-
-// ExitAssignment is called when production assignment is exited.
-func (s *BaseRhumbParserListener) ExitAssignment(ctx *AssignmentContext) {}
-
 // EnterComparative is called when production comparative is entered.
 func (s *BaseRhumbParserListener) EnterComparative(ctx *ComparativeContext) {}
 
 // ExitComparative is called when production comparative is exited.
 func (s *BaseRhumbParserListener) ExitComparative(ctx *ComparativeContext) {}
 
-// EnterSimple is called when production simple is entered.
-func (s *BaseRhumbParserListener) EnterSimple(ctx *SimpleContext) {}
+// EnterSimpleExpression is called when production simpleExpression is entered.
+func (s *BaseRhumbParserListener) EnterSimpleExpression(ctx *SimpleExpressionContext) {}
 
-// ExitSimple is called when production simple is exited.
-func (s *BaseRhumbParserListener) ExitSimple(ctx *SimpleContext) {}
+// ExitSimpleExpression is called when production simpleExpression is exited.
+func (s *BaseRhumbParserListener) ExitSimpleExpression(ctx *SimpleExpressionContext) {}
 
 // EnterMultiplicative is called when production multiplicative is entered.
 func (s *BaseRhumbParserListener) EnterMultiplicative(ctx *MultiplicativeContext) {}
@@ -129,6 +159,12 @@ func (s *BaseRhumbParserListener) EnterInvocation(ctx *InvocationContext) {}
 // ExitInvocation is called when production invocation is exited.
 func (s *BaseRhumbParserListener) ExitInvocation(ctx *InvocationContext) {}
 
+// EnterLibrary is called when production library is entered.
+func (s *BaseRhumbParserListener) EnterLibrary(ctx *LibraryContext) {}
+
+// ExitLibrary is called when production library is exited.
+func (s *BaseRhumbParserListener) ExitLibrary(ctx *LibraryContext) {}
+
 // EnterRoutine is called when production routine is entered.
 func (s *BaseRhumbParserListener) EnterRoutine(ctx *RoutineContext) {}
 
@@ -146,6 +182,12 @@ func (s *BaseRhumbParserListener) EnterIdentity(ctx *IdentityContext) {}
 
 // ExitIdentity is called when production identity is exited.
 func (s *BaseRhumbParserListener) ExitIdentity(ctx *IdentityContext) {}
+
+// EnterAssignLabel is called when production assignLabel is entered.
+func (s *BaseRhumbParserListener) EnterAssignLabel(ctx *AssignLabelContext) {}
+
+// ExitAssignLabel is called when production assignLabel is exited.
+func (s *BaseRhumbParserListener) ExitAssignLabel(ctx *AssignLabelContext) {}
 
 // EnterEffect is called when production effect is entered.
 func (s *BaseRhumbParserListener) EnterEffect(ctx *EffectContext) {}
@@ -177,17 +219,103 @@ func (s *BaseRhumbParserListener) EnterMap(ctx *MapContext) {}
 // ExitMap is called when production map is exited.
 func (s *BaseRhumbParserListener) ExitMap(ctx *MapContext) {}
 
-// EnterFreeze is called when production freeze is entered.
-func (s *BaseRhumbParserListener) EnterFreeze(ctx *FreezeContext) {}
+// EnterChainExpression is called when production chainExpression is entered.
+func (s *BaseRhumbParserListener) EnterChainExpression(ctx *ChainExpressionContext) {}
 
-// ExitFreeze is called when production freeze is exited.
-func (s *BaseRhumbParserListener) ExitFreeze(ctx *FreezeContext) {}
+// ExitChainExpression is called when production chainExpression is exited.
+func (s *BaseRhumbParserListener) ExitChainExpression(ctx *ChainExpressionContext) {}
 
-// EnterInner is called when production inner is entered.
-func (s *BaseRhumbParserListener) EnterInner(ctx *InnerContext) {}
+// EnterPrefixAssignMutField is called when production prefixAssignMutField is entered.
+func (s *BaseRhumbParserListener) EnterPrefixAssignMutField(ctx *PrefixAssignMutFieldContext) {}
 
-// ExitInner is called when production inner is exited.
-func (s *BaseRhumbParserListener) ExitInner(ctx *InnerContext) {}
+// ExitPrefixAssignMutField is called when production prefixAssignMutField is exited.
+func (s *BaseRhumbParserListener) ExitPrefixAssignMutField(ctx *PrefixAssignMutFieldContext) {}
+
+// EnterPrefixAssignMutSubField is called when production prefixAssignMutSubField is entered.
+func (s *BaseRhumbParserListener) EnterPrefixAssignMutSubField(ctx *PrefixAssignMutSubFieldContext) {}
+
+// ExitPrefixAssignMutSubField is called when production prefixAssignMutSubField is exited.
+func (s *BaseRhumbParserListener) ExitPrefixAssignMutSubField(ctx *PrefixAssignMutSubFieldContext) {}
+
+// EnterPrefixAssignImmSubField is called when production prefixAssignImmSubField is entered.
+func (s *BaseRhumbParserListener) EnterPrefixAssignImmSubField(ctx *PrefixAssignImmSubFieldContext) {}
+
+// ExitPrefixAssignImmSubField is called when production prefixAssignImmSubField is exited.
+func (s *BaseRhumbParserListener) ExitPrefixAssignImmSubField(ctx *PrefixAssignImmSubFieldContext) {}
+
+// EnterPrefixSlurpSpread is called when production prefixSlurpSpread is entered.
+func (s *BaseRhumbParserListener) EnterPrefixSlurpSpread(ctx *PrefixSlurpSpreadContext) {}
+
+// ExitPrefixSlurpSpread is called when production prefixSlurpSpread is exited.
+func (s *BaseRhumbParserListener) ExitPrefixSlurpSpread(ctx *PrefixSlurpSpreadContext) {}
+
+// EnterAssignMutField is called when production assignMutField is entered.
+func (s *BaseRhumbParserListener) EnterAssignMutField(ctx *AssignMutFieldContext) {}
+
+// ExitAssignMutField is called when production assignMutField is exited.
+func (s *BaseRhumbParserListener) ExitAssignMutField(ctx *AssignMutFieldContext) {}
+
+// EnterAssignMutSubField is called when production assignMutSubField is entered.
+func (s *BaseRhumbParserListener) EnterAssignMutSubField(ctx *AssignMutSubFieldContext) {}
+
+// ExitAssignMutSubField is called when production assignMutSubField is exited.
+func (s *BaseRhumbParserListener) ExitAssignMutSubField(ctx *AssignMutSubFieldContext) {}
+
+// EnterAssignImmField is called when production assignImmField is entered.
+func (s *BaseRhumbParserListener) EnterAssignImmField(ctx *AssignImmFieldContext) {}
+
+// ExitAssignImmField is called when production assignImmField is exited.
+func (s *BaseRhumbParserListener) ExitAssignImmField(ctx *AssignImmFieldContext) {}
+
+// EnterAssignImmSubField is called when production assignImmSubField is entered.
+func (s *BaseRhumbParserListener) EnterAssignImmSubField(ctx *AssignImmSubFieldContext) {}
+
+// ExitAssignImmSubField is called when production assignImmSubField is exited.
+func (s *BaseRhumbParserListener) ExitAssignImmSubField(ctx *AssignImmSubFieldContext) {}
+
+// EnterSimpleMapField is called when production simpleMapField is entered.
+func (s *BaseRhumbParserListener) EnterSimpleMapField(ctx *SimpleMapFieldContext) {}
+
+// ExitSimpleMapField is called when production simpleMapField is exited.
+func (s *BaseRhumbParserListener) ExitSimpleMapField(ctx *SimpleMapFieldContext) {}
+
+// EnterSimpleField is called when production simpleField is entered.
+func (s *BaseRhumbParserListener) EnterSimpleField(ctx *SimpleFieldContext) {}
+
+// ExitSimpleField is called when production simpleField is exited.
+func (s *BaseRhumbParserListener) ExitSimpleField(ctx *SimpleFieldContext) {}
+
+// EnterAssignBreakingPattern is called when production assignBreakingPattern is entered.
+func (s *BaseRhumbParserListener) EnterAssignBreakingPattern(ctx *AssignBreakingPatternContext) {}
+
+// ExitAssignBreakingPattern is called when production assignBreakingPattern is exited.
+func (s *BaseRhumbParserListener) ExitAssignBreakingPattern(ctx *AssignBreakingPatternContext) {}
+
+// EnterAssignFallthroughPattern is called when production assignFallthroughPattern is entered.
+func (s *BaseRhumbParserListener) EnterAssignFallthroughPattern(ctx *AssignFallthroughPatternContext) {
+}
+
+// ExitAssignFallthroughPattern is called when production assignFallthroughPattern is exited.
+func (s *BaseRhumbParserListener) ExitAssignFallthroughPattern(ctx *AssignFallthroughPatternContext) {
+}
+
+// EnterAssignDefaultPattern is called when production assignDefaultPattern is entered.
+func (s *BaseRhumbParserListener) EnterAssignDefaultPattern(ctx *AssignDefaultPatternContext) {}
+
+// ExitAssignDefaultPattern is called when production assignDefaultPattern is exited.
+func (s *BaseRhumbParserListener) ExitAssignDefaultPattern(ctx *AssignDefaultPatternContext) {}
+
+// EnterAppend is called when production append is entered.
+func (s *BaseRhumbParserListener) EnterAppend(ctx *AppendContext) {}
+
+// ExitAppend is called when production append is exited.
+func (s *BaseRhumbParserListener) ExitAppend(ctx *AppendContext) {}
+
+// EnterUnshift is called when production unshift is entered.
+func (s *BaseRhumbParserListener) EnterUnshift(ctx *UnshiftContext) {}
+
+// ExitUnshift is called when production unshift is exited.
+func (s *BaseRhumbParserListener) ExitUnshift(ctx *UnshiftContext) {}
 
 // EnterLength is called when production length is entered.
 func (s *BaseRhumbParserListener) EnterLength(ctx *LengthContext) {}
@@ -195,17 +323,113 @@ func (s *BaseRhumbParserListener) EnterLength(ctx *LengthContext) {}
 // ExitLength is called when production length is exited.
 func (s *BaseRhumbParserListener) ExitLength(ctx *LengthContext) {}
 
+// EnterEmpty is called when production empty is entered.
+func (s *BaseRhumbParserListener) EnterEmpty(ctx *EmptyContext) {}
+
+// ExitEmpty is called when production empty is exited.
+func (s *BaseRhumbParserListener) ExitEmpty(ctx *EmptyContext) {}
+
+// EnterAllSubfields is called when production allSubfields is entered.
+func (s *BaseRhumbParserListener) EnterAllSubfields(ctx *AllSubfieldsContext) {}
+
+// ExitAllSubfields is called when production allSubfields is exited.
+func (s *BaseRhumbParserListener) ExitAllSubfields(ctx *AllSubfieldsContext) {}
+
+// EnterAllFields is called when production allFields is entered.
+func (s *BaseRhumbParserListener) EnterAllFields(ctx *AllFieldsContext) {}
+
+// ExitAllFields is called when production allFields is exited.
+func (s *BaseRhumbParserListener) ExitAllFields(ctx *AllFieldsContext) {}
+
+// EnterElements is called when production elements is entered.
+func (s *BaseRhumbParserListener) EnterElements(ctx *ElementsContext) {}
+
+// ExitElements is called when production elements is exited.
+func (s *BaseRhumbParserListener) ExitElements(ctx *ElementsContext) {}
+
+// EnterFreeze is called when production freeze is entered.
+func (s *BaseRhumbParserListener) EnterFreeze(ctx *FreezeContext) {}
+
+// ExitFreeze is called when production freeze is exited.
+func (s *BaseRhumbParserListener) ExitFreeze(ctx *FreezeContext) {}
+
+// EnterCopy is called when production copy is entered.
+func (s *BaseRhumbParserListener) EnterCopy(ctx *CopyContext) {}
+
+// ExitCopy is called when production copy is exited.
+func (s *BaseRhumbParserListener) ExitCopy(ctx *CopyContext) {}
+
+// EnterToDate is called when production toDate is entered.
+func (s *BaseRhumbParserListener) EnterToDate(ctx *ToDateContext) {}
+
+// ExitToDate is called when production toDate is exited.
+func (s *BaseRhumbParserListener) ExitToDate(ctx *ToDateContext) {}
+
+// EnterParameters is called when production parameters is entered.
+func (s *BaseRhumbParserListener) EnterParameters(ctx *ParametersContext) {}
+
+// ExitParameters is called when production parameters is exited.
+func (s *BaseRhumbParserListener) ExitParameters(ctx *ParametersContext) {}
+
+// EnterConstructor is called when production constructor is entered.
+func (s *BaseRhumbParserListener) EnterConstructor(ctx *ConstructorContext) {}
+
+// ExitConstructor is called when production constructor is exited.
+func (s *BaseRhumbParserListener) ExitConstructor(ctx *ConstructorContext) {}
+
+// EnterBase is called when production base is entered.
+func (s *BaseRhumbParserListener) EnterBase(ctx *BaseContext) {}
+
+// ExitBase is called when production base is exited.
+func (s *BaseRhumbParserListener) ExitBase(ctx *BaseContext) {}
+
+// EnterToNumber is called when production toNumber is entered.
+func (s *BaseRhumbParserListener) EnterToNumber(ctx *ToNumberContext) {}
+
+// ExitToNumber is called when production toNumber is exited.
+func (s *BaseRhumbParserListener) ExitToNumber(ctx *ToNumberContext) {}
+
+// EnterNegateNumber is called when production negateNumber is entered.
+func (s *BaseRhumbParserListener) EnterNegateNumber(ctx *NegateNumberContext) {}
+
+// ExitNegateNumber is called when production negateNumber is exited.
+func (s *BaseRhumbParserListener) ExitNegateNumber(ctx *NegateNumberContext) {}
+
+// EnterToTruth is called when production toTruth is entered.
+func (s *BaseRhumbParserListener) EnterToTruth(ctx *ToTruthContext) {}
+
+// ExitToTruth is called when production toTruth is exited.
+func (s *BaseRhumbParserListener) ExitToTruth(ctx *ToTruthContext) {}
+
+// EnterNegateTruth is called when production negateTruth is entered.
+func (s *BaseRhumbParserListener) EnterNegateTruth(ctx *NegateTruthContext) {}
+
+// ExitNegateTruth is called when production negateTruth is exited.
+func (s *BaseRhumbParserListener) ExitNegateTruth(ctx *NegateTruthContext) {}
+
+// EnterVariadic is called when production variadic is entered.
+func (s *BaseRhumbParserListener) EnterVariadic(ctx *VariadicContext) {}
+
+// ExitVariadic is called when production variadic is exited.
+func (s *BaseRhumbParserListener) ExitVariadic(ctx *VariadicContext) {}
+
+// EnterToKey is called when production toKey is entered.
+func (s *BaseRhumbParserListener) EnterToKey(ctx *ToKeyContext) {}
+
+// ExitToKey is called when production toKey is exited.
+func (s *BaseRhumbParserListener) ExitToKey(ctx *ToKeyContext) {}
+
 // EnterFunction is called when production function is entered.
 func (s *BaseRhumbParserListener) EnterFunction(ctx *FunctionContext) {}
 
 // ExitFunction is called when production function is exited.
 func (s *BaseRhumbParserListener) ExitFunction(ctx *FunctionContext) {}
 
-// EnterJunction is called when production junction is entered.
-func (s *BaseRhumbParserListener) EnterJunction(ctx *JunctionContext) {}
+// EnterMethod is called when production method is entered.
+func (s *BaseRhumbParserListener) EnterMethod(ctx *MethodContext) {}
 
-// ExitJunction is called when production junction is exited.
-func (s *BaseRhumbParserListener) ExitJunction(ctx *JunctionContext) {}
+// ExitMethod is called when production method is exited.
+func (s *BaseRhumbParserListener) ExitMethod(ctx *MethodContext) {}
 
 // EnterGreaterThan is called when production greaterThan is entered.
 func (s *BaseRhumbParserListener) EnterGreaterThan(ctx *GreaterThanContext) {}
@@ -237,29 +461,17 @@ func (s *BaseRhumbParserListener) EnterIsEqual(ctx *IsEqualContext) {}
 // ExitIsEqual is called when production isEqual is exited.
 func (s *BaseRhumbParserListener) ExitIsEqual(ctx *IsEqualContext) {}
 
-// EnterIsLike is called when production isLike is entered.
-func (s *BaseRhumbParserListener) EnterIsLike(ctx *IsLikeContext) {}
+// EnterIsInner is called when production isInner is entered.
+func (s *BaseRhumbParserListener) EnterIsInner(ctx *IsInnerContext) {}
 
-// ExitIsLike is called when production isLike is exited.
-func (s *BaseRhumbParserListener) ExitIsLike(ctx *IsLikeContext) {}
+// ExitIsInner is called when production isInner is exited.
+func (s *BaseRhumbParserListener) ExitIsInner(ctx *IsInnerContext) {}
 
-// EnterIsIn is called when production isIn is entered.
-func (s *BaseRhumbParserListener) EnterIsIn(ctx *IsInContext) {}
+// EnterIsUnder is called when production isUnder is entered.
+func (s *BaseRhumbParserListener) EnterIsUnder(ctx *IsUnderContext) {}
 
-// ExitIsIn is called when production isIn is exited.
-func (s *BaseRhumbParserListener) ExitIsIn(ctx *IsInContext) {}
-
-// EnterIsOverlayed is called when production isOverlayed is entered.
-func (s *BaseRhumbParserListener) EnterIsOverlayed(ctx *IsOverlayedContext) {}
-
-// ExitIsOverlayed is called when production isOverlayed is exited.
-func (s *BaseRhumbParserListener) ExitIsOverlayed(ctx *IsOverlayedContext) {}
-
-// EnterIsTopmost is called when production isTopmost is entered.
-func (s *BaseRhumbParserListener) EnterIsTopmost(ctx *IsTopmostContext) {}
-
-// ExitIsTopmost is called when production isTopmost is exited.
-func (s *BaseRhumbParserListener) ExitIsTopmost(ctx *IsTopmostContext) {}
+// ExitIsUnder is called when production isUnder is exited.
+func (s *BaseRhumbParserListener) ExitIsUnder(ctx *IsUnderContext) {}
 
 // EnterNotEqual is called when production notEqual is entered.
 func (s *BaseRhumbParserListener) EnterNotEqual(ctx *NotEqualContext) {}
@@ -267,29 +479,17 @@ func (s *BaseRhumbParserListener) EnterNotEqual(ctx *NotEqualContext) {}
 // ExitNotEqual is called when production notEqual is exited.
 func (s *BaseRhumbParserListener) ExitNotEqual(ctx *NotEqualContext) {}
 
-// EnterNotLike is called when production notLike is entered.
-func (s *BaseRhumbParserListener) EnterNotLike(ctx *NotLikeContext) {}
+// EnterNotInner is called when production notInner is entered.
+func (s *BaseRhumbParserListener) EnterNotInner(ctx *NotInnerContext) {}
 
-// ExitNotLike is called when production notLike is exited.
-func (s *BaseRhumbParserListener) ExitNotLike(ctx *NotLikeContext) {}
+// ExitNotInner is called when production notInner is exited.
+func (s *BaseRhumbParserListener) ExitNotInner(ctx *NotInnerContext) {}
 
-// EnterNotIn is called when production notIn is entered.
-func (s *BaseRhumbParserListener) EnterNotIn(ctx *NotInContext) {}
+// EnterNotUnder is called when production notUnder is entered.
+func (s *BaseRhumbParserListener) EnterNotUnder(ctx *NotUnderContext) {}
 
-// ExitNotIn is called when production notIn is exited.
-func (s *BaseRhumbParserListener) ExitNotIn(ctx *NotInContext) {}
-
-// EnterNotOverlayed is called when production notOverlayed is entered.
-func (s *BaseRhumbParserListener) EnterNotOverlayed(ctx *NotOverlayedContext) {}
-
-// ExitNotOverlayed is called when production notOverlayed is exited.
-func (s *BaseRhumbParserListener) ExitNotOverlayed(ctx *NotOverlayedContext) {}
-
-// EnterNotTopmost is called when production notTopmost is entered.
-func (s *BaseRhumbParserListener) EnterNotTopmost(ctx *NotTopmostContext) {}
-
-// ExitNotTopmost is called when production notTopmost is exited.
-func (s *BaseRhumbParserListener) ExitNotTopmost(ctx *NotTopmostContext) {}
+// ExitNotUnder is called when production notUnder is exited.
+func (s *BaseRhumbParserListener) ExitNotUnder(ctx *NotUnderContext) {}
 
 // EnterConjunctiveOp is called when production conjunctiveOp is entered.
 func (s *BaseRhumbParserListener) EnterConjunctiveOp(ctx *ConjunctiveOpContext) {}
@@ -303,11 +503,11 @@ func (s *BaseRhumbParserListener) EnterDisjunctiveOp(ctx *DisjunctiveOpContext) 
 // ExitDisjunctiveOp is called when production disjunctiveOp is exited.
 func (s *BaseRhumbParserListener) ExitDisjunctiveOp(ctx *DisjunctiveOpContext) {}
 
-// EnterOtherwise is called when production otherwise is entered.
-func (s *BaseRhumbParserListener) EnterOtherwise(ctx *OtherwiseContext) {}
+// EnterPipe is called when production pipe is entered.
+func (s *BaseRhumbParserListener) EnterPipe(ctx *PipeContext) {}
 
-// ExitOtherwise is called when production otherwise is exited.
-func (s *BaseRhumbParserListener) ExitOtherwise(ctx *OtherwiseContext) {}
+// ExitPipe is called when production pipe is exited.
+func (s *BaseRhumbParserListener) ExitPipe(ctx *PipeContext) {}
 
 // EnterDefault is called when production default is entered.
 func (s *BaseRhumbParserListener) EnterDefault(ctx *DefaultContext) {}
@@ -339,6 +539,12 @@ func (s *BaseRhumbParserListener) EnterElse(ctx *ElseContext) {}
 // ExitElse is called when production else is exited.
 func (s *BaseRhumbParserListener) ExitElse(ctx *ElseContext) {}
 
+// EnterDestructure is called when production destructure is entered.
+func (s *BaseRhumbParserListener) EnterDestructure(ctx *DestructureContext) {}
+
+// ExitDestructure is called when production destructure is exited.
+func (s *BaseRhumbParserListener) ExitDestructure(ctx *DestructureContext) {}
+
 // EnterAddition is called when production addition is entered.
 func (s *BaseRhumbParserListener) EnterAddition(ctx *AdditionContext) {}
 
@@ -357,29 +563,35 @@ func (s *BaseRhumbParserListener) EnterSubtraction(ctx *SubtractionContext) {}
 // ExitSubtraction is called when production subtraction is exited.
 func (s *BaseRhumbParserListener) ExitSubtraction(ctx *SubtractionContext) {}
 
+// EnterConcatenate is called when production concatenate is entered.
+func (s *BaseRhumbParserListener) EnterConcatenate(ctx *ConcatenateContext) {}
+
+// ExitConcatenate is called when production concatenate is exited.
+func (s *BaseRhumbParserListener) ExitConcatenate(ctx *ConcatenateContext) {}
+
 // EnterMultiplication is called when production multiplication is entered.
 func (s *BaseRhumbParserListener) EnterMultiplication(ctx *MultiplicationContext) {}
 
 // ExitMultiplication is called when production multiplication is exited.
 func (s *BaseRhumbParserListener) ExitMultiplication(ctx *MultiplicationContext) {}
 
-// EnterDivision is called when production division is entered.
-func (s *BaseRhumbParserListener) EnterDivision(ctx *DivisionContext) {}
+// EnterRationalDivision is called when production rationalDivision is entered.
+func (s *BaseRhumbParserListener) EnterRationalDivision(ctx *RationalDivisionContext) {}
 
-// ExitDivision is called when production division is exited.
-func (s *BaseRhumbParserListener) ExitDivision(ctx *DivisionContext) {}
+// ExitRationalDivision is called when production rationalDivision is exited.
+func (s *BaseRhumbParserListener) ExitRationalDivision(ctx *RationalDivisionContext) {}
 
-// EnterIntegerDivision is called when production integerDivision is entered.
-func (s *BaseRhumbParserListener) EnterIntegerDivision(ctx *IntegerDivisionContext) {}
+// EnterWholeDivision is called when production wholeDivision is entered.
+func (s *BaseRhumbParserListener) EnterWholeDivision(ctx *WholeDivisionContext) {}
 
-// ExitIntegerDivision is called when production integerDivision is exited.
-func (s *BaseRhumbParserListener) ExitIntegerDivision(ctx *IntegerDivisionContext) {}
+// ExitWholeDivision is called when production wholeDivision is exited.
+func (s *BaseRhumbParserListener) ExitWholeDivision(ctx *WholeDivisionContext) {}
 
-// EnterModulo is called when production modulo is entered.
-func (s *BaseRhumbParserListener) EnterModulo(ctx *ModuloContext) {}
+// EnterRemainderDivision is called when production remainderDivision is entered.
+func (s *BaseRhumbParserListener) EnterRemainderDivision(ctx *RemainderDivisionContext) {}
 
-// ExitModulo is called when production modulo is exited.
-func (s *BaseRhumbParserListener) ExitModulo(ctx *ModuloContext) {}
+// ExitRemainderDivision is called when production remainderDivision is exited.
+func (s *BaseRhumbParserListener) ExitRemainderDivision(ctx *RemainderDivisionContext) {}
 
 // EnterBind is called when production bind is entered.
 func (s *BaseRhumbParserListener) EnterBind(ctx *BindContext) {}
@@ -399,17 +611,17 @@ func (s *BaseRhumbParserListener) EnterRootExtraction(ctx *RootExtractionContext
 // ExitRootExtraction is called when production rootExtraction is exited.
 func (s *BaseRhumbParserListener) ExitRootExtraction(ctx *RootExtractionContext) {}
 
+// EnterRange is called when production range is entered.
+func (s *BaseRhumbParserListener) EnterRange(ctx *RangeContext) {}
+
+// ExitRange is called when production range is exited.
+func (s *BaseRhumbParserListener) ExitRange(ctx *RangeContext) {}
+
 // EnterScientific is called when production scientific is entered.
 func (s *BaseRhumbParserListener) EnterScientific(ctx *ScientificContext) {}
 
 // ExitScientific is called when production scientific is exited.
 func (s *BaseRhumbParserListener) ExitScientific(ctx *ScientificContext) {}
-
-// EnterImmutablePair is called when production immutablePair is entered.
-func (s *BaseRhumbParserListener) EnterImmutablePair(ctx *ImmutablePairContext) {}
-
-// ExitImmutablePair is called when production immutablePair is exited.
-func (s *BaseRhumbParserListener) ExitImmutablePair(ctx *ImmutablePairContext) {}
 
 // EnterImmutableLabel is called when production immutableLabel is entered.
 func (s *BaseRhumbParserListener) EnterImmutableLabel(ctx *ImmutableLabelContext) {}
@@ -417,124 +629,124 @@ func (s *BaseRhumbParserListener) EnterImmutableLabel(ctx *ImmutableLabelContext
 // ExitImmutableLabel is called when production immutableLabel is exited.
 func (s *BaseRhumbParserListener) ExitImmutableLabel(ctx *ImmutableLabelContext) {}
 
-// EnterMutablePair is called when production mutablePair is entered.
-func (s *BaseRhumbParserListener) EnterMutablePair(ctx *MutablePairContext) {}
-
-// ExitMutablePair is called when production mutablePair is exited.
-func (s *BaseRhumbParserListener) ExitMutablePair(ctx *MutablePairContext) {}
-
 // EnterMutableLabel is called when production mutableLabel is entered.
 func (s *BaseRhumbParserListener) EnterMutableLabel(ctx *MutableLabelContext) {}
 
 // ExitMutableLabel is called when production mutableLabel is exited.
 func (s *BaseRhumbParserListener) ExitMutableLabel(ctx *MutableLabelContext) {}
 
-// EnterNumericalNegate is called when production numericalNegate is entered.
-func (s *BaseRhumbParserListener) EnterNumericalNegate(ctx *NumericalNegateContext) {}
+// EnterEmptyPrefix is called when production emptyPrefix is entered.
+func (s *BaseRhumbParserListener) EnterEmptyPrefix(ctx *EmptyPrefixContext) {}
 
-// ExitNumericalNegate is called when production numericalNegate is exited.
-func (s *BaseRhumbParserListener) ExitNumericalNegate(ctx *NumericalNegateContext) {}
+// ExitEmptyPrefix is called when production emptyPrefix is exited.
+func (s *BaseRhumbParserListener) ExitEmptyPrefix(ctx *EmptyPrefixContext) {}
 
-// EnterOuterScope is called when production outerScope is entered.
-func (s *BaseRhumbParserListener) EnterOuterScope(ctx *OuterScopeContext) {}
+// EnterFreezePrefix is called when production freezePrefix is entered.
+func (s *BaseRhumbParserListener) EnterFreezePrefix(ctx *FreezePrefixContext) {}
 
-// ExitOuterScope is called when production outerScope is exited.
-func (s *BaseRhumbParserListener) ExitOuterScope(ctx *OuterScopeContext) {}
+// ExitFreezePrefix is called when production freezePrefix is exited.
+func (s *BaseRhumbParserListener) ExitFreezePrefix(ctx *FreezePrefixContext) {}
 
-// EnterLogicalNegate is called when production logicalNegate is entered.
-func (s *BaseRhumbParserListener) EnterLogicalNegate(ctx *LogicalNegateContext) {}
+// EnterCopyPrefix is called when production copyPrefix is entered.
+func (s *BaseRhumbParserListener) EnterCopyPrefix(ctx *CopyPrefixContext) {}
 
-// ExitLogicalNegate is called when production logicalNegate is exited.
-func (s *BaseRhumbParserListener) ExitLogicalNegate(ctx *LogicalNegateContext) {}
+// ExitCopyPrefix is called when production copyPrefix is exited.
+func (s *BaseRhumbParserListener) ExitCopyPrefix(ctx *CopyPrefixContext) {}
 
-// EnterAssert is called when production assert is entered.
-func (s *BaseRhumbParserListener) EnterAssert(ctx *AssertContext) {}
+// EnterToNumberPrefix is called when production toNumberPrefix is entered.
+func (s *BaseRhumbParserListener) EnterToNumberPrefix(ctx *ToNumberPrefixContext) {}
 
-// ExitAssert is called when production assert is exited.
-func (s *BaseRhumbParserListener) ExitAssert(ctx *AssertContext) {}
+// ExitToNumberPrefix is called when production toNumberPrefix is exited.
+func (s *BaseRhumbParserListener) ExitToNumberPrefix(ctx *ToNumberPrefixContext) {}
 
-// EnterArgument is called when production argument is entered.
-func (s *BaseRhumbParserListener) EnterArgument(ctx *ArgumentContext) {}
+// EnterNegateNumberPrefix is called when production negateNumberPrefix is entered.
+func (s *BaseRhumbParserListener) EnterNegateNumberPrefix(ctx *NegateNumberPrefixContext) {}
 
-// ExitArgument is called when production argument is exited.
-func (s *BaseRhumbParserListener) ExitArgument(ctx *ArgumentContext) {}
+// ExitNegateNumberPrefix is called when production negateNumberPrefix is exited.
+func (s *BaseRhumbParserListener) ExitNegateNumberPrefix(ctx *NegateNumberPrefixContext) {}
 
-// EnterSlurpSpread is called when production slurpSpread is entered.
-func (s *BaseRhumbParserListener) EnterSlurpSpread(ctx *SlurpSpreadContext) {}
+// EnterToTruthPrefix is called when production toTruthPrefix is entered.
+func (s *BaseRhumbParserListener) EnterToTruthPrefix(ctx *ToTruthPrefixContext) {}
 
-// ExitSlurpSpread is called when production slurpSpread is exited.
-func (s *BaseRhumbParserListener) ExitSlurpSpread(ctx *SlurpSpreadContext) {}
+// ExitToTruthPrefix is called when production toTruthPrefix is exited.
+func (s *BaseRhumbParserListener) ExitToTruthPrefix(ctx *ToTruthPrefixContext) {}
 
-// EnterBaseClone is called when production baseClone is entered.
-func (s *BaseRhumbParserListener) EnterBaseClone(ctx *BaseCloneContext) {}
+// EnterNegateTruthPrefix is called when production negateTruthPrefix is entered.
+func (s *BaseRhumbParserListener) EnterNegateTruthPrefix(ctx *NegateTruthPrefixContext) {}
 
-// ExitBaseClone is called when production baseClone is exited.
-func (s *BaseRhumbParserListener) ExitBaseClone(ctx *BaseCloneContext) {}
+// ExitNegateTruthPrefix is called when production negateTruthPrefix is exited.
+func (s *BaseRhumbParserListener) ExitNegateTruthPrefix(ctx *NegateTruthPrefixContext) {}
 
-// EnterNumericalPosit is called when production numericalPosit is entered.
-func (s *BaseRhumbParserListener) EnterNumericalPosit(ctx *NumericalPositContext) {}
+// EnterVariadicPrefix is called when production variadicPrefix is entered.
+func (s *BaseRhumbParserListener) EnterVariadicPrefix(ctx *VariadicPrefixContext) {}
 
-// ExitNumericalPosit is called when production numericalPosit is exited.
-func (s *BaseRhumbParserListener) ExitNumericalPosit(ctx *NumericalPositContext) {}
+// ExitVariadicPrefix is called when production variadicPrefix is exited.
+func (s *BaseRhumbParserListener) ExitVariadicPrefix(ctx *VariadicPrefixContext) {}
 
-// EnterLogicalPosit is called when production logicalPosit is entered.
-func (s *BaseRhumbParserListener) EnterLogicalPosit(ctx *LogicalPositContext) {}
+// EnterArgumentPrefix is called when production argumentPrefix is entered.
+func (s *BaseRhumbParserListener) EnterArgumentPrefix(ctx *ArgumentPrefixContext) {}
 
-// ExitLogicalPosit is called when production logicalPosit is exited.
-func (s *BaseRhumbParserListener) ExitLogicalPosit(ctx *LogicalPositContext) {}
+// ExitArgumentPrefix is called when production argumentPrefix is exited.
+func (s *BaseRhumbParserListener) ExitArgumentPrefix(ctx *ArgumentPrefixContext) {}
 
-// EnterOverlay is called when production overlay is entered.
-func (s *BaseRhumbParserListener) EnterOverlay(ctx *OverlayContext) {}
+// EnterSignalOutwardPrefix is called when production signalOutwardPrefix is entered.
+func (s *BaseRhumbParserListener) EnterSignalOutwardPrefix(ctx *SignalOutwardPrefixContext) {}
 
-// ExitOverlay is called when production overlay is exited.
-func (s *BaseRhumbParserListener) ExitOverlay(ctx *OverlayContext) {}
+// ExitSignalOutwardPrefix is called when production signalOutwardPrefix is exited.
+func (s *BaseRhumbParserListener) ExitSignalOutwardPrefix(ctx *SignalOutwardPrefixContext) {}
 
-// EnterExistentialPosit is called when production existentialPosit is entered.
-func (s *BaseRhumbParserListener) EnterExistentialPosit(ctx *ExistentialPositContext) {}
+// EnterSignalInwardPrefix is called when production signalInwardPrefix is entered.
+func (s *BaseRhumbParserListener) EnterSignalInwardPrefix(ctx *SignalInwardPrefixContext) {}
 
-// ExitExistentialPosit is called when production existentialPosit is exited.
-func (s *BaseRhumbParserListener) ExitExistentialPosit(ctx *ExistentialPositContext) {}
+// ExitSignalInwardPrefix is called when production signalInwardPrefix is exited.
+func (s *BaseRhumbParserListener) ExitSignalInwardPrefix(ctx *SignalInwardPrefixContext) {}
 
-// EnterImmutableDestruct is called when production immutableDestruct is entered.
-func (s *BaseRhumbParserListener) EnterImmutableDestruct(ctx *ImmutableDestructContext) {}
+// EnterNestedField is called when production nestedField is entered.
+func (s *BaseRhumbParserListener) EnterNestedField(ctx *NestedFieldContext) {}
 
-// ExitImmutableDestruct is called when production immutableDestruct is exited.
-func (s *BaseRhumbParserListener) ExitImmutableDestruct(ctx *ImmutableDestructContext) {}
+// ExitNestedField is called when production nestedField is exited.
+func (s *BaseRhumbParserListener) ExitNestedField(ctx *NestedFieldContext) {}
 
-// EnterMutableDestruct is called when production mutableDestruct is entered.
-func (s *BaseRhumbParserListener) EnterMutableDestruct(ctx *MutableDestructContext) {}
+// EnterDeeplyNestedField is called when production deeplyNestedField is entered.
+func (s *BaseRhumbParserListener) EnterDeeplyNestedField(ctx *DeeplyNestedFieldContext) {}
 
-// ExitMutableDestruct is called when production mutableDestruct is exited.
-func (s *BaseRhumbParserListener) ExitMutableDestruct(ctx *MutableDestructContext) {}
+// ExitDeeplyNestedField is called when production deeplyNestedField is exited.
+func (s *BaseRhumbParserListener) ExitDeeplyNestedField(ctx *DeeplyNestedFieldContext) {}
 
-// EnterNestedLabel is called when production nestedLabel is entered.
-func (s *BaseRhumbParserListener) EnterNestedLabel(ctx *NestedLabelContext) {}
+// EnterNestedSubfield is called when production nestedSubfield is entered.
+func (s *BaseRhumbParserListener) EnterNestedSubfield(ctx *NestedSubfieldContext) {}
 
-// ExitNestedLabel is called when production nestedLabel is exited.
-func (s *BaseRhumbParserListener) ExitNestedLabel(ctx *NestedLabelContext) {}
+// ExitNestedSubfield is called when production nestedSubfield is exited.
+func (s *BaseRhumbParserListener) ExitNestedSubfield(ctx *NestedSubfieldContext) {}
 
-// EnterNestedOverlay is called when production nestedOverlay is entered.
-func (s *BaseRhumbParserListener) EnterNestedOverlay(ctx *NestedOverlayContext) {}
+// EnterDeeplyNestedSubfield is called when production deeplyNestedSubfield is entered.
+func (s *BaseRhumbParserListener) EnterDeeplyNestedSubfield(ctx *DeeplyNestedSubfieldContext) {}
 
-// ExitNestedOverlay is called when production nestedOverlay is exited.
-func (s *BaseRhumbParserListener) ExitNestedOverlay(ctx *NestedOverlayContext) {}
+// ExitDeeplyNestedSubfield is called when production deeplyNestedSubfield is exited.
+func (s *BaseRhumbParserListener) ExitDeeplyNestedSubfield(ctx *DeeplyNestedSubfieldContext) {}
 
-// EnterRange is called when production range is entered.
-func (s *BaseRhumbParserListener) EnterRange(ctx *RangeContext) {}
+// EnterDatePart is called when production datePart is entered.
+func (s *BaseRhumbParserListener) EnterDatePart(ctx *DatePartContext) {}
 
-// ExitRange is called when production range is exited.
-func (s *BaseRhumbParserListener) ExitRange(ctx *RangeContext) {}
+// ExitDatePart is called when production datePart is exited.
+func (s *BaseRhumbParserListener) ExitDatePart(ctx *DatePartContext) {}
 
-// EnterString is called when production string is entered.
-func (s *BaseRhumbParserListener) EnterString(ctx *StringContext) {}
+// EnterDate is called when production date is entered.
+func (s *BaseRhumbParserListener) EnterDate(ctx *DateContext) {}
 
-// ExitString is called when production string is exited.
-func (s *BaseRhumbParserListener) ExitString(ctx *StringContext) {}
+// ExitDate is called when production date is exited.
+func (s *BaseRhumbParserListener) ExitDate(ctx *DateContext) {}
 
-// EnterLabelInterp is called when production LabelInterp is entered.
+// EnterText is called when production text is entered.
+func (s *BaseRhumbParserListener) EnterText(ctx *TextContext) {}
+
+// ExitText is called when production text is exited.
+func (s *BaseRhumbParserListener) ExitText(ctx *TextContext) {}
+
+// EnterLabelInterp is called when production labelInterp is entered.
 func (s *BaseRhumbParserListener) EnterLabelInterp(ctx *LabelInterpContext) {}
 
-// ExitLabelInterp is called when production LabelInterp is exited.
+// ExitLabelInterp is called when production labelInterp is exited.
 func (s *BaseRhumbParserListener) ExitLabelInterp(ctx *LabelInterpContext) {}
 
 // EnterRoutineInterp is called when production routineInterp is entered.
@@ -555,17 +767,17 @@ func (s *BaseRhumbParserListener) EnterNamedRef(ctx *NamedRefContext) {}
 // ExitNamedRef is called when production namedRef is exited.
 func (s *BaseRhumbParserListener) ExitNamedRef(ctx *NamedRefContext) {}
 
-// EnterFunctionRef is called when production functionRef is entered.
-func (s *BaseRhumbParserListener) EnterFunctionRef(ctx *FunctionRefContext) {}
-
-// ExitFunctionRef is called when production functionRef is exited.
-func (s *BaseRhumbParserListener) ExitFunctionRef(ctx *FunctionRefContext) {}
-
 // EnterComputedRef is called when production computedRef is entered.
 func (s *BaseRhumbParserListener) EnterComputedRef(ctx *ComputedRefContext) {}
 
 // ExitComputedRef is called when production computedRef is exited.
 func (s *BaseRhumbParserListener) ExitComputedRef(ctx *ComputedRefContext) {}
+
+// EnterFunctionRef is called when production functionRef is entered.
+func (s *BaseRhumbParserListener) EnterFunctionRef(ctx *FunctionRefContext) {}
+
+// ExitFunctionRef is called when production functionRef is exited.
+func (s *BaseRhumbParserListener) ExitFunctionRef(ctx *FunctionRefContext) {}
 
 // EnterJunctionRef is called when production junctionRef is entered.
 func (s *BaseRhumbParserListener) EnterJunctionRef(ctx *JunctionRefContext) {}

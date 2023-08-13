@@ -1,4 +1,4 @@
-// Code generated from java-escape by ANTLR 4.11.1. DO NOT EDIT.
+// Code generated from /home/jake/Code/rhumb-grammar/grammar/RhumbParser.g4 by ANTLR 4.10.1. DO NOT EDIT.
 
 package parser // RhumbParser
 
@@ -8,7 +8,15 @@ type BaseRhumbParserVisitor struct {
 	*antlr.BaseParseTreeVisitor
 }
 
-func (v *BaseRhumbParserVisitor) VisitSequence(ctx *SequenceContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitExpressions(ctx *ExpressionsContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitFields(ctx *FieldsContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitPatterns(ctx *PatternsContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -16,15 +24,27 @@ func (v *BaseRhumbParserVisitor) VisitTerminator(ctx *TerminatorContext) interfa
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitFloatLiteral(ctx *FloatLiteralContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitRationalNumber(ctx *RationalNumberContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitIntegerLiteral(ctx *IntegerLiteralContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitDateNumber(ctx *DateNumberContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitStringLiteral(ctx *StringLiteralContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitZeroNumber(ctx *ZeroNumberContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitWholeNumber(ctx *WholeNumberContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitKeySymbol(ctx *KeySymbolContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitTextSymbol(ctx *TextSymbolContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -32,7 +52,11 @@ func (v *BaseRhumbParserVisitor) VisitReferenceLiteral(ctx *ReferenceLiteralCont
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitLabelLiteral(ctx *LabelLiteralContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitLabelSymbol(ctx *LabelSymbolContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitFieldLiteral(ctx *FieldLiteralContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -56,15 +80,11 @@ func (v *BaseRhumbParserVisitor) VisitPrefix(ctx *PrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitAssignment(ctx *AssignmentContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseRhumbParserVisitor) VisitComparative(ctx *ComparativeContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitSimple(ctx *SimpleContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitSimpleExpression(ctx *SimpleExpressionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -80,6 +100,10 @@ func (v *BaseRhumbParserVisitor) VisitInvocation(ctx *InvocationContext) interfa
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseRhumbParserVisitor) VisitLibrary(ctx *LibraryContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseRhumbParserVisitor) VisitRoutine(ctx *RoutineContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -89,6 +113,10 @@ func (v *BaseRhumbParserVisitor) VisitDisjunctive(ctx *DisjunctiveContext) inter
 }
 
 func (v *BaseRhumbParserVisitor) VisitIdentity(ctx *IdentityContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignLabel(ctx *AssignLabelContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -112,11 +140,67 @@ func (v *BaseRhumbParserVisitor) VisitMap(ctx *MapContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitFreeze(ctx *FreezeContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitChainExpression(ctx *ChainExpressionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitInner(ctx *InnerContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitPrefixAssignMutField(ctx *PrefixAssignMutFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitPrefixAssignMutSubField(ctx *PrefixAssignMutSubFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitPrefixAssignImmSubField(ctx *PrefixAssignImmSubFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitPrefixSlurpSpread(ctx *PrefixSlurpSpreadContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignMutField(ctx *AssignMutFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignMutSubField(ctx *AssignMutSubFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignImmField(ctx *AssignImmFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignImmSubField(ctx *AssignImmSubFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitSimpleMapField(ctx *SimpleMapFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitSimpleField(ctx *SimpleFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignBreakingPattern(ctx *AssignBreakingPatternContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignFallthroughPattern(ctx *AssignFallthroughPatternContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAssignDefaultPattern(ctx *AssignDefaultPatternContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAppend(ctx *AppendContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitUnshift(ctx *UnshiftContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -124,11 +208,75 @@ func (v *BaseRhumbParserVisitor) VisitLength(ctx *LengthContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseRhumbParserVisitor) VisitEmpty(ctx *EmptyContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAllSubfields(ctx *AllSubfieldsContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitAllFields(ctx *AllFieldsContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitElements(ctx *ElementsContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitFreeze(ctx *FreezeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitCopy(ctx *CopyContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitToDate(ctx *ToDateContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitParameters(ctx *ParametersContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitConstructor(ctx *ConstructorContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitBase(ctx *BaseContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitToNumber(ctx *ToNumberContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitNegateNumber(ctx *NegateNumberContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitToTruth(ctx *ToTruthContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitNegateTruth(ctx *NegateTruthContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitVariadic(ctx *VariadicContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitToKey(ctx *ToKeyContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseRhumbParserVisitor) VisitFunction(ctx *FunctionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitJunction(ctx *JunctionContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitMethod(ctx *MethodContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -152,19 +300,11 @@ func (v *BaseRhumbParserVisitor) VisitIsEqual(ctx *IsEqualContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitIsLike(ctx *IsLikeContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitIsInner(ctx *IsInnerContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitIsIn(ctx *IsInContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *BaseRhumbParserVisitor) VisitIsOverlayed(ctx *IsOverlayedContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *BaseRhumbParserVisitor) VisitIsTopmost(ctx *IsTopmostContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitIsUnder(ctx *IsUnderContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -172,19 +312,11 @@ func (v *BaseRhumbParserVisitor) VisitNotEqual(ctx *NotEqualContext) interface{}
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitNotLike(ctx *NotLikeContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitNotInner(ctx *NotInnerContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitNotIn(ctx *NotInContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *BaseRhumbParserVisitor) VisitNotOverlayed(ctx *NotOverlayedContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *BaseRhumbParserVisitor) VisitNotTopmost(ctx *NotTopmostContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitNotUnder(ctx *NotUnderContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -196,7 +328,7 @@ func (v *BaseRhumbParserVisitor) VisitDisjunctiveOp(ctx *DisjunctiveOpContext) i
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitOtherwise(ctx *OtherwiseContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitPipe(ctx *PipeContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -220,6 +352,10 @@ func (v *BaseRhumbParserVisitor) VisitElse(ctx *ElseContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseRhumbParserVisitor) VisitDestructure(ctx *DestructureContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseRhumbParserVisitor) VisitAddition(ctx *AdditionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -232,19 +368,23 @@ func (v *BaseRhumbParserVisitor) VisitSubtraction(ctx *SubtractionContext) inter
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseRhumbParserVisitor) VisitConcatenate(ctx *ConcatenateContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseRhumbParserVisitor) VisitMultiplication(ctx *MultiplicationContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitDivision(ctx *DivisionContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitRationalDivision(ctx *RationalDivisionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitIntegerDivision(ctx *IntegerDivisionContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitWholeDivision(ctx *WholeDivisionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitModulo(ctx *ModuloContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitRemainderDivision(ctx *RemainderDivisionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -260,11 +400,11 @@ func (v *BaseRhumbParserVisitor) VisitRootExtraction(ctx *RootExtractionContext)
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitScientific(ctx *ScientificContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitRange(ctx *RangeContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitImmutablePair(ctx *ImmutablePairContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitScientific(ctx *ScientificContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -272,79 +412,79 @@ func (v *BaseRhumbParserVisitor) VisitImmutableLabel(ctx *ImmutableLabelContext)
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitMutablePair(ctx *MutablePairContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseRhumbParserVisitor) VisitMutableLabel(ctx *MutableLabelContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitNumericalNegate(ctx *NumericalNegateContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitEmptyPrefix(ctx *EmptyPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitOuterScope(ctx *OuterScopeContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitFreezePrefix(ctx *FreezePrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitLogicalNegate(ctx *LogicalNegateContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitCopyPrefix(ctx *CopyPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitAssert(ctx *AssertContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitToNumberPrefix(ctx *ToNumberPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitArgument(ctx *ArgumentContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitNegateNumberPrefix(ctx *NegateNumberPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitSlurpSpread(ctx *SlurpSpreadContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitToTruthPrefix(ctx *ToTruthPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitBaseClone(ctx *BaseCloneContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitNegateTruthPrefix(ctx *NegateTruthPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitNumericalPosit(ctx *NumericalPositContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitVariadicPrefix(ctx *VariadicPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitLogicalPosit(ctx *LogicalPositContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitArgumentPrefix(ctx *ArgumentPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitOverlay(ctx *OverlayContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitSignalOutwardPrefix(ctx *SignalOutwardPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitExistentialPosit(ctx *ExistentialPositContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitSignalInwardPrefix(ctx *SignalInwardPrefixContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitImmutableDestruct(ctx *ImmutableDestructContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitNestedField(ctx *NestedFieldContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitMutableDestruct(ctx *MutableDestructContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitDeeplyNestedField(ctx *DeeplyNestedFieldContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitNestedLabel(ctx *NestedLabelContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitNestedSubfield(ctx *NestedSubfieldContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitNestedOverlay(ctx *NestedOverlayContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitDeeplyNestedSubfield(ctx *DeeplyNestedSubfieldContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitRange(ctx *RangeContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitDatePart(ctx *DatePartContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitString(ctx *StringContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitDate(ctx *DateContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseRhumbParserVisitor) VisitText(ctx *TextContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -364,11 +504,11 @@ func (v *BaseRhumbParserVisitor) VisitNamedRef(ctx *NamedRefContext) interface{}
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitFunctionRef(ctx *FunctionRefContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitComputedRef(ctx *ComputedRefContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseRhumbParserVisitor) VisitComputedRef(ctx *ComputedRefContext) interface{} {
+func (v *BaseRhumbParserVisitor) VisitFunctionRef(ctx *FunctionRefContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

@@ -27,19 +27,6 @@ func (r RationalNumber) WHAT() string {
 	return fmt.Sprint("RationalNumber: ", r.Value)
 }
 
-type VersionNumber struct {
-	Major      int
-	Minor      int
-	Patch      int
-	PreRelease string
-	Build      string
-}
-
-func (v VersionNumber) IsObject() {}
-func (v VersionNumber) WHAT() string {
-	return fmt.Sprint("VersionNumber: ", v.Major, v.Minor, v.Patch, "-", v.PreRelease, "+", v.Build)
-}
-
 type DateNumber struct{ Value int }
 
 func (d DateNumber) IsObject() {}
