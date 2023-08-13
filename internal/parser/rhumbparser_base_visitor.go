@@ -1,8 +1,8 @@
-// Code generated from /home/jake/Code/rhumb-grammar/grammar/RhumbParser.g4 by ANTLR 4.10.1. DO NOT EDIT.
+// Code generated from RhumbParser.g4 by ANTLR 4.13.0. DO NOT EDIT.
 
 package parser // RhumbParser
 
-import "github.com/antlr/antlr4/runtime/Go/antlr/v4"
+import "github.com/antlr4-go/antlr/v4"
 
 type BaseRhumbParserVisitor struct {
 	*antlr.BaseParseTreeVisitor

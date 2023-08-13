@@ -1,13 +1,12 @@
-// Code generated from /home/jake/Code/rhumb-grammar/grammar/RhumbLexer.g4 by ANTLR 4.10.1. DO NOT EDIT.
+// Code generated from RhumbLexer.g4 by ANTLR 4.13.0. DO NOT EDIT.
 
 package parser
 
 import (
 	"fmt"
+	"github.com/antlr4-go/antlr/v4"
 	"sync"
 	"unicode"
-
-	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 // Suppress unused import error
@@ -22,28 +21,28 @@ type RhumbLexer struct {
 	// TODO: EOF string
 }
 
-var rhumblexerLexerStaticData struct {
+var RhumbLexerLexerStaticData struct {
 	once                   sync.Once
 	serializedATN          []int32
-	channelNames           []string
-	modeNames              []string
-	literalNames           []string
-	symbolicNames          []string
-	ruleNames              []string
-	predictionContextCache *antlr.PredictionContextCache
+	ChannelNames           []string
+	ModeNames              []string
+	LiteralNames           []string
+	SymbolicNames          []string
+	RuleNames              []string
+	PredictionContextCache *antlr.PredictionContextCache
 	atn                    *antlr.ATN
 	decisionToDFA          []*antlr.DFA
 }
 
 func rhumblexerLexerInit() {
-	staticData := &rhumblexerLexerStaticData
-	staticData.channelNames = []string{
+	staticData := &RhumbLexerLexerStaticData
+	staticData.ChannelNames = []string{
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN",
 	}
-	staticData.modeNames = []string{
+	staticData.ModeNames = []string{
 		"DEFAULT_MODE", "STRING_MODE",
 	}
-	staticData.literalNames = []string{
+	staticData.LiteralNames = []string{
 		"", "'&&'", "'&'", "'@'", "'@@'", "'\\'", "'\\\\'", "'\\/'", "'`'",
 		"'!'", "'!!'", "'!>'", "'^'", "'^^'", "'^='", "'^/'", "':'", "'::'",
 		"':='", "','", "',-'", "'-'", "'--'", "'-/'", "'->'", "'$'", "'.'",
@@ -54,7 +53,7 @@ func rhumblexerLexerInit() {
 		"'0'", "", "", "", "", "'('", "')'", "'['", "']'", "'{'", "'}'", "'<'",
 		"'>'", "", "", "", "", "", "", "", "", "'$('", "'${'", "", "'`$'", "'`\"'",
 	}
-	staticData.symbolicNames = []string{
+	staticData.SymbolicNames = []string{
 		"", "AmpAmp", "Ampersand", "At", "AtAt", "BSlash", "BSlashBSlash", "BSlashFSlash",
 		"Backtick", "Bang", "BangBang", "BangGreater", "Caret", "CaretCaret",
 		"CaretEqual", "CaretFSlash", "Colon", "ColonColon", "ColonEqual", "Comma",
@@ -72,7 +71,7 @@ func rhumblexerLexerInit() {
 		"EnterRoutineInterp", "EnterSelectorInterp", "InterpLabel", "EscapedDollar",
 		"EscapedQuote", "InnerText", "CloseInterpString",
 	}
-	staticData.ruleNames = []string{
+	staticData.RuleNames = []string{
 		"AmpAmp", "Ampersand", "At", "AtAt", "BSlash", "BSlashBSlash", "BSlashFSlash",
 		"Backtick", "Bang", "BangBang", "BangGreater", "Caret", "CaretCaret",
 		"CaretEqual", "CaretFSlash", "Colon", "ColonColon", "ColonEqual", "Comma",
@@ -91,7 +90,7 @@ func rhumblexerLexerInit() {
 		"LabelSymbol", "EnterRoutineInterp", "EnterSelectorInterp", "InterpLabel",
 		"EscapedDollar", "EscapedQuote", "InnerText", "CloseInterpString",
 	}
-	staticData.predictionContextCache = antlr.NewPredictionContextCache()
+	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
 		4, 0, 91, 623, 6, -1, 6, -1, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3,
 		7, 3, 2, 4, 7, 4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9,
@@ -392,7 +391,7 @@ func rhumblexerLexerInit() {
 // NewRhumbLexer(). You can call this function if you wish to initialize the static state ahead
 // of time.
 func RhumbLexerInit() {
-	staticData := &rhumblexerLexerStaticData
+	staticData := &RhumbLexerLexerStaticData
 	staticData.once.Do(rhumblexerLexerInit)
 }
 
@@ -401,13 +400,13 @@ func NewRhumbLexer(input antlr.CharStream) *RhumbLexer {
 	RhumbLexerInit()
 	l := new(RhumbLexer)
 	l.BaseLexer = antlr.NewBaseLexer(input)
-	staticData := &rhumblexerLexerStaticData
-	l.Interpreter = antlr.NewLexerATNSimulator(l, staticData.atn, staticData.decisionToDFA, staticData.predictionContextCache)
-	l.channelNames = staticData.channelNames
-	l.modeNames = staticData.modeNames
-	l.RuleNames = staticData.ruleNames
-	l.LiteralNames = staticData.literalNames
-	l.SymbolicNames = staticData.symbolicNames
+	staticData := &RhumbLexerLexerStaticData
+	l.Interpreter = antlr.NewLexerATNSimulator(l, staticData.atn, staticData.decisionToDFA, staticData.PredictionContextCache)
+	l.channelNames = staticData.ChannelNames
+	l.modeNames = staticData.ModeNames
+	l.RuleNames = staticData.RuleNames
+	l.LiteralNames = staticData.LiteralNames
+	l.SymbolicNames = staticData.SymbolicNames
 	l.GrammarFileName = "RhumbLexer.g4"
 	// TODO: l.EOF = antlr.TokenEOF
 

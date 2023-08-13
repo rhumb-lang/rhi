@@ -1,4 +1,4 @@
-// Code generated from /home/jake/Code/rhumb-grammar/grammar/RhumbParser.g4 by ANTLR 4.10.1. DO NOT EDIT.
+// Code generated from RhumbParser.g4 by ANTLR 4.13.0. DO NOT EDIT.
 
 package parser // RhumbParser
 
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // Suppress unused import errors
@@ -19,20 +19,20 @@ type RhumbParser struct {
 	*antlr.BaseParser
 }
 
-var rhumbparserParserStaticData struct {
+var RhumbParserParserStaticData struct {
 	once                   sync.Once
 	serializedATN          []int32
-	literalNames           []string
-	symbolicNames          []string
-	ruleNames              []string
-	predictionContextCache *antlr.PredictionContextCache
+	LiteralNames           []string
+	SymbolicNames          []string
+	RuleNames              []string
+	PredictionContextCache *antlr.PredictionContextCache
 	atn                    *antlr.ATN
 	decisionToDFA          []*antlr.DFA
 }
 
 func rhumbparserParserInit() {
-	staticData := &rhumbparserParserStaticData
-	staticData.literalNames = []string{
+	staticData := &RhumbParserParserStaticData
+	staticData.LiteralNames = []string{
 		"", "'&&'", "'&'", "'@'", "'@@'", "'\\'", "'\\\\'", "'\\/'", "'`'",
 		"'!'", "'!!'", "'!>'", "'^'", "'^^'", "'^='", "'^/'", "':'", "'::'",
 		"':='", "','", "',-'", "'-'", "'--'", "'-/'", "'->'", "'$'", "'.'",
@@ -43,7 +43,7 @@ func rhumbparserParserInit() {
 		"'0'", "", "", "", "", "'('", "')'", "'['", "']'", "'{'", "'}'", "'<'",
 		"'>'", "", "", "", "", "", "", "", "", "'$('", "'${'", "", "'`$'", "'`\"'",
 	}
-	staticData.symbolicNames = []string{
+	staticData.SymbolicNames = []string{
 		"", "AmpAmp", "Ampersand", "At", "AtAt", "BSlash", "BSlashBSlash", "BSlashFSlash",
 		"Backtick", "Bang", "BangBang", "BangGreater", "Caret", "CaretCaret",
 		"CaretEqual", "CaretFSlash", "Colon", "ColonColon", "ColonEqual", "Comma",
@@ -61,7 +61,7 @@ func rhumbparserParserInit() {
 		"EnterRoutineInterp", "EnterSelectorInterp", "InterpLabel", "EscapedDollar",
 		"EscapedQuote", "InnerText", "CloseInterpString",
 	}
-	staticData.ruleNames = []string{
+	staticData.RuleNames = []string{
 		"expressions", "fields", "patterns", "terminator", "literal", "fieldLiteral",
 		"expression", "chainExpression", "field", "pattern", "accessOp", "applicativeOp",
 		"comparativeOp", "identityOp", "conjunctiveOp", "disjunctiveOp", "conditionalOp",
@@ -69,7 +69,7 @@ func rhumbparserParserInit() {
 		"prefixOp", "chainOp", "datePart", "date", "text", "interpolation",
 		"reference",
 	}
-	staticData.predictionContextCache = antlr.NewPredictionContextCache()
+	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
 		4, 1, 91, 693, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
@@ -425,7 +425,7 @@ func rhumbparserParserInit() {
 // NewRhumbParser(). You can call this function if you wish to initialize the static state ahead
 // of time.
 func RhumbParserInit() {
-	staticData := &rhumbparserParserStaticData
+	staticData := &RhumbParserParserStaticData
 	staticData.once.Do(rhumbparserParserInit)
 }
 
@@ -434,11 +434,11 @@ func NewRhumbParser(input antlr.TokenStream) *RhumbParser {
 	RhumbParserInit()
 	this := new(RhumbParser)
 	this.BaseParser = antlr.NewBaseParser(input)
-	staticData := &rhumbparserParserStaticData
-	this.Interpreter = antlr.NewParserATNSimulator(this, staticData.atn, staticData.decisionToDFA, staticData.predictionContextCache)
-	this.RuleNames = staticData.ruleNames
-	this.LiteralNames = staticData.literalNames
-	this.SymbolicNames = staticData.symbolicNames
+	staticData := &RhumbParserParserStaticData
+	this.Interpreter = antlr.NewParserATNSimulator(this, staticData.atn, staticData.decisionToDFA, staticData.PredictionContextCache)
+	this.RuleNames = staticData.RuleNames
+	this.LiteralNames = staticData.LiteralNames
+	this.SymbolicNames = staticData.SymbolicNames
 	this.GrammarFileName = "RhumbParser.g4"
 
 	return this
@@ -579,20 +579,31 @@ type IExpressionsContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	AllExpression() []IExpressionContext
+	Expression(i int) IExpressionContext
+	AllTerminator() []ITerminatorContext
+	Terminator(i int) ITerminatorContext
+
 	// IsExpressionsContext differentiates from other interfaces.
 	IsExpressionsContext()
 }
 
 type ExpressionsContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyExpressionsContext() *ExpressionsContext {
 	var p = new(ExpressionsContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_expressions
 	return p
+}
+
+func InitEmptyExpressionsContext(p *ExpressionsContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_expressions
 }
 
 func (*ExpressionsContext) IsExpressionsContext() {}
@@ -600,7 +611,7 @@ func (*ExpressionsContext) IsExpressionsContext() {}
 func NewExpressionsContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExpressionsContext {
 	var p = new(ExpressionsContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_expressions
@@ -723,32 +734,16 @@ func (s *ExpressionsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 func (p *RhumbParser) Expressions() (localctx IExpressionsContext) {
-	this := p
-	_ = this
-
 	localctx = NewExpressionsContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 0, RhumbParserRULE_expressions)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(59)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -759,6 +754,9 @@ func (p *RhumbParser) Expressions() (localctx IExpressionsContext) {
 
 		p.SetState(61)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
@@ -767,6 +765,9 @@ func (p *RhumbParser) Expressions() (localctx IExpressionsContext) {
 	}
 	p.SetState(69)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -776,9 +777,12 @@ func (p *RhumbParser) Expressions() (localctx IExpressionsContext) {
 		}
 		p.SetState(65)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9076863210788679164) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&658107) != 0) {
 			{
 				p.SetState(64)
 				p.expression(0)
@@ -788,10 +792,23 @@ func (p *RhumbParser) Expressions() (localctx IExpressionsContext) {
 
 		p.SetState(71)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFieldsContext is an interface to support dynamic dispatch.
@@ -801,20 +818,31 @@ type IFieldsContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	AllField() []IFieldContext
+	Field(i int) IFieldContext
+	AllTerminator() []ITerminatorContext
+	Terminator(i int) ITerminatorContext
+
 	// IsFieldsContext differentiates from other interfaces.
 	IsFieldsContext()
 }
 
 type FieldsContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyFieldsContext() *FieldsContext {
 	var p = new(FieldsContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_fields
 	return p
+}
+
+func InitEmptyFieldsContext(p *FieldsContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_fields
 }
 
 func (*FieldsContext) IsFieldsContext() {}
@@ -822,7 +850,7 @@ func (*FieldsContext) IsFieldsContext() {}
 func NewFieldsContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FieldsContext {
 	var p = new(FieldsContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_fields
@@ -945,32 +973,16 @@ func (s *FieldsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) Fields() (localctx IFieldsContext) {
-	this := p
-	_ = this
-
 	localctx = NewFieldsContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 2, RhumbParserRULE_fields)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(75)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -981,6 +993,9 @@ func (p *RhumbParser) Fields() (localctx IFieldsContext) {
 
 		p.SetState(77)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
@@ -989,6 +1004,9 @@ func (p *RhumbParser) Fields() (localctx IFieldsContext) {
 	}
 	p.SetState(85)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -998,9 +1016,12 @@ func (p *RhumbParser) Fields() (localctx IFieldsContext) {
 		}
 		p.SetState(81)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserAt)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9076863210788679156) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&658107) != 0) {
 			{
 				p.SetState(80)
 				p.Field()
@@ -1010,10 +1031,23 @@ func (p *RhumbParser) Fields() (localctx IFieldsContext) {
 
 		p.SetState(87)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPatternsContext is an interface to support dynamic dispatch.
@@ -1023,20 +1057,31 @@ type IPatternsContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	AllPattern() []IPatternContext
+	Pattern(i int) IPatternContext
+	AllTerminator() []ITerminatorContext
+	Terminator(i int) ITerminatorContext
+
 	// IsPatternsContext differentiates from other interfaces.
 	IsPatternsContext()
 }
 
 type PatternsContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyPatternsContext() *PatternsContext {
 	var p = new(PatternsContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_patterns
 	return p
+}
+
+func InitEmptyPatternsContext(p *PatternsContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_patterns
 }
 
 func (*PatternsContext) IsPatternsContext() {}
@@ -1044,7 +1089,7 @@ func (*PatternsContext) IsPatternsContext() {}
 func NewPatternsContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PatternsContext {
 	var p = new(PatternsContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_patterns
@@ -1167,32 +1212,16 @@ func (s *PatternsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) Patterns() (localctx IPatternsContext) {
-	this := p
-	_ = this
-
 	localctx = NewPatternsContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 4, RhumbParserRULE_patterns)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(91)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -1203,6 +1232,9 @@ func (p *RhumbParser) Patterns() (localctx IPatternsContext) {
 
 		p.SetState(93)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
@@ -1211,6 +1243,9 @@ func (p *RhumbParser) Patterns() (localctx IPatternsContext) {
 	}
 	p.SetState(101)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -1220,9 +1255,12 @@ func (p *RhumbParser) Patterns() (localctx IPatternsContext) {
 		}
 		p.SetState(97)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9076863210788679164) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&658107) != 0) {
 			{
 				p.SetState(96)
 				p.Pattern()
@@ -1232,10 +1270,23 @@ func (p *RhumbParser) Patterns() (localctx IPatternsContext) {
 
 		p.SetState(103)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITerminatorContext is an interface to support dynamic dispatch.
@@ -1245,20 +1296,29 @@ type ITerminatorContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	Semicolon() antlr.TerminalNode
+	NL() antlr.TerminalNode
+
 	// IsTerminatorContext differentiates from other interfaces.
 	IsTerminatorContext()
 }
 
 type TerminatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyTerminatorContext() *TerminatorContext {
 	var p = new(TerminatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_terminator
 	return p
+}
+
+func InitEmptyTerminatorContext(p *TerminatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_terminator
 }
 
 func (*TerminatorContext) IsTerminatorContext() {}
@@ -1266,7 +1326,7 @@ func (*TerminatorContext) IsTerminatorContext() {}
 func NewTerminatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *TerminatorContext {
 	var p = new(TerminatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_terminator
@@ -1315,28 +1375,9 @@ func (s *TerminatorContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) Terminator() (localctx ITerminatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewTerminatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 6, RhumbParserRULE_terminator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -1351,7 +1392,17 @@ func (p *RhumbParser) Terminator() (localctx ITerminatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ILiteralContext is an interface to support dynamic dispatch.
@@ -1360,21 +1411,25 @@ type ILiteralContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsLiteralContext differentiates from other interfaces.
 	IsLiteralContext()
 }
 
 type LiteralContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyLiteralContext() *LiteralContext {
 	var p = new(LiteralContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_literal
 	return p
+}
+
+func InitEmptyLiteralContext(p *LiteralContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_literal
 }
 
 func (*LiteralContext) IsLiteralContext() {}
@@ -1382,7 +1437,7 @@ func (*LiteralContext) IsLiteralContext() {}
 func NewLiteralContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *LiteralContext {
 	var p = new(LiteralContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_literal
@@ -1392,8 +1447,8 @@ func NewLiteralContext(parser antlr.Parser, parent antlr.ParserRuleContext, invo
 
 func (s *LiteralContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *LiteralContext) CopyFrom(ctx *LiteralContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *LiteralContext) CopyAll(ctx *LiteralContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *LiteralContext) GetRuleContext() antlr.RuleContext {
@@ -1405,15 +1460,15 @@ func (s *LiteralContext) ToStringTree(ruleNames []string, recog antlr.Recognizer
 }
 
 type TextSymbolContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewTextSymbolContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *TextSymbolContext {
 	var p = new(TextSymbolContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1461,15 +1516,15 @@ func (s *TextSymbolContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type RationalNumberContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewRationalNumberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RationalNumberContext {
 	var p = new(RationalNumberContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1505,15 +1560,15 @@ func (s *RationalNumberContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type WholeNumberContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewWholeNumberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *WholeNumberContext {
 	var p = new(WholeNumberContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1549,15 +1604,15 @@ func (s *WholeNumberContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type ReferenceLiteralContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewReferenceLiteralContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ReferenceLiteralContext {
 	var p = new(ReferenceLiteralContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1605,15 +1660,15 @@ func (s *ReferenceLiteralContext) Accept(visitor antlr.ParseTreeVisitor) interfa
 }
 
 type ZeroNumberContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewZeroNumberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ZeroNumberContext {
 	var p = new(ZeroNumberContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1649,15 +1704,15 @@ func (s *ZeroNumberContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type KeySymbolContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewKeySymbolContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *KeySymbolContext {
 	var p = new(KeySymbolContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1693,15 +1748,15 @@ func (s *KeySymbolContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type LabelSymbolContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewLabelSymbolContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LabelSymbolContext {
 	var p = new(LabelSymbolContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1741,15 +1796,15 @@ func (s *LabelSymbolContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type DateNumberContext struct {
-	*LiteralContext
+	LiteralContext
 }
 
 func NewDateNumberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DateNumberContext {
 	var p = new(DateNumberContext)
 
-	p.LiteralContext = NewEmptyLiteralContext()
+	InitEmptyLiteralContext(&p.LiteralContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*LiteralContext))
+	p.CopyAll(ctx.(*LiteralContext))
 
 	return p
 }
@@ -1797,37 +1852,25 @@ func (s *DateNumberContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) Literal() (localctx ILiteralContext) {
-	this := p
-	_ = this
-
 	localctx = NewLiteralContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 8, RhumbParserRULE_literal)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(115)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 9, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 9, p.GetParserRuleContext()) {
 	case 1:
 		localctx = NewRationalNumberContext(p, localctx)
 		p.EnterOuterAlt(localctx, 1)
 		{
 			p.SetState(106)
 			p.Match(RhumbParserFloatingPoint)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 2:
@@ -1844,6 +1887,10 @@ func (p *RhumbParser) Literal() (localctx ILiteralContext) {
 		{
 			p.SetState(108)
 			p.Match(RhumbParserZero)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 4:
@@ -1852,6 +1899,10 @@ func (p *RhumbParser) Literal() (localctx ILiteralContext) {
 		{
 			p.SetState(109)
 			p.Match(RhumbParserNumberPart)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 5:
@@ -1860,6 +1911,10 @@ func (p *RhumbParser) Literal() (localctx ILiteralContext) {
 		{
 			p.SetState(110)
 			p.Match(RhumbParserKey)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 6:
@@ -1884,6 +1939,10 @@ func (p *RhumbParser) Literal() (localctx ILiteralContext) {
 		{
 			p.SetState(113)
 			p.Match(RhumbParserBang)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 9:
@@ -1892,11 +1951,27 @@ func (p *RhumbParser) Literal() (localctx ILiteralContext) {
 		{
 			p.SetState(114)
 			p.Match(RhumbParserLabel)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFieldLiteralContext is an interface to support dynamic dispatch.
@@ -1906,20 +1981,34 @@ type IFieldLiteralContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	Zero() antlr.TerminalNode
+	NumberPart() antlr.TerminalNode
+	Key() antlr.TerminalNode
+	Text() ITextContext
+	Reference() IReferenceContext
+	Bang() antlr.TerminalNode
+	Label() antlr.TerminalNode
+
 	// IsFieldLiteralContext differentiates from other interfaces.
 	IsFieldLiteralContext()
 }
 
 type FieldLiteralContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyFieldLiteralContext() *FieldLiteralContext {
 	var p = new(FieldLiteralContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_fieldLiteral
 	return p
+}
+
+func InitEmptyFieldLiteralContext(p *FieldLiteralContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_fieldLiteral
 }
 
 func (*FieldLiteralContext) IsFieldLiteralContext() {}
@@ -1927,7 +2016,7 @@ func (*FieldLiteralContext) IsFieldLiteralContext() {}
 func NewFieldLiteralContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FieldLiteralContext {
 	var p = new(FieldLiteralContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_fieldLiteral
@@ -2020,36 +2109,24 @@ func (s *FieldLiteralContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 }
 
 func (p *RhumbParser) FieldLiteral() (localctx IFieldLiteralContext) {
-	this := p
-	_ = this
-
 	localctx = NewFieldLiteralContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, RhumbParserRULE_fieldLiteral)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(124)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 10, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 10, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
 			p.SetState(117)
 			p.Match(RhumbParserZero)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 2:
@@ -2057,6 +2134,10 @@ func (p *RhumbParser) FieldLiteral() (localctx IFieldLiteralContext) {
 		{
 			p.SetState(118)
 			p.Match(RhumbParserNumberPart)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 3:
@@ -2064,6 +2145,10 @@ func (p *RhumbParser) FieldLiteral() (localctx IFieldLiteralContext) {
 		{
 			p.SetState(119)
 			p.Match(RhumbParserKey)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 4:
@@ -2085,6 +2170,10 @@ func (p *RhumbParser) FieldLiteral() (localctx IFieldLiteralContext) {
 		{
 			p.SetState(122)
 			p.Match(RhumbParserBang)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 7:
@@ -2092,11 +2181,27 @@ func (p *RhumbParser) FieldLiteral() (localctx IFieldLiteralContext) {
 		{
 			p.SetState(123)
 			p.Match(RhumbParserLabel)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IExpressionContext is an interface to support dynamic dispatch.
@@ -2105,21 +2210,25 @@ type IExpressionContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsExpressionContext differentiates from other interfaces.
 	IsExpressionContext()
 }
 
 type ExpressionContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyExpressionContext() *ExpressionContext {
 	var p = new(ExpressionContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_expression
 	return p
+}
+
+func InitEmptyExpressionContext(p *ExpressionContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_expression
 }
 
 func (*ExpressionContext) IsExpressionContext() {}
@@ -2127,7 +2236,7 @@ func (*ExpressionContext) IsExpressionContext() {}
 func NewExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExpressionContext {
 	var p = new(ExpressionContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_expression
@@ -2137,8 +2246,8 @@ func NewExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 
 func (s *ExpressionContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ExpressionContext) CopyFrom(ctx *ExpressionContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ExpressionContext) CopyAll(ctx *ExpressionContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ExpressionContext) GetRuleContext() antlr.RuleContext {
@@ -2150,15 +2259,15 @@ func (s *ExpressionContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 }
 
 type ConjunctiveContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewConjunctiveContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ConjunctiveContext {
 	var p = new(ConjunctiveContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2255,15 +2364,15 @@ func (s *ConjunctiveContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type AccessContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewAccessContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AccessContext {
 	var p = new(AccessContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2392,15 +2501,15 @@ func (s *AccessContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ApplicativeContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewApplicativeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ApplicativeContext {
 	var p = new(ApplicativeContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2497,15 +2606,15 @@ func (s *ApplicativeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type ConditionalContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewConditionalContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ConditionalContext {
 	var p = new(ConditionalContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2602,15 +2711,15 @@ func (s *ConditionalContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type PrefixContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PrefixContext {
 	var p = new(PrefixContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2674,15 +2783,15 @@ func (s *PrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ComparativeContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewComparativeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ComparativeContext {
 	var p = new(ComparativeContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2779,15 +2888,15 @@ func (s *ComparativeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type SimpleExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewSimpleExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SimpleExpressionContext {
 	var p = new(SimpleExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2835,15 +2944,15 @@ func (s *SimpleExpressionContext) Accept(visitor antlr.ParseTreeVisitor) interfa
 }
 
 type MultiplicativeContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewMultiplicativeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MultiplicativeContext {
 	var p = new(MultiplicativeContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -2940,15 +3049,15 @@ func (s *MultiplicativeContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type AdditiveContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewAdditiveContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AdditiveContext {
 	var p = new(AdditiveContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3045,15 +3154,15 @@ func (s *AdditiveContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type InvocationContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewInvocationContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *InvocationContext {
 	var p = new(InvocationContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3166,15 +3275,15 @@ func (s *InvocationContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type LibraryContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewLibraryContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LibraryContext {
 	var p = new(LibraryContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3226,15 +3335,15 @@ func (s *LibraryContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type RoutineContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewRoutineContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RoutineContext {
 	var p = new(RoutineContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3290,15 +3399,15 @@ func (s *RoutineContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type DisjunctiveContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewDisjunctiveContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DisjunctiveContext {
 	var p = new(DisjunctiveContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3395,15 +3504,15 @@ func (s *DisjunctiveContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type IdentityContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewIdentityContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *IdentityContext {
 	var p = new(IdentityContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3500,15 +3609,15 @@ func (s *IdentityContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type AssignLabelContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewAssignLabelContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignLabelContext {
 	var p = new(AssignLabelContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3612,15 +3721,15 @@ func (s *AssignLabelContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type EffectContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewEffectContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *EffectContext {
 	var p = new(EffectContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3733,15 +3842,15 @@ func (s *EffectContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type MemberContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewMemberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MemberContext {
 	var p = new(MemberContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3789,15 +3898,15 @@ func (s *MemberContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type SelectorContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewSelectorContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SelectorContext {
 	var p = new(SelectorContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3853,15 +3962,15 @@ func (s *SelectorContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type PowerContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewPowerContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PowerContext {
 	var p = new(PowerContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -3958,15 +4067,15 @@ func (s *PowerContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type MapContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewMapContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MapContext {
 	var p = new(MapContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -4026,10 +4135,8 @@ func (p *RhumbParser) Expression() (localctx IExpressionContext) {
 }
 
 func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
-	this := p
-	_ = this
-
 	var _parentctx antlr.ParserRuleContext = p.GetParserRuleContext()
+
 	_parentState := p.GetState()
 	localctx = NewExpressionContext(p, p.GetParserRuleContext(), _parentState)
 	var _prevctx IExpressionContext = localctx
@@ -4038,28 +4145,16 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 	p.EnterRecursionRule(localctx, 12, RhumbParserRULE_expression, _p)
 	var _la int
 
-	defer func() {
-		p.UnrollRecursionContexts(_parentctx)
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(173)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 18, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 18, p.GetParserRuleContext()) {
 	case 1:
 		localctx = NewMapContext(p, localctx)
 		p.SetParserRuleContext(localctx)
@@ -4068,12 +4163,19 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(127)
 			p.Match(RhumbParserOpenBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(129)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserAt)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938164) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 			{
 				p.SetState(128)
 				p.Fields()
@@ -4083,6 +4185,10 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(131)
 			p.Match(RhumbParserCloseBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 2:
@@ -4092,29 +4198,52 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(132)
 			p.Match(RhumbParserOpenCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(134)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		if _la == RhumbParserLabel {
 			{
 				p.SetState(133)
 				p.Match(RhumbParserLabel)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 		}
 		{
 			p.SetState(136)
 			p.Match(RhumbParserPath)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(137)
 			p.Match(RhumbParserVersion)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(138)
 			p.Match(RhumbParserCloseCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 3:
@@ -4124,12 +4253,19 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(139)
 			p.Match(RhumbParserOpenCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(141)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938172) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 			{
 				p.SetState(140)
 				p.Patterns()
@@ -4139,6 +4275,10 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(143)
 			p.Match(RhumbParserCloseCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 4:
@@ -4148,12 +4288,19 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(144)
 			p.Match(RhumbParserOpenParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(146)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938172) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 			{
 				p.SetState(145)
 				p.Expressions()
@@ -4163,6 +4310,10 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(148)
 			p.Match(RhumbParserCloseParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 5:
@@ -4193,7 +4344,11 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		_prevctx = localctx
 		p.SetState(155)
 		p.GetErrorHandler().Sync(p)
-		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 15, p.GetParserRuleContext()) {
+		if p.HasError() {
+			goto errorExit
+		}
+
+		switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 15, p.GetParserRuleContext()) {
 		case 1:
 			{
 				p.SetState(153)
@@ -4206,19 +4361,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.FieldLiteral()
 			}
 
+		case antlr.ATNInvalidAltNumber:
+			goto errorExit
 		}
 		p.SetState(160)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(157)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(162)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -4227,16 +4394,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 		}
 		p.SetState(167)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(164)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(169)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -4253,12 +4430,19 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 			p.Literal()
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
 	p.SetState(358)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 44, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 44, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1 {
 			if p.GetParseListeners() != nil {
@@ -4267,27 +4451,42 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 			_prevctx = localctx
 			p.SetState(356)
 			p.GetErrorHandler().Sync(p)
-			switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 43, p.GetParserRuleContext()) {
+			if p.HasError() {
+				goto errorExit
+			}
+
+			switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 43, p.GetParserRuleContext()) {
 			case 1:
 				localctx = NewPowerContext(p, NewExpressionContext(p, _parentctx, _parentState))
 				p.PushNewRecursionContext(localctx, _startState, RhumbParserRULE_expression)
 				p.SetState(175)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 12)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 12)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 12)", ""))
+					goto errorExit
 				}
 				p.SetState(179)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(176)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(181)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4296,16 +4495,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(186)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(183)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(188)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4319,20 +4528,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(191)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 10)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 10)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 10)", ""))
+					goto errorExit
 				}
 				p.SetState(195)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(192)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(197)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4341,16 +4561,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(202)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(199)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(204)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4364,20 +4594,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(207)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 9)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 9)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 9)", ""))
+					goto errorExit
 				}
 				p.SetState(211)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(208)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(213)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4386,16 +4627,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(218)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(215)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(220)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4409,20 +4660,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(223)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
+					goto errorExit
 				}
 				p.SetState(227)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(224)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(229)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4431,16 +4693,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(234)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(231)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(236)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4454,20 +4726,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(239)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 7)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
+					goto errorExit
 				}
 				p.SetState(243)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(240)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(245)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4476,16 +4759,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(250)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(247)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(252)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4499,20 +4792,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(255)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 6)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 6)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 6)", ""))
+					goto errorExit
 				}
 				p.SetState(259)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(256)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(261)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4521,16 +4825,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(266)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(263)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(268)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4544,20 +4858,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(271)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 5)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 5)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 5)", ""))
+					goto errorExit
 				}
 				p.SetState(275)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(272)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(277)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4566,16 +4891,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(282)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(279)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(284)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4589,20 +4924,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(287)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 4)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 4)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 4)", ""))
+					goto errorExit
 				}
 				p.SetState(291)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(288)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(293)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4611,16 +4957,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(298)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(295)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(300)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4634,20 +4990,31 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(303)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 3)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 3)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 3)", ""))
+					goto errorExit
 				}
 				p.SetState(307)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(304)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(309)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4656,16 +5023,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				}
 				p.SetState(314)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserNL {
 					{
 						p.SetState(311)
 						p.Match(RhumbParserNL)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 					p.SetState(316)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				{
@@ -4679,16 +5056,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(319)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 15)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 15)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 15)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(320)
 					p.Match(RhumbParserOpenParen)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				p.SetState(324)
 				p.GetErrorHandler().Sync(p)
-				_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 37, p.GetParserRuleContext())
-
+				if p.HasError() {
+					goto errorExit
+				}
+				_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 37, p.GetParserRuleContext())
+				if p.HasError() {
+					goto errorExit
+				}
 				for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 					if _alt == 1 {
 						{
@@ -4699,13 +5086,22 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 					}
 					p.SetState(326)
 					p.GetErrorHandler().Sync(p)
-					_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 37, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
+					_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 37, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
 				}
 				p.SetState(328)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
-				if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+				if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938172) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 					{
 						p.SetState(327)
 						p.Expressions()
@@ -4715,6 +5111,10 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				{
 					p.SetState(330)
 					p.Match(RhumbParserCloseParen)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
 			case 11:
@@ -4723,16 +5123,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(331)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 14)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 14)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 14)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(332)
 					p.Match(RhumbParserOpenBracket)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				p.SetState(336)
 				p.GetErrorHandler().Sync(p)
-				_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 39, p.GetParserRuleContext())
-
+				if p.HasError() {
+					goto errorExit
+				}
+				_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 39, p.GetParserRuleContext())
+				if p.HasError() {
+					goto errorExit
+				}
 				for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 					if _alt == 1 {
 						{
@@ -4743,27 +5153,41 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 					}
 					p.SetState(338)
 					p.GetErrorHandler().Sync(p)
-					_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 39, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
+					_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 39, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
 				}
 				p.SetState(341)
 				p.GetErrorHandler().Sync(p)
 
-				if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 40, p.GetParserRuleContext()) == 1 {
+				if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 40, p.GetParserRuleContext()) == 1 {
 					{
 						p.SetState(339)
 						p.Expressions()
 					}
 
-				} else if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 40, p.GetParserRuleContext()) == 2 {
+				} else if p.HasError() { // JIM
+					goto errorExit
+				} else if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 40, p.GetParserRuleContext()) == 2 {
 					{
 						p.SetState(340)
 						p.AccessOp()
 					}
 
+				} else if p.HasError() { // JIM
+					goto errorExit
 				}
 				{
 					p.SetState(343)
 					p.Match(RhumbParserCloseBracket)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
 			case 12:
@@ -4772,16 +5196,26 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(344)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 13)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 13)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 13)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(345)
 					p.Match(RhumbParserOpenCurly)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				p.SetState(349)
 				p.GetErrorHandler().Sync(p)
-				_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 41, p.GetParserRuleContext())
-
+				if p.HasError() {
+					goto errorExit
+				}
+				_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 41, p.GetParserRuleContext())
+				if p.HasError() {
+					goto errorExit
+				}
 				for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 					if _alt == 1 {
 						{
@@ -4792,13 +5226,22 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 					}
 					p.SetState(351)
 					p.GetErrorHandler().Sync(p)
-					_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 41, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
+					_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 41, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
 				}
 				p.SetState(353)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
-				if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+				if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938172) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 					{
 						p.SetState(352)
 						p.Patterns()
@@ -4808,17 +5251,39 @@ func (p *RhumbParser) expression(_p int) (localctx IExpressionContext) {
 				{
 					p.SetState(355)
 					p.Match(RhumbParserCloseCurly)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
+			case antlr.ATNInvalidAltNumber:
+				goto errorExit
 			}
 
 		}
 		p.SetState(360)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 44, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 44, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.UnrollRecursionContexts(_parentctx)
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IChainExpressionContext is an interface to support dynamic dispatch.
@@ -4828,20 +5293,49 @@ type IChainExpressionContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	AllFieldLiteral() []IFieldLiteralContext
+	FieldLiteral(i int) IFieldLiteralContext
+	AllChainOp() []IChainOpContext
+	ChainOp(i int) IChainOpContext
+	AllOpenBracket() []antlr.TerminalNode
+	OpenBracket(i int) antlr.TerminalNode
+	AllCloseBracket() []antlr.TerminalNode
+	CloseBracket(i int) antlr.TerminalNode
+	AllOpenParen() []antlr.TerminalNode
+	OpenParen(i int) antlr.TerminalNode
+	AllCloseParen() []antlr.TerminalNode
+	CloseParen(i int) antlr.TerminalNode
+	AllPrefixOp() []IPrefixOpContext
+	PrefixOp(i int) IPrefixOpContext
+	AllTerminator() []ITerminatorContext
+	Terminator(i int) ITerminatorContext
+	AllExpression() []IExpressionContext
+	Expression(i int) IExpressionContext
+	AllAccessOp() []IAccessOpContext
+	AccessOp(i int) IAccessOpContext
+	AllExpressions() []IExpressionsContext
+	Expressions(i int) IExpressionsContext
+
 	// IsChainExpressionContext differentiates from other interfaces.
 	IsChainExpressionContext()
 }
 
 type ChainExpressionContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyChainExpressionContext() *ChainExpressionContext {
 	var p = new(ChainExpressionContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_chainExpression
 	return p
+}
+
+func InitEmptyChainExpressionContext(p *ChainExpressionContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_chainExpression
 }
 
 func (*ChainExpressionContext) IsChainExpressionContext() {}
@@ -4849,7 +5343,7 @@ func (*ChainExpressionContext) IsChainExpressionContext() {}
 func NewChainExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ChainExpressionContext {
 	var p = new(ChainExpressionContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_chainExpression
@@ -5209,28 +5703,9 @@ func (s *ChainExpressionContext) Accept(visitor antlr.ParseTreeVisitor) interfac
 }
 
 func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
-	this := p
-	_ = this
-
 	localctx = NewChainExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 14, RhumbParserRULE_chainExpression)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	var _alt int
 
@@ -5241,12 +5716,18 @@ func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
 	}
 	p.SetState(391)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_alt = 1
 	for ok := true; ok; ok = _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		switch _alt {
 		case 1:
 			p.SetState(391)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 
 			switch p.GetTokenStream().LA(1) {
 			case RhumbParserAt, RhumbParserAtAt, RhumbParserBSlash, RhumbParserBSlashBSlash:
@@ -5256,9 +5737,12 @@ func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
 				}
 				p.SetState(364)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
-				if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserTilde-40)))) != 0) {
+				if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&146508826066096132) != 0 {
 					{
 						p.SetState(363)
 						p.PrefixOp()
@@ -5274,9 +5758,16 @@ func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
 				{
 					p.SetState(368)
 					p.Match(RhumbParserOpenBracket)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				p.SetState(372)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				for _la == RhumbParserSemicolon || _la == RhumbParserNL {
@@ -5287,38 +5778,58 @@ func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
 
 					p.SetState(374)
 					p.GetErrorHandler().Sync(p)
+					if p.HasError() {
+						goto errorExit
+					}
 					_la = p.GetTokenStream().LA(1)
 				}
 				p.SetState(377)
 				p.GetErrorHandler().Sync(p)
 
-				if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 47, p.GetParserRuleContext()) == 1 {
+				if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 47, p.GetParserRuleContext()) == 1 {
 					{
 						p.SetState(375)
 						p.expression(0)
 					}
 
-				} else if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 47, p.GetParserRuleContext()) == 2 {
+				} else if p.HasError() { // JIM
+					goto errorExit
+				} else if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 47, p.GetParserRuleContext()) == 2 {
 					{
 						p.SetState(376)
 						p.AccessOp()
 					}
 
+				} else if p.HasError() { // JIM
+					goto errorExit
 				}
 				{
 					p.SetState(379)
 					p.Match(RhumbParserCloseBracket)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
 			case RhumbParserOpenParen:
 				{
 					p.SetState(380)
 					p.Match(RhumbParserOpenParen)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				p.SetState(384)
 				p.GetErrorHandler().Sync(p)
-				_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 48, p.GetParserRuleContext())
-
+				if p.HasError() {
+					goto errorExit
+				}
+				_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 48, p.GetParserRuleContext())
+				if p.HasError() {
+					goto errorExit
+				}
 				for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 					if _alt == 1 {
 						{
@@ -5329,13 +5840,22 @@ func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
 					}
 					p.SetState(386)
 					p.GetErrorHandler().Sync(p)
-					_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 48, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
+					_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 48, p.GetParserRuleContext())
+					if p.HasError() {
+						goto errorExit
+					}
 				}
 				p.SetState(388)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
-				if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+				if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938172) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 					{
 						p.SetState(387)
 						p.Expressions()
@@ -5345,22 +5865,41 @@ func (p *RhumbParser) ChainExpression() (localctx IChainExpressionContext) {
 				{
 					p.SetState(390)
 					p.Match(RhumbParserCloseParen)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
 			default:
-				panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+				p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+				goto errorExit
 			}
 
 		default:
-			panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+			p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+			goto errorExit
 		}
 
 		p.SetState(393)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 51, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 51, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFieldContext is an interface to support dynamic dispatch.
@@ -5369,21 +5908,25 @@ type IFieldContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsFieldContext differentiates from other interfaces.
 	IsFieldContext()
 }
 
 type FieldContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyFieldContext() *FieldContext {
 	var p = new(FieldContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_field
 	return p
+}
+
+func InitEmptyFieldContext(p *FieldContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_field
 }
 
 func (*FieldContext) IsFieldContext() {}
@@ -5391,7 +5934,7 @@ func (*FieldContext) IsFieldContext() {}
 func NewFieldContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FieldContext {
 	var p = new(FieldContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_field
@@ -5401,8 +5944,8 @@ func NewFieldContext(parser antlr.Parser, parent antlr.ParserRuleContext, invoki
 
 func (s *FieldContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FieldContext) CopyFrom(ctx *FieldContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *FieldContext) CopyAll(ctx *FieldContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *FieldContext) GetRuleContext() antlr.RuleContext {
@@ -5414,15 +5957,15 @@ func (s *FieldContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) 
 }
 
 type SimpleFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewSimpleFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SimpleFieldContext {
 	var p = new(SimpleFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5470,15 +6013,15 @@ func (s *SimpleFieldContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type AssignMutSubFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewAssignMutSubFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignMutSubFieldContext {
 	var p = new(AssignMutSubFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5558,15 +6101,15 @@ func (s *AssignMutSubFieldContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type PrefixAssignImmSubFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewPrefixAssignImmSubFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PrefixAssignImmSubFieldContext {
 	var p = new(PrefixAssignImmSubFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5622,15 +6165,15 @@ func (s *PrefixAssignImmSubFieldContext) Accept(visitor antlr.ParseTreeVisitor) 
 }
 
 type PrefixAssignMutSubFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewPrefixAssignMutSubFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PrefixAssignMutSubFieldContext {
 	var p = new(PrefixAssignMutSubFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5686,15 +6229,15 @@ func (s *PrefixAssignMutSubFieldContext) Accept(visitor antlr.ParseTreeVisitor) 
 }
 
 type AssignMutFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewAssignMutFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignMutFieldContext {
 	var p = new(AssignMutFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5770,15 +6313,15 @@ func (s *AssignMutFieldContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type PrefixSlurpSpreadContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewPrefixSlurpSpreadContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PrefixSlurpSpreadContext {
 	var p = new(PrefixSlurpSpreadContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5830,15 +6373,15 @@ func (s *PrefixSlurpSpreadContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type PrefixAssignMutFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewPrefixAssignMutFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PrefixAssignMutFieldContext {
 	var p = new(PrefixAssignMutFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5890,15 +6433,15 @@ func (s *PrefixAssignMutFieldContext) Accept(visitor antlr.ParseTreeVisitor) int
 }
 
 type AssignImmFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewAssignImmFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignImmFieldContext {
 	var p = new(AssignImmFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -5974,15 +6517,15 @@ func (s *AssignImmFieldContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type AssignImmSubFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewAssignImmSubFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignImmSubFieldContext {
 	var p = new(AssignImmSubFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -6062,15 +6605,15 @@ func (s *AssignImmSubFieldContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type SimpleMapFieldContext struct {
-	*FieldContext
+	FieldContext
 }
 
 func NewSimpleMapFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SimpleMapFieldContext {
 	var p = new(SimpleMapFieldContext)
 
-	p.FieldContext = NewEmptyFieldContext()
+	InitEmptyFieldContext(&p.FieldContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*FieldContext))
+	p.CopyAll(ctx.(*FieldContext))
 
 	return p
 }
@@ -6126,38 +6669,27 @@ func (s *SimpleMapFieldContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 func (p *RhumbParser) Field() (localctx IFieldContext) {
-	this := p
-	_ = this
-
 	localctx = NewFieldContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 16, RhumbParserRULE_field)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(479)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 61, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 61, p.GetParserRuleContext()) {
 	case 1:
 		localctx = NewPrefixAssignMutFieldContext(p, localctx)
 		p.EnterOuterAlt(localctx, 1)
 		{
 			p.SetState(395)
 			p.Match(RhumbParserDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(396)
@@ -6170,10 +6702,18 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(397)
 			p.Match(RhumbParserDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(398)
 			p.Match(RhumbParserAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(399)
@@ -6186,6 +6726,10 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(400)
 			p.Match(RhumbParserColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(401)
@@ -6198,10 +6742,18 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(402)
 			p.Match(RhumbParserColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(403)
 			p.Match(RhumbParserAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(404)
@@ -6214,6 +6766,10 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(405)
 			p.Match(RhumbParserAmpersand)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(406)
@@ -6229,34 +6785,58 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		}
 		p.SetState(411)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(408)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(413)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(414)
 			p.Match(RhumbParserColonColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(418)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(415)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(420)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -6270,6 +6850,10 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(423)
 			p.Match(RhumbParserAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(424)
@@ -6277,34 +6861,58 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		}
 		p.SetState(428)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(425)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(430)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(431)
 			p.Match(RhumbParserColonColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(435)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(432)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(437)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -6321,34 +6929,58 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		}
 		p.SetState(444)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(441)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(446)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(447)
 			p.Match(RhumbParserDotDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(451)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(448)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(453)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -6362,6 +6994,10 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(456)
 			p.Match(RhumbParserAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(457)
@@ -6369,34 +7005,58 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		}
 		p.SetState(461)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(458)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(463)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(464)
 			p.Match(RhumbParserDotDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(468)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(465)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(470)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -6410,12 +7070,19 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(473)
 			p.Match(RhumbParserOpenBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(475)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<RhumbParserAmpersand)|(1<<RhumbParserAt)|(1<<RhumbParserBang)|(1<<RhumbParserCaret)|(1<<RhumbParserColon)|(1<<RhumbParserDash)|(1<<RhumbParserDollar)|(1<<RhumbParserDot)|(1<<RhumbParserEqual))) != 0) || (((_la-40)&-(0x1f+1)) == 0 && ((1<<uint((_la-40)))&((1<<(RhumbParserHash-40))|(1<<(RhumbParserPlus-40))|(1<<(RhumbParserQMark-40))|(1<<(RhumbParserSemicolon-40))|(1<<(RhumbParserTilde-40))|(1<<(RhumbParserFloatingPoint-40))|(1<<(RhumbParserZero-40))|(1<<(RhumbParserNumberPart-40))|(1<<(RhumbParserRawText-40))|(1<<(RhumbParserOpenInterpString-40))|(1<<(RhumbParserOpenParen-40))|(1<<(RhumbParserOpenBracket-40)))) != 0) || (((_la-73)&-(0x1f+1)) == 0 && ((1<<uint((_la-73)))&((1<<(RhumbParserOpenCurly-73))|(1<<(RhumbParserOpenAnglet-73))|(1<<(RhumbParserNL-73))|(1<<(RhumbParserKey-73))|(1<<(RhumbParserLabel-73)))) != 0) {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&-9067856011533938164) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&666299) != 0) {
 			{
 				p.SetState(474)
 				p.Fields()
@@ -6425,6 +7092,10 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 		{
 			p.SetState(477)
 			p.Match(RhumbParserCloseBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 11:
@@ -6435,9 +7106,21 @@ func (p *RhumbParser) Field() (localctx IFieldContext) {
 			p.expression(0)
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPatternContext is an interface to support dynamic dispatch.
@@ -6446,21 +7129,25 @@ type IPatternContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsPatternContext differentiates from other interfaces.
 	IsPatternContext()
 }
 
 type PatternContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyPatternContext() *PatternContext {
 	var p = new(PatternContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_pattern
 	return p
+}
+
+func InitEmptyPatternContext(p *PatternContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_pattern
 }
 
 func (*PatternContext) IsPatternContext() {}
@@ -6468,7 +7155,7 @@ func (*PatternContext) IsPatternContext() {}
 func NewPatternContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PatternContext {
 	var p = new(PatternContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_pattern
@@ -6478,8 +7165,8 @@ func NewPatternContext(parser antlr.Parser, parent antlr.ParserRuleContext, invo
 
 func (s *PatternContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *PatternContext) CopyFrom(ctx *PatternContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *PatternContext) CopyAll(ctx *PatternContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *PatternContext) GetRuleContext() antlr.RuleContext {
@@ -6491,15 +7178,15 @@ func (s *PatternContext) ToStringTree(ruleNames []string, recog antlr.Recognizer
 }
 
 type AssignBreakingPatternContext struct {
-	*PatternContext
+	PatternContext
 }
 
 func NewAssignBreakingPatternContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignBreakingPatternContext {
 	var p = new(AssignBreakingPatternContext)
 
-	p.PatternContext = NewEmptyPatternContext()
+	InitEmptyPatternContext(&p.PatternContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PatternContext))
+	p.CopyAll(ctx.(*PatternContext))
 
 	return p
 }
@@ -6584,15 +7271,15 @@ func (s *AssignBreakingPatternContext) Accept(visitor antlr.ParseTreeVisitor) in
 }
 
 type AssignDefaultPatternContext struct {
-	*PatternContext
+	PatternContext
 }
 
 func NewAssignDefaultPatternContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignDefaultPatternContext {
 	var p = new(AssignDefaultPatternContext)
 
-	p.PatternContext = NewEmptyPatternContext()
+	InitEmptyPatternContext(&p.PatternContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PatternContext))
+	p.CopyAll(ctx.(*PatternContext))
 
 	return p
 }
@@ -6640,15 +7327,15 @@ func (s *AssignDefaultPatternContext) Accept(visitor antlr.ParseTreeVisitor) int
 }
 
 type AssignFallthroughPatternContext struct {
-	*PatternContext
+	PatternContext
 }
 
 func NewAssignFallthroughPatternContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AssignFallthroughPatternContext {
 	var p = new(AssignFallthroughPatternContext)
 
-	p.PatternContext = NewEmptyPatternContext()
+	InitEmptyPatternContext(&p.PatternContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PatternContext))
+	p.CopyAll(ctx.(*PatternContext))
 
 	return p
 }
@@ -6733,32 +7420,17 @@ func (s *AssignFallthroughPatternContext) Accept(visitor antlr.ParseTreeVisitor)
 }
 
 func (p *RhumbParser) Pattern() (localctx IPatternContext) {
-	this := p
-	_ = this
-
 	localctx = NewPatternContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 18, RhumbParserRULE_pattern)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(514)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 66, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 66, p.GetParserRuleContext()) {
 	case 1:
 		localctx = NewAssignBreakingPatternContext(p, localctx)
 		p.EnterOuterAlt(localctx, 1)
@@ -6768,34 +7440,58 @@ func (p *RhumbParser) Pattern() (localctx IPatternContext) {
 		}
 		p.SetState(485)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(482)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(487)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(488)
 			p.Match(RhumbParserDotDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(492)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(489)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(494)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -6812,34 +7508,58 @@ func (p *RhumbParser) Pattern() (localctx IPatternContext) {
 		}
 		p.SetState(501)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(498)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(503)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(504)
 			p.Match(RhumbParserColonColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(508)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		for _la == RhumbParserNL {
 			{
 				p.SetState(505)
 				p.Match(RhumbParserNL)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 			p.SetState(510)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
@@ -6855,9 +7575,21 @@ func (p *RhumbParser) Pattern() (localctx IPatternContext) {
 			p.expression(0)
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAccessOpContext is an interface to support dynamic dispatch.
@@ -6866,21 +7598,25 @@ type IAccessOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsAccessOpContext differentiates from other interfaces.
 	IsAccessOpContext()
 }
 
 type AccessOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAccessOpContext() *AccessOpContext {
 	var p = new(AccessOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_accessOp
 	return p
+}
+
+func InitEmptyAccessOpContext(p *AccessOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_accessOp
 }
 
 func (*AccessOpContext) IsAccessOpContext() {}
@@ -6888,7 +7624,7 @@ func (*AccessOpContext) IsAccessOpContext() {}
 func NewAccessOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AccessOpContext {
 	var p = new(AccessOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_accessOp
@@ -6898,8 +7634,8 @@ func NewAccessOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, inv
 
 func (s *AccessOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *AccessOpContext) CopyFrom(ctx *AccessOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *AccessOpContext) CopyAll(ctx *AccessOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *AccessOpContext) GetRuleContext() antlr.RuleContext {
@@ -6911,15 +7647,15 @@ func (s *AccessOpContext) ToStringTree(ruleNames []string, recog antlr.Recognize
 }
 
 type AllFieldsContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewAllFieldsContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AllFieldsContext {
 	var p = new(AllFieldsContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -6955,15 +7691,15 @@ func (s *AllFieldsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ToTruthContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewToTruthContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ToTruthContext {
 	var p = new(ToTruthContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -6999,15 +7735,15 @@ func (s *ToTruthContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ToDateContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewToDateContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ToDateContext {
 	var p = new(ToDateContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7043,15 +7779,15 @@ func (s *ToDateContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type LengthContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewLengthContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LengthContext {
 	var p = new(LengthContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7087,15 +7823,15 @@ func (s *LengthContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ConstructorContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewConstructorContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ConstructorContext {
 	var p = new(ConstructorContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7131,15 +7867,15 @@ func (s *ConstructorContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type NegateNumberContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewNegateNumberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NegateNumberContext {
 	var p = new(NegateNumberContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7175,15 +7911,15 @@ func (s *NegateNumberContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 }
 
 type EmptyContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewEmptyContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *EmptyContext {
 	var p = new(EmptyContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7219,15 +7955,15 @@ func (s *EmptyContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type AllSubfieldsContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewAllSubfieldsContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AllSubfieldsContext {
 	var p = new(AllSubfieldsContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7263,15 +7999,15 @@ func (s *AllSubfieldsContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 }
 
 type ToKeyContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewToKeyContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ToKeyContext {
 	var p = new(ToKeyContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7307,15 +8043,15 @@ func (s *ToKeyContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type FreezeContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewFreezeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *FreezeContext {
 	var p = new(FreezeContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7351,15 +8087,15 @@ func (s *FreezeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type NegateTruthContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewNegateTruthContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NegateTruthContext {
 	var p = new(NegateTruthContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7395,15 +8131,15 @@ func (s *NegateTruthContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type ElementsContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewElementsContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ElementsContext {
 	var p = new(ElementsContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7439,15 +8175,15 @@ func (s *ElementsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type UnshiftContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewUnshiftContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *UnshiftContext {
 	var p = new(UnshiftContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7483,15 +8219,15 @@ func (s *UnshiftContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type CopyContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewCopyContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *CopyContext {
 	var p = new(CopyContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7527,15 +8263,15 @@ func (s *CopyContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type VariadicContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewVariadicContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *VariadicContext {
 	var p = new(VariadicContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7571,15 +8307,15 @@ func (s *VariadicContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ParametersContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewParametersContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ParametersContext {
 	var p = new(ParametersContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7615,15 +8351,15 @@ func (s *ParametersContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ToNumberContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewToNumberContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ToNumberContext {
 	var p = new(ToNumberContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7659,15 +8395,15 @@ func (s *ToNumberContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type AppendContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewAppendContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AppendContext {
 	var p = new(AppendContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7703,15 +8439,15 @@ func (s *AppendContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type BaseContext struct {
-	*AccessOpContext
+	AccessOpContext
 }
 
 func NewBaseContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BaseContext {
 	var p = new(BaseContext)
 
-	p.AccessOpContext = NewEmptyAccessOpContext()
+	InitEmptyAccessOpContext(&p.AccessOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AccessOpContext))
+	p.CopyAll(ctx.(*AccessOpContext))
 
 	return p
 }
@@ -7747,30 +8483,13 @@ func (s *BaseContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewAccessOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 20, RhumbParserRULE_accessOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(535)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserCloseAnglet:
@@ -7779,6 +8498,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(516)
 			p.Match(RhumbParserCloseAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserOpenAnglet:
@@ -7787,6 +8510,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(517)
 			p.Match(RhumbParserOpenAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserHash:
@@ -7795,6 +8522,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(518)
 			p.Match(RhumbParserHash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserQMark:
@@ -7803,6 +8534,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(519)
 			p.Match(RhumbParserQMark)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserAt:
@@ -7811,6 +8546,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(520)
 			p.Match(RhumbParserAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserStar:
@@ -7819,6 +8558,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(521)
 			p.Match(RhumbParserStar)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserZero:
@@ -7827,6 +8570,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(522)
 			p.Match(RhumbParserZero)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDot:
@@ -7835,6 +8582,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(523)
 			p.Match(RhumbParserDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserColon:
@@ -7843,6 +8594,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(524)
 			p.Match(RhumbParserColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserFSlash:
@@ -7851,6 +8606,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(525)
 			p.Match(RhumbParserFSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDollar:
@@ -7859,6 +8618,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(526)
 			p.Match(RhumbParserDollar)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserCaret:
@@ -7867,6 +8630,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(527)
 			p.Match(RhumbParserCaret)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserBang:
@@ -7875,6 +8642,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(528)
 			p.Match(RhumbParserBang)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserPlus:
@@ -7883,6 +8654,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(529)
 			p.Match(RhumbParserPlus)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDash:
@@ -7891,6 +8666,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(530)
 			p.Match(RhumbParserDash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEqual:
@@ -7899,6 +8678,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(531)
 			p.Match(RhumbParserEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserTilde:
@@ -7907,6 +8690,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(532)
 			p.Match(RhumbParserTilde)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserAmpersand:
@@ -7915,6 +8702,10 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(533)
 			p.Match(RhumbParserAmpersand)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserBacktick:
@@ -7923,13 +8714,28 @@ func (p *RhumbParser) AccessOp() (localctx IAccessOpContext) {
 		{
 			p.SetState(534)
 			p.Match(RhumbParserBacktick)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IApplicativeOpContext is an interface to support dynamic dispatch.
@@ -7938,21 +8744,25 @@ type IApplicativeOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsApplicativeOpContext differentiates from other interfaces.
 	IsApplicativeOpContext()
 }
 
 type ApplicativeOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyApplicativeOpContext() *ApplicativeOpContext {
 	var p = new(ApplicativeOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_applicativeOp
 	return p
+}
+
+func InitEmptyApplicativeOpContext(p *ApplicativeOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_applicativeOp
 }
 
 func (*ApplicativeOpContext) IsApplicativeOpContext() {}
@@ -7960,7 +8770,7 @@ func (*ApplicativeOpContext) IsApplicativeOpContext() {}
 func NewApplicativeOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ApplicativeOpContext {
 	var p = new(ApplicativeOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_applicativeOp
@@ -7970,8 +8780,8 @@ func NewApplicativeOpContext(parser antlr.Parser, parent antlr.ParserRuleContext
 
 func (s *ApplicativeOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ApplicativeOpContext) CopyFrom(ctx *ApplicativeOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ApplicativeOpContext) CopyAll(ctx *ApplicativeOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ApplicativeOpContext) GetRuleContext() antlr.RuleContext {
@@ -7983,15 +8793,15 @@ func (s *ApplicativeOpContext) ToStringTree(ruleNames []string, recog antlr.Reco
 }
 
 type MethodContext struct {
-	*ApplicativeOpContext
+	ApplicativeOpContext
 }
 
 func NewMethodContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MethodContext {
 	var p = new(MethodContext)
 
-	p.ApplicativeOpContext = NewEmptyApplicativeOpContext()
+	InitEmptyApplicativeOpContext(&p.ApplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ApplicativeOpContext))
+	p.CopyAll(ctx.(*ApplicativeOpContext))
 
 	return p
 }
@@ -8027,15 +8837,15 @@ func (s *MethodContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type FunctionContext struct {
-	*ApplicativeOpContext
+	ApplicativeOpContext
 }
 
 func NewFunctionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *FunctionContext {
 	var p = new(FunctionContext)
 
-	p.ApplicativeOpContext = NewEmptyApplicativeOpContext()
+	InitEmptyApplicativeOpContext(&p.ApplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ApplicativeOpContext))
+	p.CopyAll(ctx.(*ApplicativeOpContext))
 
 	return p
 }
@@ -8071,30 +8881,13 @@ func (s *FunctionContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) ApplicativeOp() (localctx IApplicativeOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewApplicativeOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 22, RhumbParserRULE_applicativeOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(539)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserDashGreater:
@@ -8103,6 +8896,10 @@ func (p *RhumbParser) ApplicativeOp() (localctx IApplicativeOpContext) {
 		{
 			p.SetState(537)
 			p.Match(RhumbParserDashGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserBangGreater:
@@ -8111,13 +8908,28 @@ func (p *RhumbParser) ApplicativeOp() (localctx IApplicativeOpContext) {
 		{
 			p.SetState(538)
 			p.Match(RhumbParserBangGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IComparativeOpContext is an interface to support dynamic dispatch.
@@ -8126,21 +8938,25 @@ type IComparativeOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsComparativeOpContext differentiates from other interfaces.
 	IsComparativeOpContext()
 }
 
 type ComparativeOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyComparativeOpContext() *ComparativeOpContext {
 	var p = new(ComparativeOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_comparativeOp
 	return p
+}
+
+func InitEmptyComparativeOpContext(p *ComparativeOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_comparativeOp
 }
 
 func (*ComparativeOpContext) IsComparativeOpContext() {}
@@ -8148,7 +8964,7 @@ func (*ComparativeOpContext) IsComparativeOpContext() {}
 func NewComparativeOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ComparativeOpContext {
 	var p = new(ComparativeOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_comparativeOp
@@ -8158,8 +8974,8 @@ func NewComparativeOpContext(parser antlr.Parser, parent antlr.ParserRuleContext
 
 func (s *ComparativeOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ComparativeOpContext) CopyFrom(ctx *ComparativeOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ComparativeOpContext) CopyAll(ctx *ComparativeOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ComparativeOpContext) GetRuleContext() antlr.RuleContext {
@@ -8171,15 +8987,15 @@ func (s *ComparativeOpContext) ToStringTree(ruleNames []string, recog antlr.Reco
 }
 
 type LessThanContext struct {
-	*ComparativeOpContext
+	ComparativeOpContext
 }
 
 func NewLessThanContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LessThanContext {
 	var p = new(LessThanContext)
 
-	p.ComparativeOpContext = NewEmptyComparativeOpContext()
+	InitEmptyComparativeOpContext(&p.ComparativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ComparativeOpContext))
+	p.CopyAll(ctx.(*ComparativeOpContext))
 
 	return p
 }
@@ -8215,15 +9031,15 @@ func (s *LessThanContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type GreaterThanOrEqualToContext struct {
-	*ComparativeOpContext
+	ComparativeOpContext
 }
 
 func NewGreaterThanOrEqualToContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *GreaterThanOrEqualToContext {
 	var p = new(GreaterThanOrEqualToContext)
 
-	p.ComparativeOpContext = NewEmptyComparativeOpContext()
+	InitEmptyComparativeOpContext(&p.ComparativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ComparativeOpContext))
+	p.CopyAll(ctx.(*ComparativeOpContext))
 
 	return p
 }
@@ -8259,15 +9075,15 @@ func (s *GreaterThanOrEqualToContext) Accept(visitor antlr.ParseTreeVisitor) int
 }
 
 type LessThanOrEqualToContext struct {
-	*ComparativeOpContext
+	ComparativeOpContext
 }
 
 func NewLessThanOrEqualToContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LessThanOrEqualToContext {
 	var p = new(LessThanOrEqualToContext)
 
-	p.ComparativeOpContext = NewEmptyComparativeOpContext()
+	InitEmptyComparativeOpContext(&p.ComparativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ComparativeOpContext))
+	p.CopyAll(ctx.(*ComparativeOpContext))
 
 	return p
 }
@@ -8303,15 +9119,15 @@ func (s *LessThanOrEqualToContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type GreaterThanContext struct {
-	*ComparativeOpContext
+	ComparativeOpContext
 }
 
 func NewGreaterThanContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *GreaterThanContext {
 	var p = new(GreaterThanContext)
 
-	p.ComparativeOpContext = NewEmptyComparativeOpContext()
+	InitEmptyComparativeOpContext(&p.ComparativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ComparativeOpContext))
+	p.CopyAll(ctx.(*ComparativeOpContext))
 
 	return p
 }
@@ -8347,30 +9163,13 @@ func (s *GreaterThanContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 func (p *RhumbParser) ComparativeOp() (localctx IComparativeOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewComparativeOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 24, RhumbParserRULE_comparativeOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(545)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserGreaterGreater:
@@ -8379,6 +9178,10 @@ func (p *RhumbParser) ComparativeOp() (localctx IComparativeOpContext) {
 		{
 			p.SetState(541)
 			p.Match(RhumbParserGreaterGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserGreaterEqual:
@@ -8387,6 +9190,10 @@ func (p *RhumbParser) ComparativeOp() (localctx IComparativeOpContext) {
 		{
 			p.SetState(542)
 			p.Match(RhumbParserGreaterEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserLesserLesser:
@@ -8395,6 +9202,10 @@ func (p *RhumbParser) ComparativeOp() (localctx IComparativeOpContext) {
 		{
 			p.SetState(543)
 			p.Match(RhumbParserLesserLesser)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserLesserEqual:
@@ -8403,13 +9214,28 @@ func (p *RhumbParser) ComparativeOp() (localctx IComparativeOpContext) {
 		{
 			p.SetState(544)
 			p.Match(RhumbParserLesserEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIdentityOpContext is an interface to support dynamic dispatch.
@@ -8418,21 +9244,25 @@ type IIdentityOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsIdentityOpContext differentiates from other interfaces.
 	IsIdentityOpContext()
 }
 
 type IdentityOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyIdentityOpContext() *IdentityOpContext {
 	var p = new(IdentityOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_identityOp
 	return p
+}
+
+func InitEmptyIdentityOpContext(p *IdentityOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_identityOp
 }
 
 func (*IdentityOpContext) IsIdentityOpContext() {}
@@ -8440,7 +9270,7 @@ func (*IdentityOpContext) IsIdentityOpContext() {}
 func NewIdentityOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *IdentityOpContext {
 	var p = new(IdentityOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_identityOp
@@ -8450,8 +9280,8 @@ func NewIdentityOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 
 func (s *IdentityOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *IdentityOpContext) CopyFrom(ctx *IdentityOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *IdentityOpContext) CopyAll(ctx *IdentityOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *IdentityOpContext) GetRuleContext() antlr.RuleContext {
@@ -8463,15 +9293,15 @@ func (s *IdentityOpContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 }
 
 type IsUnderContext struct {
-	*IdentityOpContext
+	IdentityOpContext
 }
 
 func NewIsUnderContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *IsUnderContext {
 	var p = new(IsUnderContext)
 
-	p.IdentityOpContext = NewEmptyIdentityOpContext()
+	InitEmptyIdentityOpContext(&p.IdentityOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*IdentityOpContext))
+	p.CopyAll(ctx.(*IdentityOpContext))
 
 	return p
 }
@@ -8507,15 +9337,15 @@ func (s *IsUnderContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type IsEqualContext struct {
-	*IdentityOpContext
+	IdentityOpContext
 }
 
 func NewIsEqualContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *IsEqualContext {
 	var p = new(IsEqualContext)
 
-	p.IdentityOpContext = NewEmptyIdentityOpContext()
+	InitEmptyIdentityOpContext(&p.IdentityOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*IdentityOpContext))
+	p.CopyAll(ctx.(*IdentityOpContext))
 
 	return p
 }
@@ -8551,15 +9381,15 @@ func (s *IsEqualContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type NotEqualContext struct {
-	*IdentityOpContext
+	IdentityOpContext
 }
 
 func NewNotEqualContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NotEqualContext {
 	var p = new(NotEqualContext)
 
-	p.IdentityOpContext = NewEmptyIdentityOpContext()
+	InitEmptyIdentityOpContext(&p.IdentityOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*IdentityOpContext))
+	p.CopyAll(ctx.(*IdentityOpContext))
 
 	return p
 }
@@ -8595,15 +9425,15 @@ func (s *NotEqualContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type NotInnerContext struct {
-	*IdentityOpContext
+	IdentityOpContext
 }
 
 func NewNotInnerContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NotInnerContext {
 	var p = new(NotInnerContext)
 
-	p.IdentityOpContext = NewEmptyIdentityOpContext()
+	InitEmptyIdentityOpContext(&p.IdentityOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*IdentityOpContext))
+	p.CopyAll(ctx.(*IdentityOpContext))
 
 	return p
 }
@@ -8639,15 +9469,15 @@ func (s *NotInnerContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type NotUnderContext struct {
-	*IdentityOpContext
+	IdentityOpContext
 }
 
 func NewNotUnderContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NotUnderContext {
 	var p = new(NotUnderContext)
 
-	p.IdentityOpContext = NewEmptyIdentityOpContext()
+	InitEmptyIdentityOpContext(&p.IdentityOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*IdentityOpContext))
+	p.CopyAll(ctx.(*IdentityOpContext))
 
 	return p
 }
@@ -8683,15 +9513,15 @@ func (s *NotUnderContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type IsInnerContext struct {
-	*IdentityOpContext
+	IdentityOpContext
 }
 
 func NewIsInnerContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *IsInnerContext {
 	var p = new(IsInnerContext)
 
-	p.IdentityOpContext = NewEmptyIdentityOpContext()
+	InitEmptyIdentityOpContext(&p.IdentityOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*IdentityOpContext))
+	p.CopyAll(ctx.(*IdentityOpContext))
 
 	return p
 }
@@ -8727,30 +9557,13 @@ func (s *IsInnerContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewIdentityOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 26, RhumbParserRULE_identityOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(553)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserEqualEqual:
@@ -8759,6 +9572,10 @@ func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
 		{
 			p.SetState(547)
 			p.Match(RhumbParserEqualEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEqualBSlash:
@@ -8767,6 +9584,10 @@ func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
 		{
 			p.SetState(548)
 			p.Match(RhumbParserEqualBSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEqualAt:
@@ -8775,6 +9596,10 @@ func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
 		{
 			p.SetState(549)
 			p.Match(RhumbParserEqualAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserTildeTilde:
@@ -8783,6 +9608,10 @@ func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
 		{
 			p.SetState(550)
 			p.Match(RhumbParserTildeTilde)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserTildeBSlash:
@@ -8791,6 +9620,10 @@ func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
 		{
 			p.SetState(551)
 			p.Match(RhumbParserTildeBSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserTildeAt:
@@ -8799,13 +9632,28 @@ func (p *RhumbParser) IdentityOp() (localctx IIdentityOpContext) {
 		{
 			p.SetState(552)
 			p.Match(RhumbParserTildeAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConjunctiveOpContext is an interface to support dynamic dispatch.
@@ -8815,20 +9663,28 @@ type IConjunctiveOpContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	FSlashBSlash() antlr.TerminalNode
+
 	// IsConjunctiveOpContext differentiates from other interfaces.
 	IsConjunctiveOpContext()
 }
 
 type ConjunctiveOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConjunctiveOpContext() *ConjunctiveOpContext {
 	var p = new(ConjunctiveOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_conjunctiveOp
 	return p
+}
+
+func InitEmptyConjunctiveOpContext(p *ConjunctiveOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_conjunctiveOp
 }
 
 func (*ConjunctiveOpContext) IsConjunctiveOpContext() {}
@@ -8836,7 +9692,7 @@ func (*ConjunctiveOpContext) IsConjunctiveOpContext() {}
 func NewConjunctiveOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConjunctiveOpContext {
 	var p = new(ConjunctiveOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_conjunctiveOp
@@ -8881,35 +9737,29 @@ func (s *ConjunctiveOpContext) Accept(visitor antlr.ParseTreeVisitor) interface{
 }
 
 func (p *RhumbParser) ConjunctiveOp() (localctx IConjunctiveOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewConjunctiveOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 28, RhumbParserRULE_conjunctiveOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(555)
 		p.Match(RhumbParserFSlashBSlash)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IDisjunctiveOpContext is an interface to support dynamic dispatch.
@@ -8919,20 +9769,28 @@ type IDisjunctiveOpContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	BSlashFSlash() antlr.TerminalNode
+
 	// IsDisjunctiveOpContext differentiates from other interfaces.
 	IsDisjunctiveOpContext()
 }
 
 type DisjunctiveOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyDisjunctiveOpContext() *DisjunctiveOpContext {
 	var p = new(DisjunctiveOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_disjunctiveOp
 	return p
+}
+
+func InitEmptyDisjunctiveOpContext(p *DisjunctiveOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_disjunctiveOp
 }
 
 func (*DisjunctiveOpContext) IsDisjunctiveOpContext() {}
@@ -8940,7 +9798,7 @@ func (*DisjunctiveOpContext) IsDisjunctiveOpContext() {}
 func NewDisjunctiveOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *DisjunctiveOpContext {
 	var p = new(DisjunctiveOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_disjunctiveOp
@@ -8985,35 +9843,29 @@ func (s *DisjunctiveOpContext) Accept(visitor antlr.ParseTreeVisitor) interface{
 }
 
 func (p *RhumbParser) DisjunctiveOp() (localctx IDisjunctiveOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewDisjunctiveOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 30, RhumbParserRULE_disjunctiveOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(557)
 		p.Match(RhumbParserBSlashFSlash)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConditionalOpContext is an interface to support dynamic dispatch.
@@ -9022,21 +9874,25 @@ type IConditionalOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsConditionalOpContext differentiates from other interfaces.
 	IsConditionalOpContext()
 }
 
 type ConditionalOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConditionalOpContext() *ConditionalOpContext {
 	var p = new(ConditionalOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_conditionalOp
 	return p
+}
+
+func InitEmptyConditionalOpContext(p *ConditionalOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_conditionalOp
 }
 
 func (*ConditionalOpContext) IsConditionalOpContext() {}
@@ -9044,7 +9900,7 @@ func (*ConditionalOpContext) IsConditionalOpContext() {}
 func NewConditionalOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConditionalOpContext {
 	var p = new(ConditionalOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_conditionalOp
@@ -9054,8 +9910,8 @@ func NewConditionalOpContext(parser antlr.Parser, parent antlr.ParserRuleContext
 
 func (s *ConditionalOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ConditionalOpContext) CopyFrom(ctx *ConditionalOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ConditionalOpContext) CopyAll(ctx *ConditionalOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ConditionalOpContext) GetRuleContext() antlr.RuleContext {
@@ -9067,15 +9923,15 @@ func (s *ConditionalOpContext) ToStringTree(ruleNames []string, recog antlr.Reco
 }
 
 type ForeachContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewForeachContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ForeachContext {
 	var p = new(ForeachContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9111,15 +9967,15 @@ func (s *ForeachContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type DefaultContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewDefaultContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DefaultContext {
 	var p = new(DefaultContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9155,15 +10011,15 @@ func (s *DefaultContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ElseContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewElseContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ElseContext {
 	var p = new(ElseContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9199,15 +10055,15 @@ func (s *ElseContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type PipeContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewPipeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *PipeContext {
 	var p = new(PipeContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9243,15 +10099,15 @@ func (s *PipeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ThenContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewThenContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ThenContext {
 	var p = new(ThenContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9287,15 +10143,15 @@ func (s *ThenContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type WhileContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewWhileContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *WhileContext {
 	var p = new(WhileContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9331,15 +10187,15 @@ func (s *WhileContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type DestructureContext struct {
-	*ConditionalOpContext
+	ConditionalOpContext
 }
 
 func NewDestructureContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DestructureContext {
 	var p = new(DestructureContext)
 
-	p.ConditionalOpContext = NewEmptyConditionalOpContext()
+	InitEmptyConditionalOpContext(&p.ConditionalOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ConditionalOpContext))
+	p.CopyAll(ctx.(*ConditionalOpContext))
 
 	return p
 }
@@ -9375,30 +10231,13 @@ func (s *DestructureContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewConditionalOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 32, RhumbParserRULE_conditionalOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(566)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserPipePipe:
@@ -9407,6 +10246,10 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(559)
 			p.Match(RhumbParserPipePipe)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserQMarkQMark:
@@ -9415,6 +10258,10 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(560)
 			p.Match(RhumbParserQMarkQMark)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserLesserGreater:
@@ -9423,6 +10270,10 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(561)
 			p.Match(RhumbParserLesserGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserPipeGreater:
@@ -9431,6 +10282,10 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(562)
 			p.Match(RhumbParserPipeGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEqualGreater:
@@ -9439,6 +10294,10 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(563)
 			p.Match(RhumbParserEqualGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserTildeGreater:
@@ -9447,6 +10306,10 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(564)
 			p.Match(RhumbParserTildeGreater)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserCaretEqual:
@@ -9455,13 +10318,28 @@ func (p *RhumbParser) ConditionalOp() (localctx IConditionalOpContext) {
 		{
 			p.SetState(565)
 			p.Match(RhumbParserCaretEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAdditiveOpContext is an interface to support dynamic dispatch.
@@ -9470,21 +10348,25 @@ type IAdditiveOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsAdditiveOpContext differentiates from other interfaces.
 	IsAdditiveOpContext()
 }
 
 type AdditiveOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAdditiveOpContext() *AdditiveOpContext {
 	var p = new(AdditiveOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_additiveOp
 	return p
+}
+
+func InitEmptyAdditiveOpContext(p *AdditiveOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_additiveOp
 }
 
 func (*AdditiveOpContext) IsAdditiveOpContext() {}
@@ -9492,7 +10374,7 @@ func (*AdditiveOpContext) IsAdditiveOpContext() {}
 func NewAdditiveOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AdditiveOpContext {
 	var p = new(AdditiveOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_additiveOp
@@ -9502,8 +10384,8 @@ func NewAdditiveOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 
 func (s *AdditiveOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *AdditiveOpContext) CopyFrom(ctx *AdditiveOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *AdditiveOpContext) CopyAll(ctx *AdditiveOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *AdditiveOpContext) GetRuleContext() antlr.RuleContext {
@@ -9515,15 +10397,15 @@ func (s *AdditiveOpContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 }
 
 type ConcatenateContext struct {
-	*AdditiveOpContext
+	AdditiveOpContext
 }
 
 func NewConcatenateContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ConcatenateContext {
 	var p = new(ConcatenateContext)
 
-	p.AdditiveOpContext = NewEmptyAdditiveOpContext()
+	InitEmptyAdditiveOpContext(&p.AdditiveOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AdditiveOpContext))
+	p.CopyAll(ctx.(*AdditiveOpContext))
 
 	return p
 }
@@ -9559,15 +10441,15 @@ func (s *ConcatenateContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type SubtractionContext struct {
-	*AdditiveOpContext
+	AdditiveOpContext
 }
 
 func NewSubtractionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SubtractionContext {
 	var p = new(SubtractionContext)
 
-	p.AdditiveOpContext = NewEmptyAdditiveOpContext()
+	InitEmptyAdditiveOpContext(&p.AdditiveOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AdditiveOpContext))
+	p.CopyAll(ctx.(*AdditiveOpContext))
 
 	return p
 }
@@ -9603,15 +10485,15 @@ func (s *SubtractionContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type DeviationContext struct {
-	*AdditiveOpContext
+	AdditiveOpContext
 }
 
 func NewDeviationContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DeviationContext {
 	var p = new(DeviationContext)
 
-	p.AdditiveOpContext = NewEmptyAdditiveOpContext()
+	InitEmptyAdditiveOpContext(&p.AdditiveOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AdditiveOpContext))
+	p.CopyAll(ctx.(*AdditiveOpContext))
 
 	return p
 }
@@ -9647,15 +10529,15 @@ func (s *DeviationContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type AdditionContext struct {
-	*AdditiveOpContext
+	AdditiveOpContext
 }
 
 func NewAdditionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AdditionContext {
 	var p = new(AdditionContext)
 
-	p.AdditiveOpContext = NewEmptyAdditiveOpContext()
+	InitEmptyAdditiveOpContext(&p.AdditiveOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AdditiveOpContext))
+	p.CopyAll(ctx.(*AdditiveOpContext))
 
 	return p
 }
@@ -9691,30 +10573,13 @@ func (s *AdditionContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) AdditiveOp() (localctx IAdditiveOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewAdditiveOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 34, RhumbParserRULE_additiveOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(572)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserPlusPlus:
@@ -9723,6 +10588,10 @@ func (p *RhumbParser) AdditiveOp() (localctx IAdditiveOpContext) {
 		{
 			p.SetState(568)
 			p.Match(RhumbParserPlusPlus)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserPlusDash:
@@ -9731,6 +10600,10 @@ func (p *RhumbParser) AdditiveOp() (localctx IAdditiveOpContext) {
 		{
 			p.SetState(569)
 			p.Match(RhumbParserPlusDash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDashDash:
@@ -9739,6 +10612,10 @@ func (p *RhumbParser) AdditiveOp() (localctx IAdditiveOpContext) {
 		{
 			p.SetState(570)
 			p.Match(RhumbParserDashDash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserAmpAmp:
@@ -9747,13 +10624,28 @@ func (p *RhumbParser) AdditiveOp() (localctx IAdditiveOpContext) {
 		{
 			p.SetState(571)
 			p.Match(RhumbParserAmpAmp)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IMultiplicativeOpContext is an interface to support dynamic dispatch.
@@ -9762,21 +10654,25 @@ type IMultiplicativeOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsMultiplicativeOpContext differentiates from other interfaces.
 	IsMultiplicativeOpContext()
 }
 
 type MultiplicativeOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyMultiplicativeOpContext() *MultiplicativeOpContext {
 	var p = new(MultiplicativeOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_multiplicativeOp
 	return p
+}
+
+func InitEmptyMultiplicativeOpContext(p *MultiplicativeOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_multiplicativeOp
 }
 
 func (*MultiplicativeOpContext) IsMultiplicativeOpContext() {}
@@ -9784,7 +10680,7 @@ func (*MultiplicativeOpContext) IsMultiplicativeOpContext() {}
 func NewMultiplicativeOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *MultiplicativeOpContext {
 	var p = new(MultiplicativeOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_multiplicativeOp
@@ -9794,8 +10690,8 @@ func NewMultiplicativeOpContext(parser antlr.Parser, parent antlr.ParserRuleCont
 
 func (s *MultiplicativeOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *MultiplicativeOpContext) CopyFrom(ctx *MultiplicativeOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *MultiplicativeOpContext) CopyAll(ctx *MultiplicativeOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *MultiplicativeOpContext) GetRuleContext() antlr.RuleContext {
@@ -9807,15 +10703,15 @@ func (s *MultiplicativeOpContext) ToStringTree(ruleNames []string, recog antlr.R
 }
 
 type RationalDivisionContext struct {
-	*MultiplicativeOpContext
+	MultiplicativeOpContext
 }
 
 func NewRationalDivisionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RationalDivisionContext {
 	var p = new(RationalDivisionContext)
 
-	p.MultiplicativeOpContext = NewEmptyMultiplicativeOpContext()
+	InitEmptyMultiplicativeOpContext(&p.MultiplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*MultiplicativeOpContext))
+	p.CopyAll(ctx.(*MultiplicativeOpContext))
 
 	return p
 }
@@ -9851,15 +10747,15 @@ func (s *RationalDivisionContext) Accept(visitor antlr.ParseTreeVisitor) interfa
 }
 
 type BindContext struct {
-	*MultiplicativeOpContext
+	MultiplicativeOpContext
 }
 
 func NewBindContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BindContext {
 	var p = new(BindContext)
 
-	p.MultiplicativeOpContext = NewEmptyMultiplicativeOpContext()
+	InitEmptyMultiplicativeOpContext(&p.MultiplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*MultiplicativeOpContext))
+	p.CopyAll(ctx.(*MultiplicativeOpContext))
 
 	return p
 }
@@ -9895,15 +10791,15 @@ func (s *BindContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type RemainderDivisionContext struct {
-	*MultiplicativeOpContext
+	MultiplicativeOpContext
 }
 
 func NewRemainderDivisionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RemainderDivisionContext {
 	var p = new(RemainderDivisionContext)
 
-	p.MultiplicativeOpContext = NewEmptyMultiplicativeOpContext()
+	InitEmptyMultiplicativeOpContext(&p.MultiplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*MultiplicativeOpContext))
+	p.CopyAll(ctx.(*MultiplicativeOpContext))
 
 	return p
 }
@@ -9939,15 +10835,15 @@ func (s *RemainderDivisionContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type MultiplicationContext struct {
-	*MultiplicativeOpContext
+	MultiplicativeOpContext
 }
 
 func NewMultiplicationContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MultiplicationContext {
 	var p = new(MultiplicationContext)
 
-	p.MultiplicativeOpContext = NewEmptyMultiplicativeOpContext()
+	InitEmptyMultiplicativeOpContext(&p.MultiplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*MultiplicativeOpContext))
+	p.CopyAll(ctx.(*MultiplicativeOpContext))
 
 	return p
 }
@@ -9983,15 +10879,15 @@ func (s *MultiplicationContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type WholeDivisionContext struct {
-	*MultiplicativeOpContext
+	MultiplicativeOpContext
 }
 
 func NewWholeDivisionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *WholeDivisionContext {
 	var p = new(WholeDivisionContext)
 
-	p.MultiplicativeOpContext = NewEmptyMultiplicativeOpContext()
+	InitEmptyMultiplicativeOpContext(&p.MultiplicativeOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*MultiplicativeOpContext))
+	p.CopyAll(ctx.(*MultiplicativeOpContext))
 
 	return p
 }
@@ -10027,30 +10923,13 @@ func (s *WholeDivisionContext) Accept(visitor antlr.ParseTreeVisitor) interface{
 }
 
 func (p *RhumbParser) MultiplicativeOp() (localctx IMultiplicativeOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewMultiplicativeOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 36, RhumbParserRULE_multiplicativeOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(579)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserStarStar:
@@ -10059,6 +10938,10 @@ func (p *RhumbParser) MultiplicativeOp() (localctx IMultiplicativeOpContext) {
 		{
 			p.SetState(574)
 			p.Match(RhumbParserStarStar)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserFSlashFSlash:
@@ -10067,6 +10950,10 @@ func (p *RhumbParser) MultiplicativeOp() (localctx IMultiplicativeOpContext) {
 		{
 			p.SetState(575)
 			p.Match(RhumbParserFSlashFSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserPlusFSlash:
@@ -10075,6 +10962,10 @@ func (p *RhumbParser) MultiplicativeOp() (localctx IMultiplicativeOpContext) {
 		{
 			p.SetState(576)
 			p.Match(RhumbParserPlusFSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDashFSlash:
@@ -10083,6 +10974,10 @@ func (p *RhumbParser) MultiplicativeOp() (localctx IMultiplicativeOpContext) {
 		{
 			p.SetState(577)
 			p.Match(RhumbParserDashFSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserBangBang:
@@ -10091,13 +10986,28 @@ func (p *RhumbParser) MultiplicativeOp() (localctx IMultiplicativeOpContext) {
 		{
 			p.SetState(578)
 			p.Match(RhumbParserBangBang)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IExponentiationOpContext is an interface to support dynamic dispatch.
@@ -10106,21 +11016,25 @@ type IExponentiationOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsExponentiationOpContext differentiates from other interfaces.
 	IsExponentiationOpContext()
 }
 
 type ExponentiationOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyExponentiationOpContext() *ExponentiationOpContext {
 	var p = new(ExponentiationOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_exponentiationOp
 	return p
+}
+
+func InitEmptyExponentiationOpContext(p *ExponentiationOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_exponentiationOp
 }
 
 func (*ExponentiationOpContext) IsExponentiationOpContext() {}
@@ -10128,7 +11042,7 @@ func (*ExponentiationOpContext) IsExponentiationOpContext() {}
 func NewExponentiationOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExponentiationOpContext {
 	var p = new(ExponentiationOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_exponentiationOp
@@ -10138,8 +11052,8 @@ func NewExponentiationOpContext(parser antlr.Parser, parent antlr.ParserRuleCont
 
 func (s *ExponentiationOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ExponentiationOpContext) CopyFrom(ctx *ExponentiationOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ExponentiationOpContext) CopyAll(ctx *ExponentiationOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ExponentiationOpContext) GetRuleContext() antlr.RuleContext {
@@ -10151,15 +11065,15 @@ func (s *ExponentiationOpContext) ToStringTree(ruleNames []string, recog antlr.R
 }
 
 type RootExtractionContext struct {
-	*ExponentiationOpContext
+	ExponentiationOpContext
 }
 
 func NewRootExtractionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RootExtractionContext {
 	var p = new(RootExtractionContext)
 
-	p.ExponentiationOpContext = NewEmptyExponentiationOpContext()
+	InitEmptyExponentiationOpContext(&p.ExponentiationOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExponentiationOpContext))
+	p.CopyAll(ctx.(*ExponentiationOpContext))
 
 	return p
 }
@@ -10195,15 +11109,15 @@ func (s *RootExtractionContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type ScientificContext struct {
-	*ExponentiationOpContext
+	ExponentiationOpContext
 }
 
 func NewScientificContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ScientificContext {
 	var p = new(ScientificContext)
 
-	p.ExponentiationOpContext = NewEmptyExponentiationOpContext()
+	InitEmptyExponentiationOpContext(&p.ExponentiationOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExponentiationOpContext))
+	p.CopyAll(ctx.(*ExponentiationOpContext))
 
 	return p
 }
@@ -10239,15 +11153,15 @@ func (s *ScientificContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type RangeContext struct {
-	*ExponentiationOpContext
+	ExponentiationOpContext
 }
 
 func NewRangeContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RangeContext {
 	var p = new(RangeContext)
 
-	p.ExponentiationOpContext = NewEmptyExponentiationOpContext()
+	InitEmptyExponentiationOpContext(&p.ExponentiationOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExponentiationOpContext))
+	p.CopyAll(ctx.(*ExponentiationOpContext))
 
 	return p
 }
@@ -10283,15 +11197,15 @@ func (s *RangeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ExponentContext struct {
-	*ExponentiationOpContext
+	ExponentiationOpContext
 }
 
 func NewExponentContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ExponentContext {
 	var p = new(ExponentContext)
 
-	p.ExponentiationOpContext = NewEmptyExponentiationOpContext()
+	InitEmptyExponentiationOpContext(&p.ExponentiationOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExponentiationOpContext))
+	p.CopyAll(ctx.(*ExponentiationOpContext))
 
 	return p
 }
@@ -10327,30 +11241,13 @@ func (s *ExponentContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) ExponentiationOp() (localctx IExponentiationOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewExponentiationOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 38, RhumbParserRULE_exponentiationOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(585)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserCaretCaret:
@@ -10359,6 +11256,10 @@ func (p *RhumbParser) ExponentiationOp() (localctx IExponentiationOpContext) {
 		{
 			p.SetState(581)
 			p.Match(RhumbParserCaretCaret)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserCaretFSlash:
@@ -10367,6 +11268,10 @@ func (p *RhumbParser) ExponentiationOp() (localctx IExponentiationOpContext) {
 		{
 			p.SetState(582)
 			p.Match(RhumbParserCaretFSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserPipe:
@@ -10375,6 +11280,10 @@ func (p *RhumbParser) ExponentiationOp() (localctx IExponentiationOpContext) {
 		{
 			p.SetState(583)
 			p.Match(RhumbParserPipe)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserStarCaret:
@@ -10383,13 +11292,28 @@ func (p *RhumbParser) ExponentiationOp() (localctx IExponentiationOpContext) {
 		{
 			p.SetState(584)
 			p.Match(RhumbParserStarCaret)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAssignmentOpContext is an interface to support dynamic dispatch.
@@ -10398,21 +11322,25 @@ type IAssignmentOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsAssignmentOpContext differentiates from other interfaces.
 	IsAssignmentOpContext()
 }
 
 type AssignmentOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAssignmentOpContext() *AssignmentOpContext {
 	var p = new(AssignmentOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_assignmentOp
 	return p
+}
+
+func InitEmptyAssignmentOpContext(p *AssignmentOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_assignmentOp
 }
 
 func (*AssignmentOpContext) IsAssignmentOpContext() {}
@@ -10420,7 +11348,7 @@ func (*AssignmentOpContext) IsAssignmentOpContext() {}
 func NewAssignmentOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AssignmentOpContext {
 	var p = new(AssignmentOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_assignmentOp
@@ -10430,8 +11358,8 @@ func NewAssignmentOpContext(parser antlr.Parser, parent antlr.ParserRuleContext,
 
 func (s *AssignmentOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *AssignmentOpContext) CopyFrom(ctx *AssignmentOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *AssignmentOpContext) CopyAll(ctx *AssignmentOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *AssignmentOpContext) GetRuleContext() antlr.RuleContext {
@@ -10443,15 +11371,15 @@ func (s *AssignmentOpContext) ToStringTree(ruleNames []string, recog antlr.Recog
 }
 
 type MutableLabelContext struct {
-	*AssignmentOpContext
+	AssignmentOpContext
 }
 
 func NewMutableLabelContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MutableLabelContext {
 	var p = new(MutableLabelContext)
 
-	p.AssignmentOpContext = NewEmptyAssignmentOpContext()
+	InitEmptyAssignmentOpContext(&p.AssignmentOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AssignmentOpContext))
+	p.CopyAll(ctx.(*AssignmentOpContext))
 
 	return p
 }
@@ -10487,15 +11415,15 @@ func (s *MutableLabelContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 }
 
 type ImmutableLabelContext struct {
-	*AssignmentOpContext
+	AssignmentOpContext
 }
 
 func NewImmutableLabelContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ImmutableLabelContext {
 	var p = new(ImmutableLabelContext)
 
-	p.AssignmentOpContext = NewEmptyAssignmentOpContext()
+	InitEmptyAssignmentOpContext(&p.AssignmentOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*AssignmentOpContext))
+	p.CopyAll(ctx.(*AssignmentOpContext))
 
 	return p
 }
@@ -10531,30 +11459,13 @@ func (s *ImmutableLabelContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 func (p *RhumbParser) AssignmentOp() (localctx IAssignmentOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewAssignmentOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 40, RhumbParserRULE_assignmentOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(589)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserDotEqual:
@@ -10563,6 +11474,10 @@ func (p *RhumbParser) AssignmentOp() (localctx IAssignmentOpContext) {
 		{
 			p.SetState(587)
 			p.Match(RhumbParserDotEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserColonEqual:
@@ -10571,13 +11486,28 @@ func (p *RhumbParser) AssignmentOp() (localctx IAssignmentOpContext) {
 		{
 			p.SetState(588)
 			p.Match(RhumbParserColonEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPrefixOpContext is an interface to support dynamic dispatch.
@@ -10586,21 +11516,25 @@ type IPrefixOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsPrefixOpContext differentiates from other interfaces.
 	IsPrefixOpContext()
 }
 
 type PrefixOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyPrefixOpContext() *PrefixOpContext {
 	var p = new(PrefixOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_prefixOp
 	return p
+}
+
+func InitEmptyPrefixOpContext(p *PrefixOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_prefixOp
 }
 
 func (*PrefixOpContext) IsPrefixOpContext() {}
@@ -10608,7 +11542,7 @@ func (*PrefixOpContext) IsPrefixOpContext() {}
 func NewPrefixOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PrefixOpContext {
 	var p = new(PrefixOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_prefixOp
@@ -10618,8 +11552,8 @@ func NewPrefixOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, inv
 
 func (s *PrefixOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *PrefixOpContext) CopyFrom(ctx *PrefixOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *PrefixOpContext) CopyAll(ctx *PrefixOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *PrefixOpContext) GetRuleContext() antlr.RuleContext {
@@ -10631,15 +11565,15 @@ func (s *PrefixOpContext) ToStringTree(ruleNames []string, recog antlr.Recognize
 }
 
 type NegateNumberPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewNegateNumberPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NegateNumberPrefixContext {
 	var p = new(NegateNumberPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10675,15 +11609,15 @@ func (s *NegateNumberPrefixContext) Accept(visitor antlr.ParseTreeVisitor) inter
 }
 
 type SignalInwardPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewSignalInwardPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SignalInwardPrefixContext {
 	var p = new(SignalInwardPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10719,15 +11653,15 @@ func (s *SignalInwardPrefixContext) Accept(visitor antlr.ParseTreeVisitor) inter
 }
 
 type CopyPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewCopyPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *CopyPrefixContext {
 	var p = new(CopyPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10763,15 +11697,15 @@ func (s *CopyPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type ToNumberPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewToNumberPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ToNumberPrefixContext {
 	var p = new(ToNumberPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10807,15 +11741,15 @@ func (s *ToNumberPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type ToTruthPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewToTruthPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ToTruthPrefixContext {
 	var p = new(ToTruthPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10851,15 +11785,15 @@ func (s *ToTruthPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface{
 }
 
 type VariadicPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewVariadicPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *VariadicPrefixContext {
 	var p = new(VariadicPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10895,15 +11829,15 @@ func (s *VariadicPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type EmptyPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewEmptyPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *EmptyPrefixContext {
 	var p = new(EmptyPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10939,15 +11873,15 @@ func (s *EmptyPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type NegateTruthPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewNegateTruthPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NegateTruthPrefixContext {
 	var p = new(NegateTruthPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -10983,15 +11917,15 @@ func (s *NegateTruthPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type ArgumentPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewArgumentPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ArgumentPrefixContext {
 	var p = new(ArgumentPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -11027,15 +11961,15 @@ func (s *ArgumentPrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type FreezePrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewFreezePrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *FreezePrefixContext {
 	var p = new(FreezePrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -11071,15 +12005,15 @@ func (s *FreezePrefixContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 }
 
 type SignalOutwardPrefixContext struct {
-	*PrefixOpContext
+	PrefixOpContext
 }
 
 func NewSignalOutwardPrefixContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SignalOutwardPrefixContext {
 	var p = new(SignalOutwardPrefixContext)
 
-	p.PrefixOpContext = NewEmptyPrefixOpContext()
+	InitEmptyPrefixOpContext(&p.PrefixOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*PrefixOpContext))
+	p.CopyAll(ctx.(*PrefixOpContext))
 
 	return p
 }
@@ -11115,30 +12049,13 @@ func (s *SignalOutwardPrefixContext) Accept(visitor antlr.ParseTreeVisitor) inte
 }
 
 func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewPrefixOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 42, RhumbParserRULE_prefixOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(602)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserQMark:
@@ -11147,6 +12064,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(591)
 			p.Match(RhumbParserQMark)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDot:
@@ -11155,6 +12076,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(592)
 			p.Match(RhumbParserDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserColon:
@@ -11163,6 +12088,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(593)
 			p.Match(RhumbParserColon)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserPlus:
@@ -11171,6 +12100,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(594)
 			p.Match(RhumbParserPlus)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDash:
@@ -11179,6 +12112,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(595)
 			p.Match(RhumbParserDash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEqual:
@@ -11187,6 +12124,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(596)
 			p.Match(RhumbParserEqual)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserTilde:
@@ -11195,6 +12136,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(597)
 			p.Match(RhumbParserTilde)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserAmpersand:
@@ -11203,6 +12148,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(598)
 			p.Match(RhumbParserAmpersand)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDollar:
@@ -11211,6 +12160,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(599)
 			p.Match(RhumbParserDollar)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserHash:
@@ -11219,6 +12172,10 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(600)
 			p.Match(RhumbParserHash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserCaret:
@@ -11227,13 +12184,28 @@ func (p *RhumbParser) PrefixOp() (localctx IPrefixOpContext) {
 		{
 			p.SetState(601)
 			p.Match(RhumbParserCaret)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IChainOpContext is an interface to support dynamic dispatch.
@@ -11242,21 +12214,25 @@ type IChainOpContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsChainOpContext differentiates from other interfaces.
 	IsChainOpContext()
 }
 
 type ChainOpContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyChainOpContext() *ChainOpContext {
 	var p = new(ChainOpContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_chainOp
 	return p
+}
+
+func InitEmptyChainOpContext(p *ChainOpContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_chainOp
 }
 
 func (*ChainOpContext) IsChainOpContext() {}
@@ -11264,7 +12240,7 @@ func (*ChainOpContext) IsChainOpContext() {}
 func NewChainOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ChainOpContext {
 	var p = new(ChainOpContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_chainOp
@@ -11274,8 +12250,8 @@ func NewChainOpContext(parser antlr.Parser, parent antlr.ParserRuleContext, invo
 
 func (s *ChainOpContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ChainOpContext) CopyFrom(ctx *ChainOpContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ChainOpContext) CopyAll(ctx *ChainOpContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ChainOpContext) GetRuleContext() antlr.RuleContext {
@@ -11287,15 +12263,15 @@ func (s *ChainOpContext) ToStringTree(ruleNames []string, recog antlr.Recognizer
 }
 
 type DeeplyNestedSubfieldContext struct {
-	*ChainOpContext
+	ChainOpContext
 }
 
 func NewDeeplyNestedSubfieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DeeplyNestedSubfieldContext {
 	var p = new(DeeplyNestedSubfieldContext)
 
-	p.ChainOpContext = NewEmptyChainOpContext()
+	InitEmptyChainOpContext(&p.ChainOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ChainOpContext))
+	p.CopyAll(ctx.(*ChainOpContext))
 
 	return p
 }
@@ -11331,15 +12307,15 @@ func (s *DeeplyNestedSubfieldContext) Accept(visitor antlr.ParseTreeVisitor) int
 }
 
 type NestedSubfieldContext struct {
-	*ChainOpContext
+	ChainOpContext
 }
 
 func NewNestedSubfieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NestedSubfieldContext {
 	var p = new(NestedSubfieldContext)
 
-	p.ChainOpContext = NewEmptyChainOpContext()
+	InitEmptyChainOpContext(&p.ChainOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ChainOpContext))
+	p.CopyAll(ctx.(*ChainOpContext))
 
 	return p
 }
@@ -11375,15 +12351,15 @@ func (s *NestedSubfieldContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type DeeplyNestedFieldContext struct {
-	*ChainOpContext
+	ChainOpContext
 }
 
 func NewDeeplyNestedFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *DeeplyNestedFieldContext {
 	var p = new(DeeplyNestedFieldContext)
 
-	p.ChainOpContext = NewEmptyChainOpContext()
+	InitEmptyChainOpContext(&p.ChainOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ChainOpContext))
+	p.CopyAll(ctx.(*ChainOpContext))
 
 	return p
 }
@@ -11419,15 +12395,15 @@ func (s *DeeplyNestedFieldContext) Accept(visitor antlr.ParseTreeVisitor) interf
 }
 
 type NestedFieldContext struct {
-	*ChainOpContext
+	ChainOpContext
 }
 
 func NewNestedFieldContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NestedFieldContext {
 	var p = new(NestedFieldContext)
 
-	p.ChainOpContext = NewEmptyChainOpContext()
+	InitEmptyChainOpContext(&p.ChainOpContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ChainOpContext))
+	p.CopyAll(ctx.(*ChainOpContext))
 
 	return p
 }
@@ -11463,30 +12439,13 @@ func (s *NestedFieldContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 func (p *RhumbParser) ChainOp() (localctx IChainOpContext) {
-	this := p
-	_ = this
-
 	localctx = NewChainOpContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 44, RhumbParserRULE_chainOp)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(608)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserBSlash:
@@ -11495,6 +12454,10 @@ func (p *RhumbParser) ChainOp() (localctx IChainOpContext) {
 		{
 			p.SetState(604)
 			p.Match(RhumbParserBSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserBSlashBSlash:
@@ -11503,6 +12466,10 @@ func (p *RhumbParser) ChainOp() (localctx IChainOpContext) {
 		{
 			p.SetState(605)
 			p.Match(RhumbParserBSlashBSlash)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserAt:
@@ -11511,6 +12478,10 @@ func (p *RhumbParser) ChainOp() (localctx IChainOpContext) {
 		{
 			p.SetState(606)
 			p.Match(RhumbParserAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserAtAt:
@@ -11519,13 +12490,28 @@ func (p *RhumbParser) ChainOp() (localctx IChainOpContext) {
 		{
 			p.SetState(607)
 			p.Match(RhumbParserAtAt)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IDatePartContext is an interface to support dynamic dispatch.
@@ -11535,20 +12521,30 @@ type IDatePartContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	NumberPart() antlr.TerminalNode
+	Dollar() antlr.TerminalNode
+	Label() antlr.TerminalNode
+
 	// IsDatePartContext differentiates from other interfaces.
 	IsDatePartContext()
 }
 
 type DatePartContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyDatePartContext() *DatePartContext {
 	var p = new(DatePartContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_datePart
 	return p
+}
+
+func InitEmptyDatePartContext(p *DatePartContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_datePart
 }
 
 func (*DatePartContext) IsDatePartContext() {}
@@ -11556,7 +12552,7 @@ func (*DatePartContext) IsDatePartContext() {}
 func NewDatePartContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *DatePartContext {
 	var p = new(DatePartContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_datePart
@@ -11609,30 +12605,13 @@ func (s *DatePartContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) DatePart() (localctx IDatePartContext) {
-	this := p
-	_ = this
-
 	localctx = NewDatePartContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 46, RhumbParserRULE_datePart)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(613)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserNumberPart:
@@ -11640,6 +12619,10 @@ func (p *RhumbParser) DatePart() (localctx IDatePartContext) {
 		{
 			p.SetState(610)
 			p.Match(RhumbParserNumberPart)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserDollar:
@@ -11647,17 +12630,36 @@ func (p *RhumbParser) DatePart() (localctx IDatePartContext) {
 		{
 			p.SetState(611)
 			p.Match(RhumbParserDollar)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(612)
 			p.Match(RhumbParserLabel)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IDateContext is an interface to support dynamic dispatch.
@@ -11667,20 +12669,31 @@ type IDateContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	AllDatePart() []IDatePartContext
+	DatePart(i int) IDatePartContext
+	AllFSlash() []antlr.TerminalNode
+	FSlash(i int) antlr.TerminalNode
+
 	// IsDateContext differentiates from other interfaces.
 	IsDateContext()
 }
 
 type DateContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyDateContext() *DateContext {
 	var p = new(DateContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_date
 	return p
+}
+
+func InitEmptyDateContext(p *DateContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_date
 }
 
 func (*DateContext) IsDateContext() {}
@@ -11688,7 +12701,7 @@ func (*DateContext) IsDateContext() {}
 func NewDateContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *DateContext {
 	var p = new(DateContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_date
@@ -11778,28 +12791,8 @@ func (s *DateContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) Date() (localctx IDateContext) {
-	this := p
-	_ = this
-
 	localctx = NewDateContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 48, RhumbParserRULE_date)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(615)
@@ -11808,6 +12801,10 @@ func (p *RhumbParser) Date() (localctx IDateContext) {
 	{
 		p.SetState(616)
 		p.Match(RhumbParserFSlash)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(617)
@@ -11816,13 +12813,27 @@ func (p *RhumbParser) Date() (localctx IDateContext) {
 	{
 		p.SetState(618)
 		p.Match(RhumbParserFSlash)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(619)
 		p.DatePart()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITextContext is an interface to support dynamic dispatch.
@@ -11832,20 +12843,35 @@ type ITextContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	OpenInterpString() antlr.TerminalNode
+	CloseInterpString() antlr.TerminalNode
+	Bang() antlr.TerminalNode
+	AllInnerText() []antlr.TerminalNode
+	InnerText(i int) antlr.TerminalNode
+	AllInterpolation() []IInterpolationContext
+	Interpolation(i int) IInterpolationContext
+	RawText() antlr.TerminalNode
+
 	// IsTextContext differentiates from other interfaces.
 	IsTextContext()
 }
 
 type TextContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyTextContext() *TextContext {
 	var p = new(TextContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_text
 	return p
+}
+
+func InitEmptyTextContext(p *TextContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_text
 }
 
 func (*TextContext) IsTextContext() {}
@@ -11853,7 +12879,7 @@ func (*TextContext) IsTextContext() {}
 func NewTextContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *TextContext {
 	var p = new(TextContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_text
@@ -11959,63 +12985,68 @@ func (s *TextContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 func (p *RhumbParser) Text() (localctx ITextContext) {
-	this := p
-	_ = this
-
 	localctx = NewTextContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 50, RhumbParserRULE_text)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(634)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserBang, RhumbParserOpenInterpString:
 		p.EnterOuterAlt(localctx, 1)
 		p.SetState(622)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
 		if _la == RhumbParserBang {
 			{
 				p.SetState(621)
 				p.Match(RhumbParserBang)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 		}
 		{
 			p.SetState(624)
 			p.Match(RhumbParserOpenInterpString)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(629)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 
-		for ((_la-85)&-(0x1f+1)) == 0 && ((1<<uint((_la-85)))&((1<<(RhumbParserEnterRoutineInterp-85))|(1<<(RhumbParserEnterSelectorInterp-85))|(1<<(RhumbParserInterpLabel-85))|(1<<(RhumbParserInnerText-85)))) != 0 {
+		for (int64((_la-85)) & ^0x3f) == 0 && ((int64(1)<<(_la-85))&39) != 0 {
 			p.SetState(627)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 
 			switch p.GetTokenStream().LA(1) {
 			case RhumbParserInnerText:
 				{
 					p.SetState(625)
 					p.Match(RhumbParserInnerText)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
 			case RhumbParserEnterRoutineInterp, RhumbParserEnterSelectorInterp, RhumbParserInterpLabel:
@@ -12025,16 +13056,24 @@ func (p *RhumbParser) Text() (localctx ITextContext) {
 				}
 
 			default:
-				panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+				p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+				goto errorExit
 			}
 
 			p.SetState(631)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
 			p.SetState(632)
 			p.Match(RhumbParserCloseInterpString)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserRawText:
@@ -12042,13 +13081,28 @@ func (p *RhumbParser) Text() (localctx ITextContext) {
 		{
 			p.SetState(633)
 			p.Match(RhumbParserRawText)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IInterpolationContext is an interface to support dynamic dispatch.
@@ -12057,21 +13111,25 @@ type IInterpolationContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsInterpolationContext differentiates from other interfaces.
 	IsInterpolationContext()
 }
 
 type InterpolationContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyInterpolationContext() *InterpolationContext {
 	var p = new(InterpolationContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_interpolation
 	return p
+}
+
+func InitEmptyInterpolationContext(p *InterpolationContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_interpolation
 }
 
 func (*InterpolationContext) IsInterpolationContext() {}
@@ -12079,7 +13137,7 @@ func (*InterpolationContext) IsInterpolationContext() {}
 func NewInterpolationContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *InterpolationContext {
 	var p = new(InterpolationContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_interpolation
@@ -12089,8 +13147,8 @@ func NewInterpolationContext(parser antlr.Parser, parent antlr.ParserRuleContext
 
 func (s *InterpolationContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *InterpolationContext) CopyFrom(ctx *InterpolationContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *InterpolationContext) CopyAll(ctx *InterpolationContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *InterpolationContext) GetRuleContext() antlr.RuleContext {
@@ -12102,15 +13160,15 @@ func (s *InterpolationContext) ToStringTree(ruleNames []string, recog antlr.Reco
 }
 
 type RoutineInterpContext struct {
-	*InterpolationContext
+	InterpolationContext
 }
 
 func NewRoutineInterpContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *RoutineInterpContext {
 	var p = new(RoutineInterpContext)
 
-	p.InterpolationContext = NewEmptyInterpolationContext()
+	InitEmptyInterpolationContext(&p.InterpolationContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*InterpolationContext))
+	p.CopyAll(ctx.(*InterpolationContext))
 
 	return p
 }
@@ -12166,15 +13224,15 @@ func (s *RoutineInterpContext) Accept(visitor antlr.ParseTreeVisitor) interface{
 }
 
 type SelectorInterpContext struct {
-	*InterpolationContext
+	InterpolationContext
 }
 
 func NewSelectorInterpContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *SelectorInterpContext {
 	var p = new(SelectorInterpContext)
 
-	p.InterpolationContext = NewEmptyInterpolationContext()
+	InitEmptyInterpolationContext(&p.InterpolationContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*InterpolationContext))
+	p.CopyAll(ctx.(*InterpolationContext))
 
 	return p
 }
@@ -12230,15 +13288,15 @@ func (s *SelectorInterpContext) Accept(visitor antlr.ParseTreeVisitor) interface
 }
 
 type LabelInterpContext struct {
-	*InterpolationContext
+	InterpolationContext
 }
 
 func NewLabelInterpContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LabelInterpContext {
 	var p = new(LabelInterpContext)
 
-	p.InterpolationContext = NewEmptyInterpolationContext()
+	InitEmptyInterpolationContext(&p.InterpolationContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*InterpolationContext))
+	p.CopyAll(ctx.(*InterpolationContext))
 
 	return p
 }
@@ -12274,30 +13332,13 @@ func (s *LabelInterpContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 func (p *RhumbParser) Interpolation() (localctx IInterpolationContext) {
-	this := p
-	_ = this
-
 	localctx = NewInterpolationContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 52, RhumbParserRULE_interpolation)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(645)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case RhumbParserInterpLabel:
@@ -12306,6 +13347,10 @@ func (p *RhumbParser) Interpolation() (localctx IInterpolationContext) {
 		{
 			p.SetState(636)
 			p.Match(RhumbParserInterpLabel)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEnterRoutineInterp:
@@ -12314,6 +13359,10 @@ func (p *RhumbParser) Interpolation() (localctx IInterpolationContext) {
 		{
 			p.SetState(637)
 			p.Match(RhumbParserEnterRoutineInterp)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(638)
@@ -12322,6 +13371,10 @@ func (p *RhumbParser) Interpolation() (localctx IInterpolationContext) {
 		{
 			p.SetState(639)
 			p.Match(RhumbParserCloseParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case RhumbParserEnterSelectorInterp:
@@ -12330,6 +13383,10 @@ func (p *RhumbParser) Interpolation() (localctx IInterpolationContext) {
 		{
 			p.SetState(641)
 			p.Match(RhumbParserEnterSelectorInterp)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(642)
@@ -12338,13 +13395,28 @@ func (p *RhumbParser) Interpolation() (localctx IInterpolationContext) {
 		{
 			p.SetState(643)
 			p.Match(RhumbParserCloseCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IReferenceContext is an interface to support dynamic dispatch.
@@ -12353,21 +13425,25 @@ type IReferenceContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsReferenceContext differentiates from other interfaces.
 	IsReferenceContext()
 }
 
 type ReferenceContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyReferenceContext() *ReferenceContext {
 	var p = new(ReferenceContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = RhumbParserRULE_reference
 	return p
+}
+
+func InitEmptyReferenceContext(p *ReferenceContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = RhumbParserRULE_reference
 }
 
 func (*ReferenceContext) IsReferenceContext() {}
@@ -12375,7 +13451,7 @@ func (*ReferenceContext) IsReferenceContext() {}
 func NewReferenceContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ReferenceContext {
 	var p = new(ReferenceContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = RhumbParserRULE_reference
@@ -12385,8 +13461,8 @@ func NewReferenceContext(parser antlr.Parser, parent antlr.ParserRuleContext, in
 
 func (s *ReferenceContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ReferenceContext) CopyFrom(ctx *ReferenceContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ReferenceContext) CopyAll(ctx *ReferenceContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ReferenceContext) GetRuleContext() antlr.RuleContext {
@@ -12398,15 +13474,15 @@ func (s *ReferenceContext) ToStringTree(ruleNames []string, recog antlr.Recogniz
 }
 
 type FunctionRefContext struct {
-	*ReferenceContext
+	ReferenceContext
 }
 
 func NewFunctionRefContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *FunctionRefContext {
 	var p = new(FunctionRefContext)
 
-	p.ReferenceContext = NewEmptyReferenceContext()
+	InitEmptyReferenceContext(&p.ReferenceContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ReferenceContext))
+	p.CopyAll(ctx.(*ReferenceContext))
 
 	return p
 }
@@ -12511,15 +13587,15 @@ func (s *FunctionRefContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type NamedRefContext struct {
-	*ReferenceContext
+	ReferenceContext
 }
 
 func NewNamedRefContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NamedRefContext {
 	var p = new(NamedRefContext)
 
-	p.ReferenceContext = NewEmptyReferenceContext()
+	InitEmptyReferenceContext(&p.ReferenceContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ReferenceContext))
+	p.CopyAll(ctx.(*ReferenceContext))
 
 	return p
 }
@@ -12563,15 +13639,15 @@ func (s *NamedRefContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 }
 
 type JunctionRefContext struct {
-	*ReferenceContext
+	ReferenceContext
 }
 
 func NewJunctionRefContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *JunctionRefContext {
 	var p = new(JunctionRefContext)
 
-	p.ReferenceContext = NewEmptyReferenceContext()
+	InitEmptyReferenceContext(&p.ReferenceContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ReferenceContext))
+	p.CopyAll(ctx.(*ReferenceContext))
 
 	return p
 }
@@ -12676,15 +13752,15 @@ func (s *JunctionRefContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 type ComputedRefContext struct {
-	*ReferenceContext
+	ReferenceContext
 }
 
 func NewComputedRefContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ComputedRefContext {
 	var p = new(ComputedRefContext)
 
-	p.ReferenceContext = NewEmptyReferenceContext()
+	InitEmptyReferenceContext(&p.ReferenceContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ReferenceContext))
+	p.CopyAll(ctx.(*ReferenceContext))
 
 	return p
 }
@@ -12805,47 +13881,43 @@ func (s *ComputedRefContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 }
 
 func (p *RhumbParser) Reference() (localctx IReferenceContext) {
-	this := p
-	_ = this
-
 	localctx = NewReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 54, RhumbParserRULE_reference)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.SetState(690)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 87, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 87, p.GetParserRuleContext()) {
 	case 1:
 		localctx = NewNamedRefContext(p, localctx)
 		p.EnterOuterAlt(localctx, 1)
 		{
 			p.SetState(647)
 			p.Match(RhumbParserOpenAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(648)
 			p.Match(RhumbParserLabel)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(649)
 			p.Match(RhumbParserCloseAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 2:
@@ -12854,6 +13926,10 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(650)
 			p.Match(RhumbParserOpenAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(651)
@@ -12862,6 +13938,10 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(652)
 			p.Match(RhumbParserCloseAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 3:
@@ -12870,15 +13950,28 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(654)
 			p.Match(RhumbParserOpenAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(655)
 			p.Match(RhumbParserOpenParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(659)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 84, p.GetParserRuleContext())
-
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 84, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 		for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1 {
 				{
@@ -12889,7 +13982,13 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 			}
 			p.SetState(661)
 			p.GetErrorHandler().Sync(p)
-			_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 84, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 84, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(662)
@@ -12898,10 +13997,18 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(663)
 			p.Match(RhumbParserCloseParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(664)
 			p.Match(RhumbParserCloseAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 4:
@@ -12910,15 +14017,28 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(666)
 			p.Match(RhumbParserOpenAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(667)
 			p.Match(RhumbParserOpenBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(671)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 85, p.GetParserRuleContext())
-
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 85, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 		for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1 {
 				{
@@ -12929,7 +14049,13 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 			}
 			p.SetState(673)
 			p.GetErrorHandler().Sync(p)
-			_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 85, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 85, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(674)
@@ -12938,10 +14064,18 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(675)
 			p.Match(RhumbParserCloseBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(676)
 			p.Match(RhumbParserCloseAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 5:
@@ -12950,15 +14084,28 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(678)
 			p.Match(RhumbParserOpenAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(679)
 			p.Match(RhumbParserOpenCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(683)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 86, p.GetParserRuleContext())
-
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 86, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 		for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1 {
 				{
@@ -12969,7 +14116,13 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 			}
 			p.SetState(685)
 			p.GetErrorHandler().Sync(p)
-			_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 86, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 86, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(686)
@@ -12978,15 +14131,35 @@ func (p *RhumbParser) Reference() (localctx IReferenceContext) {
 		{
 			p.SetState(687)
 			p.Match(RhumbParserCloseCurly)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(688)
 			p.Match(RhumbParserCloseAnglet)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 func (p *RhumbParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex int) bool {
@@ -13004,9 +14177,6 @@ func (p *RhumbParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex i
 }
 
 func (p *RhumbParser) Expression_Sempred(localctx antlr.RuleContext, predIndex int) bool {
-	this := p
-	_ = this
-
 	switch predIndex {
 	case 0:
 		return p.Precpred(p.GetParserRuleContext(), 12)
