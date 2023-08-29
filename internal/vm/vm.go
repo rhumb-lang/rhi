@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"arena"
 	"fmt"
 
 	"git.sr.ht/~madcapjake/grhumb/internal/code"
@@ -12,117 +13,235 @@ const STK_SIZE = 500
 const SCP_SIZE = 50
 
 type VirtualMachine struct {
-	Memory [MEM_SIZE]obj.Any
-	Stack  [STK_SIZE]obj.Any
-	Scope  [SCP_SIZE]map[string]obj.Ref[obj.Any]
-	Main   obj.Ref[RoutineMap]
-	Top    struct {
-		Memory int
-		Stack  int
-		Scope  int
-	}
+	Memory *arena.Arena
+	Blocks []obj.Block
+	Stacks []Stack
+	Scopes []Scope
+	Maps   []*obj.Map
 }
 
 func NewVirtualMachine() *VirtualMachine {
 	vm := new(VirtualMachine)
-	vm.Scope[0] = map[string]obj.Ref[obj.Any]{}
-	legendRef := Allocate(vm, NewRoutineLegend())
-	main := RoutineMap{vm, legendRef, []obj.Any{}}
-	mainRef := Allocate(vm, main)
-	vm.Main = mainRef
+	vm.Memory = arena.NewArena()
+	vm.Blocks = arena.MakeSlice[obj.Block](vm.Memory, 0, 5)
+	vm.Blocks = append(vm.Blocks, obj.NewBlock(vm.Memory))
+	vm.Stacks = arena.MakeSlice[Stack](vm.Memory, 0, 5)
+	vm.Stacks = append(vm.Stacks, NewStack(vm.Memory))
+	vm.Scopes = arena.MakeSlice[Scope](vm.Memory, 0, 5)
+	vm.Scopes = append(vm.Scopes, NewScope(vm.Memory))
+	vm.Maps = arena.MakeSlice[*obj.Map](vm.Memory, 0, 5)
 	return vm
 }
 
-func Get[T obj.Any](vm *VirtualMachine, ref obj.Ref[T]) T {
-	return vm.Memory[ref.Value].(T)
+func (vm *VirtualMachine) TopBlock() *obj.Block {
+	return &vm.Blocks[len(vm.Blocks)-1]
 }
 
-func Set[T obj.Any, U obj.Any](
-	vm *VirtualMachine,
-	this obj.Ref[T],
-	that U,
-) obj.Ref[U] {
-	vm.Memory[this.Value] = that
-	return obj.Ref[U](this)
+func (vm *VirtualMachine) TopStack() *Stack {
+	return &vm.Stacks[len(vm.Stacks)-1]
 }
 
-func Allocate[T obj.Any](vm *VirtualMachine, o T) obj.Ref[T] {
-	if i := vm.Top.Memory + 1; i < MEM_SIZE {
-		vm.Memory[i] = o
-		vm.Top.Memory = i
-		return obj.Ref[T]{i}
+func (vm *VirtualMachine) TopScope() *Scope {
+	return &vm.Scopes[len(vm.Scopes)-1]
+}
+
+func (vm *VirtualMachine) TopMap() *obj.Map {
+	length := len(vm.Maps)
+	if length > 0 {
+		return vm.Maps[length-1]
 	} else {
-		panic("out of memory")
+		return nil
 	}
 }
 
-func PushStack[O obj.Any](vm *VirtualMachine, obj O) int {
-	if i := vm.Top.Stack + 1; i < STK_SIZE {
-		vm.Stack[i] = obj
-		vm.Top.Stack = i
-		return i
-	} else {
-		panic("out of stack")
-	}
+func (vm *VirtualMachine) PushCode(c obj.Code) {
+	vm.TopBlock().Write(c)
 }
 
-func PopStack(vm *VirtualMachine) obj.Any {
-	i := vm.Top.Stack
-	result := vm.Stack[i]
-	vm.Top.Stack = i - 1
+func (vm *VirtualMachine) RegisterObject(o obj.Any) int {
+	return vm.TopBlock().Register(o)
+}
+
+func (vm *VirtualMachine) PushObject(o obj.Any) {
+	vm.TopStack().Push(o)
+}
+
+func (vm *VirtualMachine) PopObject() obj.Any {
+	return vm.TopStack().Pop()
+}
+
+func (vm *VirtualMachine) PushBlock() int {
+	vm.Blocks = append(vm.Blocks, obj.NewBlock(vm.Memory))
+	return len(vm.Blocks) - 1
+}
+
+func (vm *VirtualMachine) PopBlock() obj.Block {
+	last := len(vm.Blocks) - 1
+	block := vm.Blocks[last]
+	vm.Blocks = vm.Blocks[:last]
+	return block
+}
+
+func (vm *VirtualMachine) PushStack() int {
+	vm.Stacks = append(vm.Stacks, NewStack(vm.Memory))
+	return len(vm.Stacks) - 1
+}
+
+func (vm *VirtualMachine) PopStack() int {
+	last := len(vm.Stacks) - 1
+	vm.Stacks = vm.Stacks[:last]
+	return last
+}
+
+func (vm *VirtualMachine) PushScope() int {
+	vm.Scopes = append(vm.Scopes, NewScope(vm.Memory))
+	return len(vm.Scopes) - 1
+}
+
+func (vm *VirtualMachine) PopScope() int {
+	last := len(vm.Scopes) - 1
+	vm.Scopes = vm.Scopes[:last]
+	return last
+}
+
+func (vm *VirtualMachine) PushMap(m obj.Map) int {
+	vm.Maps = append(vm.Maps, &m)
+	return len(vm.Maps) - 1
+}
+
+func (vm *VirtualMachine) PopMap() *obj.Map {
+	last := len(vm.Maps) - 1
+	result := vm.Maps[last]
+	vm.Maps = vm.Maps[:last]
 	return result
 }
 
-func EnterScope(vm *VirtualMachine) int {
-	if i := vm.Top.Scope + 1; i < SCP_SIZE {
-		vm.Scope[i] = map[string]obj.Ref[obj.Any]{}
-		vm.Top.Scope = i
-		return i
+func (vm *VirtualMachine) Run(block *obj.Block) (obj.Any, error) {
+	vm.PushStack()
+	vm.PushScope()
+	for _, code := range block.Codes {
+		val := block.Values[code.GetID()]
+		vm.Execute(code, val)
+	}
+	result := vm.PopObject()
+	vm.PopScope()
+	vm.PopStack()
+	return result, nil
+}
+
+func (vm *VirtualMachine) Disassemble(block *obj.Block) (obj.Any, error) {
+	vm.PushStack()
+	vm.PushScope()
+	for _, code := range block.Codes {
+		val := block.Values[code.GetID()]
+		fmt.Println("Code =", code.WHAT(), "\tValue =", val.WHAT())
+	}
+	result := vm.PopObject()
+	vm.PopScope()
+	vm.PopStack()
+	return result, nil
+}
+
+func (vm *VirtualMachine) RunMain() (obj.Any, error) {
+	return vm.Run(vm.TopBlock())
+}
+
+func (vm *VirtualMachine) DisassembleMain() (obj.Any, error) {
+	return vm.Disassemble(vm.TopBlock())
+}
+
+func (vm *VirtualMachine) Execute(c code.Any, v obj.Any) {
+	switch c.(type) {
+	case code.Value:
+		vm.ExecuteValue(v)
+	case code.Local:
+		vm.ExecuteLocal(v)
+	case code.Inner:
+		vm.ExecuteInner(v)
+	case code.Under:
+		vm.ExecuteUnder(v)
+	case code.Outer:
+		vm.ExecuteOuter(v)
+	case code.Event:
+		vm.ExecuteEvent(v)
+	case code.Reply:
+		vm.ExecuteReply(v)
+	}
+}
+
+func (vm *VirtualMachine) ExecuteValue(value obj.Any) {
+	if topMap := vm.TopMap(); topMap != nil {
+		switch mapVal := (*topMap).(type) {
+		case obj.ListMap:
+			mapVal.Append(value)
+		default:
+			panic("not yet implemented")
+		}
 	} else {
-		panic("out of scope")
+		vm.TopStack().Push(value)
 	}
 }
-
-func Run(vm *VirtualMachine, codes []code.Any) (obj.Any, error) {
-	scopeIndex := EnterScope(vm)
-	for _, code := range codes {
-		Execute(vm, scopeIndex, code)
+func (vm *VirtualMachine) ExecuteLocal(value obj.Any) {
+	var stack *Stack = vm.TopStack()
+	switch value := value.(type) {
+	case obj.LabelSymbol:
+		vm.TopScope().Get(value)
+	case obj.OperatorSymbol:
+		switch value.Value {
+		case "[":
+			vm.PushMap(*obj.NewListMap(vm.Memory))
+		case "]":
+			vm.TopStack().Push(*vm.PopMap())
+		case "->":
+			block, blockOk := stack.Pop().(obj.Block)
+			pList, paramOk := stack.Pop().(obj.ListMap)
+			if blockOk && paramOk {
+				routine := obj.
+					NewRoutineMap(vm.Memory, block).
+					AsFunction(pList)
+				stack.Push(routine)
+			}
+		case ".=":
+			assignee := stack.Pop()
+			if label, labelOk := stack.Pop().(obj.LabelSymbol); labelOk {
+				vm.TopScope().Set(label, assignee)
+			} else {
+				panic("cannot assign to a non-label value")
+			}
+		default:
+			panic("not yet implemented")
+		}
+	default:
+		panic("not yet implemented")
 	}
-	return vm.Stack[vm.Top.Stack], nil
 }
-
-func Disassemble(vm *VirtualMachine, codes []code.Any) (obj.Any, error) {
-	for _, code := range codes {
-		fmt.Println(code.WHAT())
+func (vm *VirtualMachine) ExecuteInner(value obj.Any) {
+	switch value.(type) {
+	default:
+		panic("not yet implemented")
 	}
-	return vm.Stack[vm.Top.Stack], nil
 }
-
-func RunMain(vm *VirtualMachine) (obj.Any, error) {
-	main := Get(vm, vm.Main)
-	return main.Invoke()
-}
-
-func DisassembleMain(vm *VirtualMachine) (obj.Any, error) {
-	main := Get(vm, vm.Main)
-	for _, code := range main.Codes() {
-		fmt.Println(code.WHAT())
+func (vm *VirtualMachine) ExecuteUnder(value obj.Any) {
+	switch value.(type) {
+	default:
+		panic("not yet implemented")
 	}
-	return vm.Stack[vm.Top.Stack], nil
 }
-
-func Execute(vm *VirtualMachine, sIdx int, code code.Any) {
-	fmt.Println(code.WHAT())
+func (vm *VirtualMachine) ExecuteOuter(value obj.Any) {
+	switch value.(type) {
+	default:
+		panic("not yet implemented")
+	}
 }
-
-func WriteCode[C code.Any](
-	vm *VirtualMachine,
-	routineRef obj.Ref[RoutineMap],
-	code C,
-) {
-	routine := Get(vm, routineRef)
-	legend := Get(vm, routine.legend)
-	codes := legend.Data
-	legend.Data = append(codes, code)
-	Set(vm, routine.legend, legend)
+func (vm *VirtualMachine) ExecuteEvent(value obj.Any) {
+	switch value.(type) {
+	default:
+		panic("not yet implemented")
+	}
+}
+func (vm *VirtualMachine) ExecuteReply(value obj.Any) {
+	switch value.(type) {
+	default:
+		panic("not yet implemented")
+	}
 }

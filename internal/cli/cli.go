@@ -12,7 +12,6 @@ import (
 
 	"git.sr.ht/~madcapjake/grhumb/internal/generator"
 	"git.sr.ht/~madcapjake/grhumb/internal/parser"
-	"git.sr.ht/~madcapjake/grhumb/internal/vm"
 	"github.com/antlr4-go/antlr/v4"
 )
 
@@ -60,9 +59,9 @@ func interpret(ctx context.Context, chars antlr.CharStream) {
 	visitor := ctx.Value(VisitorCK).(*generator.RhumbVisitor)
 	visitor.Visit(p.Expressions())
 	if ctx.Value(DisassembleCK).(bool) {
-		vm.DisassembleMain(visitor.VM)
+		visitor.VM.DisassembleMain()
 	}
-	vm.RunMain(visitor.VM)
+	visitor.VM.RunMain()
 }
 
 func InterpretFile(ctx context.Context, args []string) error {

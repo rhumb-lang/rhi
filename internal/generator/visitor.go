@@ -7,11 +7,18 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 
+	"git.sr.ht/~madcapjake/grhumb/internal/code"
+	"git.sr.ht/~madcapjake/grhumb/internal/object"
 	P "git.sr.ht/~madcapjake/grhumb/internal/parser"
 	virtual "git.sr.ht/~madcapjake/grhumb/internal/vm"
 	"github.com/antlr4-go/antlr/v4"
 )
+
+type codeKindContextKey int
+
+const CodeKind codeKindContextKey = iota
 
 var viLogger = log.New(io.Discard, "", log.LstdFlags)
 
@@ -57,318 +64,481 @@ func (v *RhumbVisitor) Visit(tree antlr.ParseTree) interface{} {
 
 	switch t := tree.(type) {
 	case *antlr.ErrorNodeImpl:
-		return RhumbReturn{nil, fmt.Errorf("syntax error near '%s'", t.GetText())}
+		return RhumbReturn{
+			nil,
+			fmt.Errorf("syntax error near '%s'", t.GetText()),
+		}
 	default:
 		if val, ok := tree.Accept(v).(RhumbReturn); ok {
 			return val
 		}
 	}
-	return RhumbReturn{nil, fmt.Errorf("visit result not of type RhumbReturn")}
+	return RhumbReturn{
+		nil,
+		fmt.Errorf("visit result not of type RhumbReturn"),
+	}
 }
 
-func (v *RhumbVisitor) VisitChildren(node antlr.RuleNode) interface{} {
+func (v *RhumbVisitor) VisitChildren(
+	node antlr.RuleNode,
+) interface{} {
 	for _, n := range node.GetChildren() {
-		viLogger.Printf("VisitChildren[node type: %s]\n", reflect.TypeOf(n))
+		viLogger.Printf(
+			"VisitChildren[node type: %s]\n",
+			reflect.TypeOf(n),
+		)
 		v.Visit(n.(antlr.ParseTree))
 	}
 	return nil
 }
 
-func (v *RhumbVisitor) VisitExpressions(ctx *P.ExpressionsContext) interface{} {
+func (v *RhumbVisitor) VisitExpressions(
+	ctx *P.ExpressionsContext,
+) interface{} {
 	viLogger.Println("expressions!")
-	// logger.Println(ctx.GetText())
+	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#fields.
 func (v *RhumbVisitor) VisitFields(ctx *P.FieldsContext) interface{} {
 	viLogger.Println("Fields!")
-	// logger.Println(ctx.GetText())
+	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#patterns.
-func (v *RhumbVisitor) VisitPatterns(ctx *P.PatternsContext) interface{} {
+func (v *RhumbVisitor) VisitPatterns(
+	ctx *P.PatternsContext,
+) interface{} {
 	viLogger.Println("Patterns!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#terminator.
-func (v *RhumbVisitor) VisitTerminator(ctx *P.TerminatorContext) interface{} {
+func (v *RhumbVisitor) VisitTerminator(
+	ctx *P.TerminatorContext,
+) interface{} {
 	viLogger.Println("Terminator!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#rationalNumber.
-func (v *RhumbVisitor) VisitRationalNumber(ctx *P.RationalNumberContext) interface{} {
+func (v *RhumbVisitor) VisitRationalNumber(
+	ctx *P.RationalNumberContext,
+) interface{} {
 	viLogger.Println("RationalNumber!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#dateNumber.
-func (v *RhumbVisitor) VisitDateNumber(ctx *P.DateNumberContext) interface{} {
+func (v *RhumbVisitor) VisitDateNumber(
+	ctx *P.DateNumberContext,
+) interface{} {
 	viLogger.Println("DateNumber!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#zeroNumber.
-func (v *RhumbVisitor) VisitZeroNumber(ctx *P.ZeroNumberContext) interface{} {
+func (v *RhumbVisitor) VisitZeroNumber(
+	ctx *P.ZeroNumberContext,
+) interface{} {
 	viLogger.Println("ZeroNumber!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#wholeNumber.
-func (v *RhumbVisitor) VisitWholeNumber(ctx *P.WholeNumberContext) interface{} {
+func (v *RhumbVisitor) VisitWholeNumber(
+	ctx *P.WholeNumberContext,
+) interface{} {
 	viLogger.Println("WholeNumber!")
 	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	num, err := strconv.ParseInt(ctx.GetText(), 10, 64)
+	if err != nil {
+		panic("Integer conv error")
+	}
+	blockID := v.VM.RegisterObject(object.WholeNumber{Value: num})
+	start := ctx.GetStart()
+	v.VM.PushCode(code.NewValue(
+		start.GetLine(),
+		start.GetColumn(),
+		blockID,
+	))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#keySymbol.
-func (v *RhumbVisitor) VisitKeySymbol(ctx *P.KeySymbolContext) interface{} {
+func (v *RhumbVisitor) VisitKeySymbol(
+	ctx *P.KeySymbolContext,
+) interface{} {
 	viLogger.Println("KeySymbol!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#textSymbol.
-func (v *RhumbVisitor) VisitTextSymbol(ctx *P.TextSymbolContext) interface{} {
+func (v *RhumbVisitor) VisitTextSymbol(
+	ctx *P.TextSymbolContext,
+) interface{} {
 	viLogger.Println("TextSymbol!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#referenceLiteral.
-func (v *RhumbVisitor) VisitReferenceLiteral(ctx *P.ReferenceLiteralContext) interface{} {
+func (v *RhumbVisitor) VisitReferenceLiteral(
+	ctx *P.ReferenceLiteralContext,
+) interface{} {
 	viLogger.Println("ReferenceLiteral!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#labelSymbol.
-func (v *RhumbVisitor) VisitLabelSymbol(ctx *P.LabelSymbolContext) interface{} {
+func (v *RhumbVisitor) VisitLabelSymbol(
+	ctx *P.LabelSymbolContext,
+) interface{} {
 	viLogger.Println("LabelSymbol!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	blockID := v.VM.RegisterObject(
+		object.LabelSymbol{Value: ctx.GetText()},
+	)
+	start := ctx.GetStart()
+	v.VM.PushCode(code.NewValue(
+		start.GetLine(),
+		start.GetColumn(),
+		blockID,
+	))
+	return blockID
 }
 
 // Visit a parse tree produced by RhumbParser#fieldLiteral.
-func (v *RhumbVisitor) VisitFieldLiteral(ctx *P.FieldLiteralContext) interface{} {
+func (v *RhumbVisitor) VisitFieldLiteral(
+	ctx *P.FieldLiteralContext,
+) interface{} {
 	viLogger.Println("FieldLiteral!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	blockID := v.VM.RegisterObject(
+		object.LabelSymbol{Value: ctx.GetText()},
+	)
+	start := ctx.GetStart()
+	v.VM.PushCode(code.NewValue(
+		start.GetLine(),
+		start.GetColumn(),
+		blockID,
+	))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#conjunctive.
-func (v *RhumbVisitor) VisitConjunctive(ctx *P.ConjunctiveContext) interface{} {
+func (v *RhumbVisitor) VisitConjunctive(
+	ctx *P.ConjunctiveContext,
+) interface{} {
 	viLogger.Println("Conjunctive!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#access.
-func (v *RhumbVisitor) VisitAccess(ctx *P.AccessContext) interface{} {
+func (v *RhumbVisitor) VisitAccess(
+	ctx *P.AccessContext,
+) interface{} {
 	viLogger.Println("Access!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#applicative.
-func (v *RhumbVisitor) VisitApplicative(ctx *P.ApplicativeContext) interface{} {
+func (v *RhumbVisitor) VisitApplicative(
+	ctx *P.ApplicativeContext,
+) interface{} {
 	viLogger.Println("Applicative!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#conditional.
-func (v *RhumbVisitor) VisitConditional(ctx *P.ConditionalContext) interface{} {
+func (v *RhumbVisitor) VisitConditional(
+	ctx *P.ConditionalContext,
+) interface{} {
 	viLogger.Println("Conditional!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#prefix.
-func (v *RhumbVisitor) VisitPrefix(ctx *P.PrefixContext) interface{} {
+func (v *RhumbVisitor) VisitPrefix(
+	ctx *P.PrefixContext,
+) interface{} {
 	viLogger.Println("Prefix!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#comparative.
-func (v *RhumbVisitor) VisitComparative(ctx *P.ComparativeContext) interface{} {
+func (v *RhumbVisitor) VisitComparative(
+	ctx *P.ComparativeContext,
+) interface{} {
 	viLogger.Println("Comparative!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#simpleExpression.
-func (v *RhumbVisitor) VisitSimpleExpression(ctx *P.SimpleExpressionContext) interface{} {
+func (v *RhumbVisitor) VisitSimpleExpression(
+	ctx *P.SimpleExpressionContext,
+) interface{} {
 	viLogger.Println("SimpleExpression!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#multiplicative.
-func (v *RhumbVisitor) VisitMultiplicative(ctx *P.MultiplicativeContext) interface{} {
+func (v *RhumbVisitor) VisitMultiplicative(
+	ctx *P.MultiplicativeContext,
+) interface{} {
 	viLogger.Println("Multiplicative!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#additive.
-func (v *RhumbVisitor) VisitAdditive(ctx *P.AdditiveContext) interface{} {
+func (v *RhumbVisitor) VisitAdditive(
+	ctx *P.AdditiveContext,
+) interface{} {
 	viLogger.Println("Additive!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#invocation.
-func (v *RhumbVisitor) VisitInvocation(ctx *P.InvocationContext) interface{} {
+func (v *RhumbVisitor) VisitInvocation(
+	ctx *P.InvocationContext,
+) interface{} {
 	viLogger.Println("Invocation!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#library.
-func (v *RhumbVisitor) VisitLibrary(ctx *P.LibraryContext) interface{} {
+func (v *RhumbVisitor) VisitLibrary(
+	ctx *P.LibraryContext,
+) interface{} {
 	viLogger.Println("Library!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#routine.
-func (v *RhumbVisitor) VisitRoutine(ctx *P.RoutineContext) interface{} {
+func (v *RhumbVisitor) VisitRoutine(
+	ctx *P.RoutineContext,
+) interface{} {
 	viLogger.Println("Routine!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.VM.PushBlock()
+	v.VisitChildren(ctx)
+	block := v.VM.PopBlock()
+	blockID := v.VM.RegisterObject(block)
+	start := ctx.GetStart()
+	v.VM.PushCode(code.NewValue(
+		start.GetLine(),
+		start.GetColumn(),
+		blockID,
+	))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#disjunctive.
-func (v *RhumbVisitor) VisitDisjunctive(ctx *P.DisjunctiveContext) interface{} {
+func (v *RhumbVisitor) VisitDisjunctive(
+	ctx *P.DisjunctiveContext,
+) interface{} {
 	viLogger.Println("Disjunctive!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#identity.
-func (v *RhumbVisitor) VisitIdentity(ctx *P.IdentityContext) interface{} {
+func (v *RhumbVisitor) VisitIdentity(
+	ctx *P.IdentityContext,
+) interface{} {
 	viLogger.Println("Identity!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignLabel.
-func (v *RhumbVisitor) VisitAssignLabel(ctx *P.AssignLabelContext) interface{} {
+func (v *RhumbVisitor) VisitAssignLabel(
+	ctx *P.AssignLabelContext,
+) interface{} {
 	viLogger.Println("AssignLabel!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#effect.
-func (v *RhumbVisitor) VisitEffect(ctx *P.EffectContext) interface{} {
+func (v *RhumbVisitor) VisitEffect(
+	ctx *P.EffectContext,
+) interface{} {
 	viLogger.Println("Effect!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#member.
-func (v *RhumbVisitor) VisitMember(ctx *P.MemberContext) interface{} {
+func (v *RhumbVisitor) VisitMember(
+	ctx *P.MemberContext,
+) interface{} {
 	viLogger.Println("Member!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#selector.
-func (v *RhumbVisitor) VisitSelector(ctx *P.SelectorContext) interface{} {
+func (v *RhumbVisitor) VisitSelector(
+	ctx *P.SelectorContext,
+) interface{} {
 	viLogger.Println("Selector!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#power.
-func (v *RhumbVisitor) VisitPower(ctx *P.PowerContext) interface{} {
+func (v *RhumbVisitor) VisitPower(
+	ctx *P.PowerContext,
+) interface{} {
 	viLogger.Println("Power!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
+	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#map.
-func (v *RhumbVisitor) VisitMap(ctx *P.MapContext) interface{} {
+func (v *RhumbVisitor) VisitMap(
+	ctx *P.MapContext,
+) interface{} {
+	var (
+		s, e antlr.Token
+		op   int
+	)
 	viLogger.Println("Map!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	op = v.VM.RegisterObject(
+		object.OperatorSymbol{Value: "["},
+	)
+	s = ctx.GetStart()
+	v.VM.PushCode(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	v.VisitChildren(ctx)
+	op = v.VM.RegisterObject(
+		object.OperatorSymbol{Value: "]"},
+	)
+	e = ctx.GetStop()
+	v.VM.PushCode(code.NewLocal(e.GetLine(), e.GetColumn(), op))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#chainExpression.
-func (v *RhumbVisitor) VisitChainExpression(ctx *P.ChainExpressionContext) interface{} {
+func (v *RhumbVisitor) VisitChainExpression(
+	ctx *P.ChainExpressionContext,
+) interface{} {
 	viLogger.Println("ChainExpression!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#prefixAssignMutField.
-func (v *RhumbVisitor) VisitPrefixAssignMutField(ctx *P.PrefixAssignMutFieldContext) interface{} {
+func (v *RhumbVisitor) VisitPrefixAssignMutField(
+	ctx *P.PrefixAssignMutFieldContext,
+) interface{} {
 	viLogger.Println("PrefixAssignMutField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#prefixAssignMutSubField.
-func (v *RhumbVisitor) VisitPrefixAssignMutSubField(ctx *P.PrefixAssignMutSubFieldContext) interface{} {
+func (v *RhumbVisitor) VisitPrefixAssignMutSubField(
+	ctx *P.PrefixAssignMutSubFieldContext,
+) interface{} {
 	viLogger.Println("PrefixAssignMutSubField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#prefixAssignImmSubField.
-func (v *RhumbVisitor) VisitPrefixAssignImmSubField(ctx *P.PrefixAssignImmSubFieldContext) interface{} {
+func (v *RhumbVisitor) VisitPrefixAssignImmSubField(
+	ctx *P.PrefixAssignImmSubFieldContext,
+) interface{} {
 	viLogger.Println("PrefixAssignImmSubField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#prefixSlurpSpread.
-func (v *RhumbVisitor) VisitPrefixSlurpSpread(ctx *P.PrefixSlurpSpreadContext) interface{} {
+func (v *RhumbVisitor) VisitPrefixSlurpSpread(
+	ctx *P.PrefixSlurpSpreadContext,
+) interface{} {
 	viLogger.Println("PrefixSlurpSpread!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignMutField.
-func (v *RhumbVisitor) VisitAssignMutField(ctx *P.AssignMutFieldContext) interface{} {
+func (v *RhumbVisitor) VisitAssignMutField(
+	ctx *P.AssignMutFieldContext,
+) interface{} {
 	viLogger.Println("AssignMutField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignMutSubField.
-func (v *RhumbVisitor) VisitAssignMutSubField(ctx *P.AssignMutSubFieldContext) interface{} {
+func (v *RhumbVisitor) VisitAssignMutSubField(
+	ctx *P.AssignMutSubFieldContext,
+) interface{} {
 	viLogger.Println("AssignMutSubField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignImmField.
-func (v *RhumbVisitor) VisitAssignImmField(ctx *P.AssignImmFieldContext) interface{} {
+func (v *RhumbVisitor) VisitAssignImmField(
+	ctx *P.AssignImmFieldContext,
+) interface{} {
 	viLogger.Println("AssignImmField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignImmSubField.
-func (v *RhumbVisitor) VisitAssignImmSubField(ctx *P.AssignImmSubFieldContext) interface{} {
+func (v *RhumbVisitor) VisitAssignImmSubField(
+	ctx *P.AssignImmSubFieldContext,
+) interface{} {
 	viLogger.Println("AssignImmSubField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#simpleMapField.
-func (v *RhumbVisitor) VisitSimpleMapField(ctx *P.SimpleMapFieldContext) interface{} {
+func (v *RhumbVisitor) VisitSimpleMapField(
+	ctx *P.SimpleMapFieldContext,
+) interface{} {
 	viLogger.Println("SimpleMapField!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
@@ -382,21 +552,27 @@ func (v *RhumbVisitor) VisitSimpleField(ctx *P.SimpleFieldContext) interface{} {
 }
 
 // Visit a parse tree produced by RhumbParser#assignBreakingPattern.
-func (v *RhumbVisitor) VisitAssignBreakingPattern(ctx *P.AssignBreakingPatternContext) interface{} {
+func (v *RhumbVisitor) VisitAssignBreakingPattern(
+	ctx *P.AssignBreakingPatternContext,
+) interface{} {
 	viLogger.Println("AssignBreakingPattern!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignFallthroughPattern.
-func (v *RhumbVisitor) VisitAssignFallthroughPattern(ctx *P.AssignFallthroughPatternContext) interface{} {
+func (v *RhumbVisitor) VisitAssignFallthroughPattern(
+	ctx *P.AssignFallthroughPatternContext,
+) interface{} {
 	viLogger.Println("AssignFallthroughPattern!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#assignDefaultPattern.
-func (v *RhumbVisitor) VisitAssignDefaultPattern(ctx *P.AssignDefaultPatternContext) interface{} {
+func (v *RhumbVisitor) VisitAssignDefaultPattern(
+	ctx *P.AssignDefaultPatternContext,
+) interface{} {
 	viLogger.Println("AssignDefaultPattern!")
 	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
@@ -538,8 +714,12 @@ func (v *RhumbVisitor) VisitToKey(ctx *P.ToKeyContext) interface{} {
 // Visit a parse tree produced by RhumbParser#function.
 func (v *RhumbVisitor) VisitFunction(ctx *P.FunctionContext) interface{} {
 	viLogger.Println("Function!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	op := v.VM.RegisterObject(
+		object.OperatorSymbol{Value: ctx.GetText()},
+	)
+	s := ctx.GetStart()
+	v.VM.PushCode(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#method.
@@ -776,8 +956,12 @@ func (v *RhumbVisitor) VisitScientific(ctx *P.ScientificContext) interface{} {
 // Visit a parse tree produced by RhumbParser#immutableLabel.
 func (v *RhumbVisitor) VisitImmutableLabel(ctx *P.ImmutableLabelContext) interface{} {
 	viLogger.Println("ImmutableLabel!")
-	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+	op := v.VM.RegisterObject(
+		object.OperatorSymbol{Value: ctx.GetText()},
+	)
+	s := ctx.GetStart()
+	v.VM.PushCode(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#mutableLabel.
