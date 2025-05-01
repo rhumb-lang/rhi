@@ -5,13 +5,11 @@ import (
 	"os"
 	"os/signal"
 
-	"git.sr.ht/~madcapjake/grhumb/internal/cli"
-	"git.sr.ht/~madcapjake/grhumb/internal/generator"
-	"git.sr.ht/~madcapjake/grhumb/internal/vm"
+	"git.sr.ht/~madcapjake/rhi/internal/cli"
+	"git.sr.ht/~madcapjake/rhi/internal/generator"
+	"git.sr.ht/~madcapjake/rhi/internal/vm"
 	"github.com/cristalhq/acmd"
 )
-
-var echo bool
 
 func main() {
 	cmds := []acmd.Command{

@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"git.sr.ht/~madcapjake/grhumb/internal/generator"
-	"git.sr.ht/~madcapjake/grhumb/internal/parser"
+	"git.sr.ht/~madcapjake/rhi/internal/generator"
+	"git.sr.ht/~madcapjake/rhi/internal/parser"
 	"github.com/antlr4-go/antlr/v4"
 )
 

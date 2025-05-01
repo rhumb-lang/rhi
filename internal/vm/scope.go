@@ -4,7 +4,7 @@ import (
 	"arena"
 	"fmt"
 
-	obj "git.sr.ht/~madcapjake/grhumb/internal/object"
+	obj "git.sr.ht/~madcapjake/rhi/internal/object"
 )
 
 const INIT_BUCKET_SIZE int = 16

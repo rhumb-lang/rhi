@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"strconv"
 
-	"git.sr.ht/~madcapjake/grhumb/internal/code"
-	"git.sr.ht/~madcapjake/grhumb/internal/object"
-	P "git.sr.ht/~madcapjake/grhumb/internal/parser"
-	virtual "git.sr.ht/~madcapjake/grhumb/internal/vm"
+	"git.sr.ht/~madcapjake/rhi/internal/code"
+	"git.sr.ht/~madcapjake/rhi/internal/object"
+	P "git.sr.ht/~madcapjake/rhi/internal/parser"
+	virtual "git.sr.ht/~madcapjake/rhi/internal/vm"
 	"github.com/antlr4-go/antlr/v4"
 )
 
@@ -103,7 +103,6 @@ func (v *RhumbVisitor) VisitExpressions(
 // Visit a parse tree produced by RhumbParser#fields.
 func (v *RhumbVisitor) VisitFields(ctx *P.FieldsContext) interface{} {
 	viLogger.Println("Fields!")
-	viLogger.Println(ctx.GetText())
 	return v.VisitChildren(ctx)
 }
 
@@ -162,12 +161,13 @@ func (v *RhumbVisitor) VisitWholeNumber(
 	if err != nil {
 		panic("Integer conv error")
 	}
-	blockID := v.VM.RegisterObject(object.WholeNumber{Value: num})
+	obj := object.NewNumber(v.VM.Memory, num)
+	objID := v.VM.RegisterObject(obj)
 	start := ctx.GetStart()
-	v.VM.PushCode(code.NewValue(
+	v.VM.Write(code.NewValue(
 		start.GetLine(),
 		start.GetColumn(),
-		blockID,
+		objID,
 	))
 	return nil
 }
@@ -204,16 +204,16 @@ func (v *RhumbVisitor) VisitLabelSymbol(
 	ctx *P.LabelSymbolContext,
 ) interface{} {
 	viLogger.Println("LabelSymbol!")
-	blockID := v.VM.RegisterObject(
-		object.LabelSymbol{Value: ctx.GetText()},
+	labelID := v.VM.RegisterObject(
+		object.Label{Value: ctx.GetText()},
 	)
 	start := ctx.GetStart()
-	v.VM.PushCode(code.NewValue(
+	v.VM.Write(code.NewValue(
 		start.GetLine(),
 		start.GetColumn(),
-		blockID,
+		labelID,
 	))
-	return blockID
+	return labelID
 }
 
 // Visit a parse tree produced by RhumbParser#fieldLiteral.
@@ -221,14 +221,15 @@ func (v *RhumbVisitor) VisitFieldLiteral(
 	ctx *P.FieldLiteralContext,
 ) interface{} {
 	viLogger.Println("FieldLiteral!")
-	blockID := v.VM.RegisterObject(
-		object.LabelSymbol{Value: ctx.GetText()},
+	viLogger.Println(ctx.GetText())
+	fieldId := v.VM.RegisterObject(
+		object.Label{Value: ctx.GetText()},
 	)
 	start := ctx.GetStart()
-	v.VM.PushCode(code.NewValue(
+	v.VM.Write(code.NewValue(
 		start.GetLine(),
 		start.GetColumn(),
-		blockID,
+		fieldId,
 	))
 	return nil
 }
@@ -349,17 +350,22 @@ func (v *RhumbVisitor) VisitRoutine(
 	ctx *P.RoutineContext,
 ) interface{} {
 	viLogger.Println("Routine!")
-	v.VM.PushBlock()
-	v.VisitChildren(ctx)
-	block := v.VM.PopBlock()
-	blockID := v.VM.RegisterObject(block)
+	viLogger.Println(ctx.GetText())
+	v.VM.PushRoutine()
+	v.VisitChildren(ctx.Expressions())
+	routine := v.VM.PopRoutine()
+	routineID := v.VM.RegisterObject(routine)
 	start := ctx.GetStart()
-	v.VM.PushCode(code.NewValue(
+	v.VM.Write(code.NewValue(
 		start.GetLine(),
 		start.GetColumn(),
-		blockID,
+		routineID,
 	))
-	return nil
+
+	return RhumbReturn{
+		routine,
+		nil,
+	}
 }
 
 // Visit a parse tree produced by RhumbParser#disjunctive.
@@ -441,16 +447,36 @@ func (v *RhumbVisitor) VisitMap(
 	)
 	viLogger.Println("Map!")
 	op = v.VM.RegisterObject(
-		object.OperatorSymbol{Value: "["},
+		object.Label{Value: "_[[_"},
 	)
 	s = ctx.GetStart()
-	v.VM.PushCode(code.NewLocal(s.GetLine(), s.GetColumn(), op))
-	v.VisitChildren(ctx)
+	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+
 	op = v.VM.RegisterObject(
-		object.OperatorSymbol{Value: "]"},
+		object.Label{Value: "_[>_"},
+	)
+
+	for _, n := range ctx.GetChildren() {
+		viLogger.Printf(
+			"VisitMapChild[node type: %s]\n",
+			reflect.TypeOf(n),
+		)
+
+		switch nType := n.(type) {
+		case *antlr.TerminalNodeImpl:
+			continue
+		default:
+			v.Visit(nType.(antlr.ParseTree))
+			s = ctx.GetStart()
+			v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+		}
+	}
+
+	op = v.VM.RegisterObject(
+		object.Label{Value: "_]]_"},
 	)
 	e = ctx.GetStop()
-	v.VM.PushCode(code.NewLocal(e.GetLine(), e.GetColumn(), op))
+	v.VM.Write(code.NewLocal(e.GetLine(), e.GetColumn(), op))
 	return nil
 }
 
@@ -714,11 +740,12 @@ func (v *RhumbVisitor) VisitToKey(ctx *P.ToKeyContext) interface{} {
 // Visit a parse tree produced by RhumbParser#function.
 func (v *RhumbVisitor) VisitFunction(ctx *P.FunctionContext) interface{} {
 	viLogger.Println("Function!")
-	op := v.VM.RegisterObject(
-		object.OperatorSymbol{Value: ctx.GetText()},
+	viLogger.Println(ctx.GetText())
+	label := v.VM.RegisterObject(
+		object.Label{Value: fmt.Sprint("_", ctx.GetText(), "_")},
 	)
 	s := ctx.GetStart()
-	v.VM.PushCode(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), label))
 	return nil
 }
 
@@ -894,7 +921,13 @@ func (v *RhumbVisitor) VisitConcatenate(ctx *P.ConcatenateContext) interface{} {
 func (v *RhumbVisitor) VisitMultiplication(ctx *P.MultiplicationContext) interface{} {
 	viLogger.Println("Multiplication!")
 	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+
+	op := v.VM.RegisterObject(
+		object.Label{Value: "_**_"},
+	)
+	s := ctx.GetStart()
+	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#rationalDivision.
@@ -957,10 +990,10 @@ func (v *RhumbVisitor) VisitScientific(ctx *P.ScientificContext) interface{} {
 func (v *RhumbVisitor) VisitImmutableLabel(ctx *P.ImmutableLabelContext) interface{} {
 	viLogger.Println("ImmutableLabel!")
 	op := v.VM.RegisterObject(
-		object.OperatorSymbol{Value: ctx.GetText()},
+		object.Label{Value: ctx.GetText()},
 	)
 	s := ctx.GetStart()
-	v.VM.PushCode(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
 	return nil
 }
 
