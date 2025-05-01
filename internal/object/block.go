@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"git.sr.ht/~madcapjake/rhi/internal/code"
+	"git.sr.ht/~madcapjake/rhi/internal/color"
 	"git.sr.ht/~madcapjake/rhi/internal/stack"
 )
 
@@ -114,7 +115,10 @@ func (b Block) Disassemble() {
 		if routineVal, ok := val.(*Routine); ok {
 			routineVal.Disassemble()
 		} else {
-			fmt.Println(i, "\tCode =", code.WHAT(), "\tValue =", val.WHAT())
+			fmt.Println(
+				color.Gray, i, color.Reset,
+				color.Purple, "Code", color.Reset, "=", code.WHAT(),
+				color.Blue, "Value", color.Reset, "=", val.WHAT())
 		}
 	}
 }

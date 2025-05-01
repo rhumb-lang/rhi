@@ -13,7 +13,7 @@ type Reference[O Any] struct {
 func (o Reference[Any]) IsObject() {}
 func (o Reference[O]) WHAT() string {
 	var rt [0]O
-	return fmt.Sprint("Reference[", reflect.TypeOf(rt).Elem(), "]")
+	return fmt.Sprint("Reference:", reflect.TypeOf(rt).Elem())
 }
 func (x Reference[O]) Equals(y Any) bool {
 	objY, ok := y.(Reference[Any])

@@ -4,6 +4,8 @@ import (
 	"arena"
 	"encoding/binary"
 	"fmt"
+
+	"git.sr.ht/~madcapjake/rhi/internal/color"
 )
 
 type Number struct {
@@ -23,7 +25,7 @@ func NewNumber(a *arena.Arena, val int64) *Number {
 
 func (w Number) IsObject() {}
 func (w Number) WHAT() string {
-	return fmt.Sprint("Number: ", w.legend.Data)
+	return fmt.Sprint("Number: ", color.Yellow, w.legend.Data, color.Reset)
 }
 func (x Number) Equals(y Any) bool {
 	objY, ok := y.(Date)
