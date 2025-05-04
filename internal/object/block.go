@@ -118,11 +118,12 @@ func scopeTabs(frameLevel int) string {
 }
 
 func printDisassembly(frame, i int, code code.Any, val Any) {
-	fmt.Println(
+	fmt.Println(fmt.Sprint(
 		scopeTabs(frame),
-		color.Gray, i, color.Reset,
-		color.Purple, "Code", color.Reset, "=", code.WHAT(),
-		color.Blue, "Value", color.Reset, "=", val.WHAT())
+		color.Gray, i, color.Reset, " ",
+		color.Purple, "Code", color.Reset, " = ", code.WHAT(), " ",
+		color.Blue, "Value", color.Reset, " = ", val.WHAT()),
+	)
 }
 
 func (b Block) Disassemble(frame int) {

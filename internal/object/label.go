@@ -24,7 +24,7 @@ func NewLabel(a *arena.Arena, v string) *Label {
 
 func (l Label) IsObject() {}
 func (l Label) WHAT() string {
-	return fmt.Sprint("Label:", color.Green, "\"", string(l.Value), "\"", color.Reset)
+	return fmt.Sprint("Label: ", color.Green, "\"", string(l.Value), "\"", color.Reset)
 }
 
 func (x Label) Equals(y Any) bool {
