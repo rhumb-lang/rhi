@@ -1032,7 +1032,7 @@ func (v *RhumbVisitor) VisitScientific(ctx *P.ScientificContext) interface{} {
 func (v *RhumbVisitor) VisitImmutableLabel(ctx *P.ImmutableLabelContext) interface{} {
 	viLogger.Println("ImmutableLabel!")
 	op := v.VM.RegisterObject(
-		object.NewLabel(v.VM.Memory, ctx.GetText()),
+		object.NewLabel(v.VM.Memory, fmt.Sprint("_", ctx.GetText(), "_")),
 	)
 	s := ctx.GetStart()
 	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
