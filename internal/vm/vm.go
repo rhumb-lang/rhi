@@ -30,7 +30,7 @@ func (vm *VirtualMachine) Run(routine *obj.Routine) (obj.Any, error) {
 }
 
 func (vm *VirtualMachine) Disassemble(routine *obj.Routine) {
-	routine.Disassemble()
+	routine.Disassemble(0)
 }
 
 func (vm *VirtualMachine) PushRoutine() {

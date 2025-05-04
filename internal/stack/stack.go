@@ -36,3 +36,8 @@ func (s *Stack[O]) Pop() (value O) {
 	}
 	return
 }
+
+func (s Stack[O]) Size() (sz int) {
+	sz = len(s.objects)
+	return
+}

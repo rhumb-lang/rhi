@@ -109,16 +109,30 @@ func (b *Block) Run() (Any, error) {
 	return result, nil
 }
 
-func (b Block) Disassemble() {
+func scopeTabs(frameLevel int) string {
+	tabs := []rune{}
+	for range frameLevel {
+		tabs = append(tabs, '\t')
+	}
+	return string(tabs)
+}
+
+func printDisassembly(frame, i int, code code.Any, val Any) {
+	fmt.Println(
+		scopeTabs(frame),
+		color.Gray, i, color.Reset,
+		color.Purple, "Code", color.Reset, "=", code.WHAT(),
+		color.Blue, "Value", color.Reset, "=", val.WHAT())
+}
+
+func (b Block) Disassemble(frame int) {
 	for i, code := range b.Codes {
 		val := b.Values[code.GetID()]
 		if routineVal, ok := val.(*Routine); ok {
-			routineVal.Disassemble()
+			printDisassembly(frame, i, code, routineVal)
+			routineVal.Disassemble(frame + 1)
 		} else {
-			fmt.Println(
-				color.Gray, i, color.Reset,
-				color.Purple, "Code", color.Reset, "=", code.WHAT(),
-				color.Blue, "Value", color.Reset, "=", val.WHAT())
+			printDisassembly(frame, i, code, val)
 		}
 	}
 }
@@ -151,7 +165,7 @@ func (b *Block) ExecuteLocal(obj Any) {
 	// case Label:
 	// 	b.TopScope().Get(value)
 	case Label:
-		switch o.Value {
+		switch string(o.Value) {
 		case "_[[_":
 			b.PushList(NewList(b.memory))
 		case "_[>_":

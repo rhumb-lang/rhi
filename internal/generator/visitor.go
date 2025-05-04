@@ -205,7 +205,7 @@ func (v *RhumbVisitor) VisitLabelSymbol(
 ) interface{} {
 	viLogger.Println("LabelSymbol!")
 	labelID := v.VM.RegisterObject(
-		object.Label{Value: ctx.GetText()},
+		object.NewLabel(v.VM.Memory, ctx.GetText()),
 	)
 	start := ctx.GetStart()
 	v.VM.Write(code.NewValue(
@@ -223,7 +223,7 @@ func (v *RhumbVisitor) VisitFieldLiteral(
 	viLogger.Println("FieldLiteral!")
 	viLogger.Println(ctx.GetText())
 	fieldId := v.VM.RegisterObject(
-		object.Label{Value: ctx.GetText()},
+		object.NewLabel(v.VM.Memory, ctx.GetText()),
 	)
 	start := ctx.GetStart()
 	v.VM.Write(code.NewValue(
@@ -437,28 +437,29 @@ func (v *RhumbVisitor) VisitPower(
 	return nil
 }
 
-// Visit a parse tree produced by RhumbParser#map.
-func (v *RhumbVisitor) VisitMap(
-	ctx *P.MapContext,
-) interface{} {
+func (v *RhumbVisitor) visitMapChildren(
+	kind string,
+	ctx antlr.ParserRuleContext,
+) {
 	var (
 		s, e antlr.Token
 		op   int
 	)
-	viLogger.Println("Map!")
+	viLogger.Println(fmt.Sprint(kind, "Map!"))
 	op = v.VM.RegisterObject(
-		object.Label{Value: "_[[_"},
+		object.NewLabel(v.VM.Memory, "_[[_"),
 	)
 	s = ctx.GetStart()
 	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
 
 	op = v.VM.RegisterObject(
-		object.Label{Value: "_[>_"},
+		object.NewLabel(v.VM.Memory, "_[>_"),
 	)
 
 	for _, n := range ctx.GetChildren() {
 		viLogger.Printf(
-			"VisitMapChild[node type: %s]\n",
+			"Visit%sMapChild[node type: %s]\n",
+			kind,
 			reflect.TypeOf(n),
 		)
 
@@ -473,10 +474,18 @@ func (v *RhumbVisitor) VisitMap(
 	}
 
 	op = v.VM.RegisterObject(
-		object.Label{Value: "_]]_"},
+		object.NewLabel(v.VM.Memory, "_]]_"),
 	)
 	e = ctx.GetStop()
 	v.VM.Write(code.NewLocal(e.GetLine(), e.GetColumn(), op))
+}
+
+// Visit a parse tree produced by RhumbParser#map.
+func (v *RhumbVisitor) VisitMap(
+	ctx *P.MapContext,
+) interface{} {
+	viLogger.Println("Map!")
+	v.visitMapChildren("List", ctx)
 	return nil
 }
 
@@ -486,7 +495,40 @@ func (v *RhumbVisitor) VisitChainExpression(
 ) interface{} {
 	viLogger.Println("ChainExpression!")
 	viLogger.Println(ctx.GetText())
-	return v.VisitChildren(ctx)
+
+	var (
+		s antlr.Token
+	)
+
+	for _, n := range ctx.GetChildren() {
+		viLogger.Printf(
+			"VisitChainChild[node type: %s]\n",
+			reflect.TypeOf(n),
+		)
+
+		s = ctx.GetStart()
+		switch nTyped := n.(type) {
+		case *P.FieldLiteralContext:
+			ref := v.VM.RegisterObject(
+				object.NewReference(
+					v.VM.Memory,
+					object.NewLabel(v.VM.Memory, nTyped.GetText()),
+				),
+			)
+			v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), ref))
+		case *P.ExpressionsContext:
+			v.visitMapChildren("Invoke", ctx)
+		case *antlr.TerminalNodeImpl:
+			continue
+		default:
+			panic("unknown chain expression child")
+			// v.Visit(nType.(antlr.ParseTree))
+			// s = ctx.GetStart()
+			// v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+		}
+	}
+	return nil
+	// return v.VisitChildren(ctx)
 }
 
 // Visit a parse tree produced by RhumbParser#prefixAssignMutField.
@@ -742,7 +784,7 @@ func (v *RhumbVisitor) VisitFunction(ctx *P.FunctionContext) interface{} {
 	viLogger.Println("Function!")
 	viLogger.Println(ctx.GetText())
 	label := v.VM.RegisterObject(
-		object.Label{Value: fmt.Sprint("_", ctx.GetText(), "_")},
+		object.NewLabel(v.VM.Memory, fmt.Sprint("_", ctx.GetText(), "_")),
 	)
 	s := ctx.GetStart()
 	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), label))
@@ -923,7 +965,7 @@ func (v *RhumbVisitor) VisitMultiplication(ctx *P.MultiplicationContext) interfa
 	viLogger.Println(ctx.GetText())
 
 	op := v.VM.RegisterObject(
-		object.Label{Value: "_**_"},
+		object.NewLabel(v.VM.Memory, "_**_"),
 	)
 	s := ctx.GetStart()
 	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
@@ -990,7 +1032,7 @@ func (v *RhumbVisitor) VisitScientific(ctx *P.ScientificContext) interface{} {
 func (v *RhumbVisitor) VisitImmutableLabel(ctx *P.ImmutableLabelContext) interface{} {
 	viLogger.Println("ImmutableLabel!")
 	op := v.VM.RegisterObject(
-		object.Label{Value: ctx.GetText()},
+		object.NewLabel(v.VM.Memory, ctx.GetText()),
 	)
 	s := ctx.GetStart()
 	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))

@@ -79,8 +79,8 @@ func (o *Routine) Run() (Any, error) {
 	return o.legend.Data.Run()
 }
 
-func (o *Routine) Disassemble() {
-	o.legend.Data.Disassemble()
+func (o *Routine) Disassemble(frame int) {
+	o.legend.Data.Disassemble(frame)
 }
 
 // func (o *Routine) Push(n Any) {
