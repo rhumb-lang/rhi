@@ -28,8 +28,15 @@ func (w Number) WHAT() string {
 	return fmt.Sprint("Number: ", color.Yellow, w.legend.Data, color.Reset)
 }
 func (x Number) Equals(y Any) bool {
-	objY, ok := y.(Date)
+	objY, ok := y.(Number)
 	return ok && x.legend.Equals(objY.legend)
+}
+func (x Number) Multiply(y Any) int64 {
+	if objY, ok := y.(*Number); ok {
+		return x.legend.Data * objY.legend.Data
+	} else {
+		panic("Right operand is not a number")
+	}
 }
 func (key Number) HashBytes() []byte {
 	buf := make([]byte, binary.MaxVarintLen64)

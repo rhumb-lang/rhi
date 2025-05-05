@@ -118,12 +118,13 @@ func scopeTabs(frameLevel int) string {
 }
 
 func printDisassembly(frame, i int, code code.Any, val Any) {
-	fmt.Println(fmt.Sprint(
+	disText := fmt.Sprint(
 		scopeTabs(frame),
 		color.Gray, i, color.Reset, " ",
 		color.Purple, "Code", color.Reset, " = ", code.WHAT(), " ",
-		color.Blue, "Value", color.Reset, " = ", val.WHAT()),
+		color.Blue, "Value", color.Reset, " = ", val.WHAT(),
 	)
+	fmt.Println(disText)
 }
 
 func (b Block) Disassemble(frame int) {
@@ -161,12 +162,10 @@ func (b *Block) ExecuteValue(obj Any) {
 	b.TopStack().Push(obj)
 }
 
-func (b *Block) ExecuteLocal(obj Any) {
-	switch o := obj.(type) {
-	// case Label:
-	// 	b.TopScope().Get(value)
-	case Label:
-		switch string(o.Value) {
+func (b *Block) ExecuteLocal(value Any) {
+	switch obj := value.(type) {
+	case *Label:
+		switch string(obj.Value) {
 		case "_[[_":
 			b.PushList(NewList(b.memory))
 		case "_[>_":
@@ -192,32 +191,106 @@ func (b *Block) ExecuteLocal(obj Any) {
 			}
 			routine.SetParameters(b.memory, *list)
 			b.TopStack().Push(routine)
-		case ".=":
+		case "_.=_":
 			assignee := b.TopStack().Pop()
-			if label, labelOk := b.TopStack().Pop().(Label); labelOk {
+			if label, labelOk := b.TopStack().Pop().(*Label); labelOk {
 				b.Scope.Set(b.memory, label, assignee, false)
 			} else {
 				panic("cannot assign to a non-label value")
 			}
-		case ":=":
+		case "_:=_":
 			assignee := b.TopStack().Pop()
-			if label, labelOk := b.TopStack().Pop().(Label); labelOk {
+			if label, labelOk := b.TopStack().Pop().(*Label); labelOk {
 				b.Scope.Set(b.memory, label, assignee, true)
 			} else {
 				panic("cannot assign to a non-label value")
 			}
+		case "_**_":
+			left := b.TopStack().Pop()
+			right := b.TopStack().Pop()
+			if leftNum, ok := left.(*Number); ok {
+				result := NewNumber(b.memory, leftNum.Multiply(right))
+				b.TopStack().Push(result)
+			} else {
+				panic("Left operand is not a number")
+			}
 		default:
-			b.Scope.Get(o)
+			if val, err := b.Scope.Get(obj); err == nil {
+				b.TopStack().Push(val)
+			} else {
+				panic("label not found")
+			}
 		}
+	case *Reference[*Label]:
+		b.TopStack().Push(obj)
 	default:
-		panic("not yet implemented")
+		panic(fmt.Sprintf("Object of type '%s' not yet implemented", obj.WHAT()))
 	}
 }
 
 func (b *Block) ExecuteInner(value Any) {
-	switch value.(type) {
+	switch obj := value.(type) {
+	case *Label:
+		switch string(obj.Value) {
+		case "_[[_":
+			b.PushList(NewList(b.memory))
+		case "_[>_":
+			b.TopList().Append(b.TopStack().Pop())
+		case "_]]_":
+			argList := b.PopList()
+			switch routineOrReference := b.TopStack().Pop().(type) {
+			case *Routine:
+				b.Frames.Push(routineOrReference)
+				routineOrReference.SetArguments(b.memory, argList)
+				if result, err := routineOrReference.Run(); err == nil {
+					b.TopStack().Push(result)
+				} else {
+					panic(err)
+				}
+				b.Frames.Pop()
+			case *Reference[*Label]:
+				labelRefObj, labelRefObjError := b.Scope.Get(routineOrReference.Address)
+				if labelRefObjError != nil {
+					panic("No referenced value found in scope")
+				}
+				if refRoutine, refRoutineOk := labelRefObj.(*Routine); refRoutineOk {
+					b.Frames.Push(refRoutine)
+					refRoutine.SetArguments(b.memory, argList)
+					if result, err := refRoutine.Run(); err == nil {
+						b.TopStack().Push(result)
+					} else {
+						panic(err)
+					}
+					b.Frames.Pop()
+				} else {
+					panic("The scoped value referenced is not a routine")
+				}
+			default:
+				panic("No routine or reference found in stack to invoke")
+			}
+
+		// TODO: convert to field assigns
+		// case ".=":
+		// 	assignee := b.TopStack().Pop()
+		// 	if label, labelOk := b.TopStack().Pop().(Label); labelOk {
+		// 		b.Scope.Set(b.memory, label, assignee, false)
+		// 	} else {
+		// 		panic("cannot assign to a non-label value")
+		// 	}
+		// case ":=":
+		// 	assignee := b.TopStack().Pop()
+		// 	if label, labelOk := b.TopStack().Pop().(Label); labelOk {
+		// 		b.Scope.Set(b.memory, label, assignee, true)
+		// 	} else {
+		// 		panic("cannot assign to a non-label value")
+		// 	}
+		default:
+			b.Scope.Get(obj)
+		}
+	case *Reference[*Label]:
+		b.TopStack().Push(obj)
 	default:
-		panic("not yet implemented")
+		panic(fmt.Sprintf("Object of type '%s' not yet implemented", obj.WHAT()))
 	}
 }
 

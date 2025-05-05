@@ -61,7 +61,11 @@ func interpret(ctx context.Context, chars antlr.CharStream) {
 	if ctx.Value(DisassembleCK).(bool) {
 		visitor.VM.DisassembleMain()
 	}
-	visitor.VM.RunMain()
+	if result, err := visitor.VM.RunMain(); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(result.WHAT())
+	}
 }
 
 func InterpretFile(ctx context.Context, args []string) error {

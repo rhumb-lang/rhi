@@ -65,3 +65,13 @@ foo <> $1 == yes % all positional eelements are true
 some-condition |> some-expression % while
 cur := :xs
 cur {[x; &xs.1] .. x >> 0} |> (cur := xs.1; console\log(x))
+
+sum-to-test .= sum-to(from::1 to::10,000)
+sum-to .= [start; end] -> (
+  result := 0
+  [start|end] <> [i] -> result := result ++ i
+  #(result)
+)
+
+recurse-test .= recurse(14)
+recurse .= <(#1 == 0 ~> (recurse($1--1); recurse($1--1)))>

@@ -208,18 +208,28 @@ func (v *RhumbVisitor) VisitLabelSymbol(
 		object.NewLabel(v.VM.Memory, ctx.GetText()),
 	)
 	start := ctx.GetStart()
-	v.VM.Write(code.NewValue(
-		start.GetLine(),
-		start.GetColumn(),
-		labelID,
-	))
-	return labelID
+	if _, ok := ctx.GetParent().GetParent().(*P.SimpleFieldContext); ok {
+		v.VM.Write(code.NewValue(
+			start.GetLine(),
+			start.GetColumn(),
+			labelID,
+		))
+	} else {
+		v.VM.Write(code.NewLocal(
+			start.GetLine(),
+			start.GetColumn(),
+			labelID,
+		))
+	}
+
+	return nil
 }
 
 // Visit a parse tree produced by RhumbParser#fieldLiteral.
 func (v *RhumbVisitor) VisitFieldLiteral(
 	ctx *P.FieldLiteralContext,
 ) interface{} {
+
 	viLogger.Println("FieldLiteral!")
 	viLogger.Println(ctx.GetText())
 	fieldId := v.VM.RegisterObject(
@@ -305,11 +315,30 @@ func (v *RhumbVisitor) VisitSimpleExpression(
 	return v.VisitChildren(ctx)
 }
 
+func (v *RhumbVisitor) visitBinaryLeaf(leaf P.IExpressionContext) {
+	switch leafTyped := v.Visit(leaf).(type) {
+	case *P.LabelSymbolContext:
+		labelID := v.VM.RegisterObject(
+			object.NewLabel(v.VM.Memory, leafTyped.GetText()),
+		)
+		start := leafTyped.GetStart()
+		v.VM.Write(code.NewLocal(
+			start.GetLine(),
+			start.GetColumn(),
+			labelID,
+		))
+	default:
+		v.Visit(leaf)
+	}
+}
+
 // Visit a parse tree produced by RhumbParser#multiplicative.
 func (v *RhumbVisitor) VisitMultiplicative(
 	ctx *P.MultiplicativeContext,
 ) interface{} {
 	viLogger.Println("Multiplicative!")
+	// v.visitBinaryLeaf(ctx.Expression(0))
+	// v.visitBinaryLeaf(ctx.Expression(1))
 	v.Visit(ctx.GetChild(0).(antlr.ParseTree))
 	v.Visit(ctx.GetChild(2).(antlr.ParseTree))
 	v.Visit(ctx.GetChild(1).(antlr.ParseTree))
@@ -438,8 +467,9 @@ func (v *RhumbVisitor) VisitPower(
 }
 
 func (v *RhumbVisitor) visitMapChildren(
+	children []antlr.Tree,
 	kind string,
-	ctx antlr.ParserRuleContext,
+	parentCtx antlr.ParserRuleContext,
 ) {
 	var (
 		s, e antlr.Token
@@ -449,14 +479,21 @@ func (v *RhumbVisitor) visitMapChildren(
 	op = v.VM.RegisterObject(
 		object.NewLabel(v.VM.Memory, "_[[_"),
 	)
-	s = ctx.GetStart()
-	v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	s = parentCtx.GetStart()
+	switch kind {
+	case "List":
+		v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
+	case "Invoke":
+		v.VM.Write(code.NewInner(s.GetLine(), s.GetColumn(), op))
+	default:
+		panic("not yet implemented")
+	}
 
 	op = v.VM.RegisterObject(
 		object.NewLabel(v.VM.Memory, "_[>_"),
 	)
 
-	for _, n := range ctx.GetChildren() {
+	for _, n := range children {
 		viLogger.Printf(
 			"Visit%sMapChild[node type: %s]\n",
 			kind,
@@ -468,7 +505,7 @@ func (v *RhumbVisitor) visitMapChildren(
 			continue
 		default:
 			v.Visit(nType.(antlr.ParseTree))
-			s = ctx.GetStart()
+			s = parentCtx.GetStart()
 			v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), op))
 		}
 	}
@@ -476,16 +513,22 @@ func (v *RhumbVisitor) visitMapChildren(
 	op = v.VM.RegisterObject(
 		object.NewLabel(v.VM.Memory, "_]]_"),
 	)
-	e = ctx.GetStop()
-	v.VM.Write(code.NewLocal(e.GetLine(), e.GetColumn(), op))
+	e = parentCtx.GetStop()
+	switch kind {
+	case "List":
+		v.VM.Write(code.NewLocal(e.GetLine(), e.GetColumn(), op))
+	case "Invoke":
+		v.VM.Write(code.NewInner(e.GetLine(), e.GetColumn(), op))
+	default:
+		panic("not yet implemented")
+	}
 }
 
 // Visit a parse tree produced by RhumbParser#map.
 func (v *RhumbVisitor) VisitMap(
 	ctx *P.MapContext,
 ) interface{} {
-	viLogger.Println("Map!")
-	v.visitMapChildren("List", ctx)
+	v.visitMapChildren(ctx.GetChildren(), "List", ctx)
 	return nil
 }
 
@@ -509,6 +552,8 @@ func (v *RhumbVisitor) VisitChainExpression(
 		s = ctx.GetStart()
 		switch nTyped := n.(type) {
 		case *P.FieldLiteralContext:
+			viLogger.Println("FieldLiteral!")
+			viLogger.Println(nTyped.GetText())
 			ref := v.VM.RegisterObject(
 				object.NewReference(
 					v.VM.Memory,
@@ -517,7 +562,7 @@ func (v *RhumbVisitor) VisitChainExpression(
 			)
 			v.VM.Write(code.NewLocal(s.GetLine(), s.GetColumn(), ref))
 		case *P.ExpressionsContext:
-			v.visitMapChildren("Invoke", ctx)
+			v.visitMapChildren(nTyped.GetChildren(), "Invoke", ctx)
 		case *antlr.TerminalNodeImpl:
 			continue
 		default:

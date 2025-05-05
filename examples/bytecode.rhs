@@ -59,6 +59,12 @@ List .= (
     _<>_ .= [fn] -> \_<>_($0;fn)
 ) 
 
+foo .= [
+    bar .= [a] -> [a ++ a ++ a]
+]
+foo\<bar>\baz .= 20
+
+
 Special .= [n] -> (
     !\data .= n
     !\_++_ .= [y] -> y[^] == <Special> => n ++ y\data ~> n ++ y)

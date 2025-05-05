@@ -2,7 +2,6 @@ package object
 
 import (
 	"arena"
-	"fmt"
 	"reflect"
 
 	"git.sr.ht/~madcapjake/rhi/internal/code"
@@ -39,11 +38,38 @@ func (o *Routine) Set(mem *arena.Arena, key Hashable, val Any, mutable bool) (An
 	}
 }
 
+func (o *Routine) initParameters(mem *arena.Arena) {
+	paramsKey := NewLabel(mem, "$0")
+	if _, err := o.Scope().Get(paramsKey); err == nil {
+		panic("$0 was already initialized")
+	} else {
+		paramList := NewList(mem)
+		o.Scope().Set(mem, paramsKey, paramList, false)
+	}
+
+}
+
+func (o *Routine) setParam(mem *arena.Arena, param Any) *Routine {
+	paramsKey := NewLabel(mem, "$0")
+	if paramsValue, err := o.Scope().Get(paramsKey); err == nil {
+		if paramsList, ok := paramsValue.(*List); ok {
+			paramsList.Append(param)
+		} else {
+			panic("$O does not contain a parameter list")
+		}
+	} else {
+		panic("$0 has not been initialized")
+	}
+	return o
+}
+
 func (o *Routine) SetParameters(mem *arena.Arena, params List) *Routine {
+	o.initParameters(mem)
 	for _, param := range params.legend.Data {
 		if key, ok := param.(Hashable); ok {
 			empty := NewEmptyMap(mem)
-			fieldsSetMutable(mem, &o.legend.Fields, &o.Values, key, empty)
+			o.Scope().Set(mem, key, empty, true)
+			o.setParam(mem, key)
 		} else {
 			panic("not a hashable parameter")
 		}
@@ -51,14 +77,21 @@ func (o *Routine) SetParameters(mem *arena.Arena, params List) *Routine {
 	return o
 }
 
-func (o *Routine) SetArguments(mem *arena.Arena, args List) *Routine {
-	for _, arg := range args.legend.Data {
-		if key, ok := arg.(Hashable); ok {
-			empty := NewEmptyMap(mem)
-			fieldsSetMutable(mem, &o.legend.Fields, &o.Values, key, empty)
+func (o *Routine) SetArguments(mem *arena.Arena, args *List) *Routine {
+	paramsKey := NewLabel(mem, "$0")
+	if params, err := o.Scope().Get(paramsKey); err == nil {
+		if paramsList, ok := params.(*List); ok {
+			for i, arg := range args.legend.Data {
+				if paramLabel, ok := paramsList.GetAt(i).(Hashable); ok {
+					o.Scope().Set(mem, paramLabel, arg, true)
+				}
+				// paramsList.SetAt(i, arg)
+			}
 		} else {
-			panic("not a hashable parameter")
+			panic("$0 is not a ListMap")
 		}
+	} else {
+		panic("$0 is not found")
 	}
 	return o
 }
@@ -91,12 +124,11 @@ func (o *Routine) Disassemble(frame int) {
 // 	return o.legend.Data.TopStack().Pop()
 // }
 
-func (o Routine) Invoke(args List) {
-
-	for code := range o.legend.Data.Codes {
-		fmt.Printf("code: %v\n", code)
-	}
-}
+// func (o Routine) Invoke(args List) {
+// 	// TODO: assign each argument to their corresponding parameter
+// 	o.legend.Data.
+// 	o.legend.Data.Run()
+// }
 
 func NewRoutine(a *arena.Arena, f *stack.Stack[*Routine], p *Scope) *Routine {
 	values := arena.MakeSlice[Any](a, 0, 2)

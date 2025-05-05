@@ -35,16 +35,20 @@ func (o List) Length() int {
 	return len(o.legend.Data)
 }
 
-func (o List) At(index int) *Any {
-	return &o.legend.Data[index]
+func (o List) Get(key Hashable) (Any, error) {
+	return fieldsGet(o.legend.Fields, o.Values, key)
 }
 
-func (o List) Append(val Any) {
+func (o List) GetAt(index int) Any {
+	return o.legend.Data[index]
+}
+
+func (o *List) Append(val Any) {
 	o.legend.Data = append(o.legend.Data, val)
 }
 
-func (o List) Get(key Hashable) (Any, error) {
-	return fieldsGet(o.legend.Fields, o.Values, key)
+func (o *List) SetAt(index int, val Any) {
+	o.legend.Data[index] = val
 }
 
 func (o *List) Set(mem *arena.Arena, key Hashable, val Any, mutable bool) (Any, error) {
