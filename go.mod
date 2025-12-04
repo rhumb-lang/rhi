@@ -1,10 +1,10 @@
 module git.sr.ht/~madcapjake/rhi
 
-go 1.24.2
+go 1.25
 
 require (
-	github.com/antlr4-go/antlr/v4 v4.13.0
-	github.com/cristalhq/acmd v0.11.1
+	github.com/antlr4-go/antlr/v4 v4.13.1
+	github.com/cristalhq/acmd v0.12.0
 )
 
-require golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb // indirect
+require golang.org/x/exp v0.0.0-20251125195548-87e1e737ad39 // indirect
