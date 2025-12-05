@@ -1,3 +1,13 @@
 cmd/rhumb/__debug_bin
 __debug_bin*.exe
 .$diagrams.drawio.svg.dtmp
+
+# Generated ANTLR files
+internal/grammar/rhumb_lexer.go
+internal/grammar/rhumb_parser.go
+internal/grammar/rhumbparser_base_listener.go
+internal/grammar/rhumbparser_base_visitor.go
+internal/grammar/rhumbparser_listener.go
+internal/grammar/rhumbparser_visitor.go
+internal/grammar/*.interp
+internal/grammar/*.tokens

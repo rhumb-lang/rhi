@@ -2,6 +2,7 @@ package vm
 
 import (
 	"arena"
+	"fmt"
 
 	"git.sr.ht/~madcapjake/rhi/internal/code"
 	obj "git.sr.ht/~madcapjake/rhi/internal/object"
@@ -13,8 +14,24 @@ const STK_SIZE = 500
 const SCP_SIZE = 50
 
 type VirtualMachine struct {
-	Memory *arena.Arena               // arena where all objects live
-	Frames *stack.Stack[*obj.Routine] // any currently open routines
+	Memory       *arena.Arena               // arena where all objects live
+	Frames       *stack.Stack[*obj.Routine] // any currently open routines
+	Assertions   []error
+	AssertionCount int
+}
+
+func New() *VirtualMachine {
+	vm := NewVirtualMachine()
+	vm.Assertions = make([]error, 0)
+	vm.AssertionCount = 0
+	return vm
+}
+
+func (vm *VirtualMachine) AddAssertion(val obj.Any) {
+	vm.AssertionCount++
+	if val != obj.TRUE {
+		vm.Assertions = append(vm.Assertions, fmt.Errorf("assertion failed"))
+	}
 }
 
 func NewVirtualMachine() *VirtualMachine {

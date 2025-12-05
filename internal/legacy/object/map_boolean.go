@@ -5,6 +5,17 @@ import (
 	"fmt"
 )
 
+var (
+	TRUE  *Boolean
+	FALSE *Boolean
+)
+
+func init() {
+	a := arena.NewArena()
+	TRUE = NewBooleanUnsafe(a, true)
+	FALSE = NewBooleanUnsafe(a, false)
+}
+
 type Boolean struct {
 	legend *BooleanLegend
 	Values []Any
@@ -31,6 +42,13 @@ func (x Boolean) DeepEquals(y Any) bool {
 }
 
 func NewBoolean(a *arena.Arena, val bool) *Boolean {
+	if val {
+		return TRUE
+	}
+	return FALSE
+}
+
+func NewBooleanUnsafe(a *arena.Arena, val bool) *Boolean {
 	values := arena.MakeSlice[Any](a, 0, 2)
 	addr := arena.New[Boolean](a)
 	*addr = Boolean{
