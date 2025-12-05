@@ -206,11 +206,25 @@ Mode' legends remain small.
 
 ### 5.3 The Value Struct (Primitives)
 
-Primitives are stack-allocated via a discriminated union.
+Primitives are stack-allocated via a discriminated union. All bit-packed types utilize the `Integer` (int64) slot to avoid heap allocation.
 
-  * **Integers/Floats:** Stored inline.
-  * **Truth/Date/Version:** Bit-packed into the `Integer` slot.
-  * **Text:** Uses Go's native `string`.
+  * **Integers:** Stored as standard `int64`.
+  * **Floats:** Stored as `float64` (separate slot).
+  * **Text:** Uses Go's native `string` (pointer + length).
+  * **Range:** A Lazy Iterator struct `start|end` (stored as Object reference or packed if small).
+
+#### Bit-Packed Primitives (Using `int64` slot)
+
+  * **Date:** Stored as **Unix Nanoseconds**.
+      * `int64` range allows for \~292 years from 1970.
+  * **Version:** Stored as **Packed SemVer**.
+      * **Bits 63-48:** Major (16 bits, max 65,535)
+      * **Bits 47-32:** Minor (16 bits, max 65,535)
+      * **Bits 31-0:** Patch (32 bits, max 4,294,967,295)
+  * **Key:** Stored as **Interned Global ID**.
+      * When a Key `` `id `` is created, the VM checks a global symbol table.
+      * If unique, it is assigned a monotonic `int64` ID.
+      * Comparison (`k1 == k2`) is a fast integer check. Keys are never garbage collected during the process lifetime.
 
 ### 5.4 The Empty Value (`___`)
 
