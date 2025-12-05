@@ -6,9 +6,11 @@ const (
 	// --- BANK 0: Control Flow & Selector ---
 	OP_HALT OpCode = iota
 	OP_JUMP             // JUMP <offset>
-	OP_JUMP_IF_FALSE    // JUMP_IF_FALSE <offset>
+	OP_DUP              // Duplicate top of stack
+	OP_POP              // Pop top of stack
 	OP_SELECT           // SELECT (Start Pattern Match)
 	OP_MATCH_STRUCT     // Match structural pattern
+
 	
 	// --- BANK 1: Lexical & Scope ---
 	OP_LOAD_CONST       // LOAD_CONST <index>

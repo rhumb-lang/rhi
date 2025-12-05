@@ -77,17 +77,18 @@ The codebase follows a "Small File" philosophy with strict separation between Ru
 
 Rhumb resolves symbols using three distinct algorithms depending on the context of the operator used.
 
-### 3.1 Lexical Lookup (The Static Path)
+### 3.1 Lexical Lookup & Assignment
 
-Resolves bare labels and local variables.
+Variables are resolved by searching the stack.
 
-  * **Trigger:** Accessing a label (e.g., `count`) or using `LOAD_LOC` / `STORE_LOC`.
-  * **Scope:** The environment extends sequentially in time.
-  * **Algorithm:**
-    1.  **Current Scope:** Scan the active stack frame's variable slots (mapped by the compiler from time-series assignment).
-    2.  **Closure Scope:** If not found, check captured "Upvalues" from the lexically enclosing subroutine.
-    3.  **Module Scope:** If not found, check the file's Static Table (Folder/Hoisted scope).
-    4.  **Failure:** If exhausted, traverse "up-and-outward" until the World scope. If still not found, throw Error.
+  * **Lookup Scope:** Current Frame $\to$ Closure (Upvalues) $\to$ Module Static.
+  * **Assignment Logic (`.=` / `:=` / `^=`):**
+    1.  **Search:** Traverse scopes to find an existing label.
+    2.  **Hit:** If found, check current mutability.
+          * If **Immutable**: Throw `WriteViolation`.
+          * If **Mutable**: Update value. Apply new mutability flag (Freeze if `.=`).
+    3.  **Miss:** Create new label in **Current Frame** with specified mutability.
+  * **Shadowing:** To shadow a variable (create a new local with the same name), use **Parameters** in a Function (`->`) or Immediate Function (`+>`). Parameters *always* create new labels in the new frame.
 
 ### 3.2 Map Lookup (The Inheritance Path)
 
@@ -313,19 +314,19 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 
 #### Control Flow & Assignment
 
-| Operator     | Syntax | Native Opcode   | Semantics                       |
-|:-------------|:-------|:----------------|:--------------------------------|
-| **Assgn Im** | `.=`   | `OP_ASSIGN_IMM` | Immutable Assignment            |
-| **Assgn Mu** | `:=`   | `OP_ASSIGN_MUT` | Mutable Assignment              |
-| **Destruct** | `^=`   | `OP_DESTRUCT`   | Destructuring Assignment        |
-| **If True**  | `=>`   | `OP_IF_TRUE`    | Execute if LHS is yes           |
-| **If False** | `~>`   | `OP_IF_FALSE`   | Execute if LHS is no/empty      |
-| **While**    | `\|>`  | `OP_WHILE`      | Loop LHS until no               |
-| **Foreach**  | `<>`   | `OP_FOREACH`    | Iterate Map / Lifecycle         |
-| **Pipe**     | `\|\|` | `OP_PIPE`       | Functional Pipe                 |
-| **Default**  | `??`   | `OP_COALESCE`   | Return LHS unless empty         |
-| **Match**    | `..`   | `OP_MATCH_CONS` | Select & Consume (Stop)         |
-| **Peek**     | `::`   | `OP_MATCH_PEEK` | Select & Continue (Fallthrough) |
+| Operator     | Syntax | Native Opcode   | Semantics                                                   |
+|:-------------|:-------|:----------------|:------------------------------------------------------------|
+| **Assgn Im** | `.=`   | `OP_ASSIGN_IMM` | Find/Create. Update Value. **Set Immutable.**               |
+| **Assgn Mu** | `:=`   | `OP_ASSIGN_MUT` | Find/Create. Update Value. **Set Mutable.**                 |
+| **Destruct** | `^=`   | `OP_DESTRUCT`   | Destructuring Assignment (Updates existing or creates new). |
+| **If True**  | `=>`   | `OP_IF_TRUE`    | Execute if LHS is yes                                       |
+| **If False** | `~>`   | `OP_IF_FALSE`   | Execute if LHS is no/empty                                  |
+| **While**    | `\|>`  | `OP_WHILE`      | Loop LHS until no                                           |
+| **Foreach**  | `<>`   | `OP_FOREACH`    | Iterate Map / Lifecycle                                     |
+| **Pipe**     | `\|\|` | `OP_PIPE`       | Functional Pipe                                             |
+| **Default**  | `??`   | `OP_COALESCE`   | Return LHS unless empty                                     |
+| **Match**    | `..`   | `OP_MATCH_CONS` | Select & Consume (Stop)                                     |
+| **Peek**     | `::`   | `OP_MATCH_PEEK` | Select & Continue (Fallthrough)                             |
 
 
 #### Field Operators (Postfix `[]`)
