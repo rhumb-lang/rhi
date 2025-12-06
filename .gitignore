@@ -1,6 +1,7 @@
 cmd/rhumb/__debug_bin
 __debug_bin*.exe
 .$diagrams.drawio.svg.dtmp
+rhi
 
 # Generated ANTLR files
 internal/grammar/rhumb_lexer.go
