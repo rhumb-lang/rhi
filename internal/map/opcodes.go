@@ -1,4 +1,4 @@
-package vm
+package mapval
 
 type OpCode byte
 
@@ -8,6 +8,8 @@ const (
 	OP_JUMP             // JUMP <offset>
 	OP_DUP              // Duplicate top of stack
 	OP_POP              // Pop top of stack
+	OP_CALL             // CALL <arg_count>
+	OP_RETURN           // RETURN
 	OP_SELECT           // SELECT (Start Pattern Match)
 	OP_MATCH_STRUCT     // Match structural pattern
 

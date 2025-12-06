@@ -7,76 +7,77 @@ type OpType int
 
 const (
 	// Math
-	OpAdd OpType = iota
-	OpSub
-	OpMult
-	OpPow
-	OpDivFloat
-	OpDivInt
-	OpMod
-	OpSciNot
-	OpRoot
-	OpDev // Deviation + -
+	OpAdd      OpType = iota // ++ (Add / Concat)
+	OpSub                    // -- (Subtract)
+	OpMult                   // ** (Multiply)
+	OpPow                    // ^ ^ (Power)
+	OpDivFloat               // // (Float Division)
+	OpDivInt                 // +/ (Integer Division)
+	OpMod                    // -/ (Modulo)
+	OpSciNot                 // *^ (Scientific Notation)
+	OpRoot                   // ^/ (Root)
+	OpDev                    // +- (Deviation)
 
 	// Logic
-	OpEq
-	OpNeq
-	OpGt
-	OpLt
-	OpGte
-	OpLte
-	OpAnd
-	OpOr
+	OpEq  // == (Equal)
+	OpNeq // ~~ (Not Equal)
+	OpGt  // >> (Greater Than)
+	OpLt  // << (Less Than)
+	OpGte // >= (Greater Than or Equal)
+	OpLte // <= (Less Than or Equal)
+	OpAnd // /\ (AND)
+	OpOr  // \/ (OR)
 
 	// Structure
-	OpRange
-	OpHasSub
-	OpNotHasSub
-	OpHasFld
-	OpNotHasFld
-	OpTempSub
-	OpConcat
-	OpNested
+	OpRange     // | (Range)
+	OpHasSub    // =@ (Has Subfield)
+	OpNotHasSub // ~@ (Not Has Subfield)
+	OpHasFld    // =\ (Has Field)
+	OpNotHasFld // ~\ (Not Has Field)
+	OpTempSub   // @@ (Temporary Subfield)
+	OpConcat    // && (Concatenate)
+	OpNested    // \\ (Nested Access)
 
 	// Access / Postfix
-	OpLength
-	OpIsEmpty
-	OpAllSub
-	OpAllFld
-	OpAllPos
-	OpFreeze
-	OpCopy
-	OpToDate
-	OpGetParams
-	OpGetCtor
-	OpGetBase
-	OpToNum
-	OpNegNum
-	OpToBool
-	OpNegBool
-	OpSpread
-	OpToKey
-	OpAppend
-	OpUnshift
+	OpIndex     // [] (Index / Access)
+	OpLength    // [#] (Length)
+	OpIsEmpty   // [?] (Is Empty)
+	OpAllSub    // [@] (All Subfields)
+	OpAllFld    // [*] (All Public Fields)
+	OpAllPos    // [0] (All Positional Elements)
+	OpFreeze    // [.] (Freeze / Make Immutable)
+	OpCopy      // [:] (Copy)
+	OpToDate    // [/] (To Date)
+	OpGetParams // [$] (Get Parameters)
+	OpGetCtor   // [^] (Get Constructor)
+	OpGetBase   // [!] (Get Base)
+	OpToNum     // [+] (To Number)
+	OpNegNum    // [-] (Negate Number)
+	OpToBool    // [=] (To Boolean)
+	OpNegBool   // [~] (Negate Boolean)
+	OpSpread    // [&] (Spread)
+	OpToKey     // [`] (To Key)
+	OpAppend    // >[] (Append)
+	OpUnshift   // [<] (Unshift)
 
 	// Control/Flow
-	OpAssignImm
-	OpAssignMut
-	OpDestruct
-	OpIfTrue
-	OpIfFalse
-	OpWhile
-	OpForeach
-	OpPipe
-	OpCoalesce
-	OpMatchCons
-	OpMatchPeek
+	OpAssignImm // .= (Immutable Assignment)
+	OpAssignMut // := (Mutable Assignment)
+	OpDestruct  // ^= (Destructuring Assignment)
+	OpIfTrue    // => (If True)
+	OpIfFalse   // ~> (If False)
+	OpWhile     // |> (While Loop)
+	OpForeach   // <> (Foreach Loop)
+	OpPipe      // || (Pipe)
+	OpCoalesce  // ?? (Coalesce / Default)
+	OpMatchCons // .. (Match & Consume)
+	OpMatchPeek // :: (Match & Peek)
 
 	// Function
-	OpMakeFn
-	OpBindFn
-	OpLetFn
-	OpRebind
+	OpMakeFn // -> (Make Function)
+	OpBindFn // !> (Bind Function)
+	OpLetFn  // +> (Let Function / IIFE)
+	OpRebind // !! (Rebind)
 )
 
 // BinaryExpression represents "Left Op Right".
@@ -164,6 +165,8 @@ func opToString(op OpType) string {
 		return "&&"
 	case OpNested:
 		return "\\\\"
+	case OpIndex:
+		return "[]"
 	case OpLength:
 		return "[#]"
 	case OpIsEmpty:

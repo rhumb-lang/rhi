@@ -21,6 +21,27 @@ func (m *MapExpression) String() string {
 	return sb.String()
 }
 
+// CallExpression represents a function call: Callee(Args).
+type CallExpression struct {
+	Callee Expression
+	Args   []Expression
+}
+
+func (c *CallExpression) expressionNode() {}
+func (c *CallExpression) String() string {
+	var sb strings.Builder
+	sb.WriteString(c.Callee.String())
+	sb.WriteString("(")
+	for i, arg := range c.Args {
+		if i > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(arg.String())
+	}
+	sb.WriteString(")")
+	return sb.String()
+}
+
 // RoutineExpression represents a subroutine ( ... ).
 type RoutineExpression struct {
 	Expressions []Expression

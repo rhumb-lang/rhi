@@ -243,5 +243,5 @@ func (b *ASTBuilder) VisitFields(ctx *grammar.FieldsContext) interface{} {
 	return fields
 }
 
-// Note: You'll need to implement VisitField, VisitPattern, and the binary ops.
-// I'll add the Binary Op logic in the next chunk.
+// --- Structural Visitors ---
+// Moved to chain.go to avoid circular dependencies or massive files.

@@ -6,8 +6,6 @@ import (
 	"os/signal"
 
 	"git.sr.ht/~madcapjake/rhi/internal/cli"
-	"git.sr.ht/~madcapjake/rhi/internal/generator"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
 	"github.com/cristalhq/acmd"
 )
 
@@ -31,11 +29,6 @@ func main() {
 	}
 
 	ctx := context.Background()
-	ctx = context.WithValue(
-		ctx,
-		cli.VisitorCK,
-		generator.NewRhumbVisitor(vm.NewVirtualMachine()),
-	)
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
 

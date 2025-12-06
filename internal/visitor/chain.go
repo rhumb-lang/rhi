@@ -3,6 +3,7 @@ package visitor
 import (
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
 	"git.sr.ht/~madcapjake/rhi/internal/grammar"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // --- Chain / Member ---
@@ -13,85 +14,137 @@ func (b *ASTBuilder) VisitMember(ctx *grammar.MemberContext) interface{} {
 }
 
 func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) interface{} {
-	// Grammar:
-	// chainExpression : fieldLiteral ( chainOp prefixOp? fieldLiteral | OpenBracket ... | OpenParen ... )+
+	// "Fold Left" Strategy: Iterate children to build expression tree
 	
-	// We start with the base fieldLiteral
-	baseNode := b.visitFieldLiteral(ctx.FieldLiteral(0))
-	currentExpr, _ := baseNode.(ast.Expression)
-
-	// We iterate manually because the structure is flat in the rule
 	children := ctx.GetChildren()
-	
-	// Skip the first child (fieldLiteral)
-	i := 1
-	fieldLitIndex := 1 // Track which fieldLiteral we are on for context lookup
-	
-	for i < len(children) {
-		child := children[i]
-		
-		if chainOp, ok := child.(grammar.IChainOpContext); ok {
-			// It's a chain op. Type switch to find which one.
-			i++ // Move past Op
-			
-			stepType := ast.ChainMember // Default to \ (NestedField)
+	if len(children) == 0 {
+		return nil
+	}
 
-			switch chainOp.(type) {
-			case *grammar.NestedFieldContext:
-				stepType = ast.ChainMember
-			case *grammar.NestedSubfieldContext:
-				stepType = ast.ChainSubfield
-			case *grammar.SignalFieldContext:
-				stepType = ast.ChainSignal
-			case *grammar.ReplyFieldContext:
-				stepType = ast.ChainReply
-			case *grammar.ProclamationFieldContext:
-				stepType = ast.ChainProclamation
-			// TODO: Add DeeplyNested handlers if AST supports them
+	// Child 0 is FieldLiteral (Base)
+	currentExpr := toExpr(b.Visit(children[0].(antlr.ParseTree)))
+
+	// Helper to get field name
+	getFieldText := func(n antlr.ParseTree) string {
+		// Reuse visitFieldLiteral if accessible or just replicate logic
+		// b.visitFieldLiteral returns ast.Node
+		if litCtx, ok := n.(grammar.IFieldLiteralContext); ok {
+			node := b.visitFieldLiteral(litCtx)
+			if lit, ok := node.(*ast.LabelLiteral); ok {
+				return lit.Value
+			}
+			if key, ok := node.(*ast.KeyLiteral); ok {
+				return key.Value
+			}
+			if txt, ok := node.(*ast.TextLiteral); ok {
+				return txt.Segments[0].String()
+			}
+		}
+		return "?"
+	}
+
+	// Iterate Tail
+	for i := 1; i < len(children); i++ {
+		child := children[i]
+
+		// CASE A: Chain Operator (\, @, #, ^, $)
+		if opCtx, ok := child.(grammar.IChainOpContext); ok {
+			// Next is Prefix (optional) then FieldLiteral
+			i++
+			if i >= len(children) { break }
+
+			if _, isPrefix := children[i].(grammar.IPrefixOpContext); isPrefix {
+				// TODO: Handle Prefix Logic (e.g. \!field)
+				i++
+			}
+
+			if i >= len(children) { break }
+			fieldLit := children[i] // FieldLiteral
+
+			opType := ast.ChainMember
+			switch opCtx.GetText() {
+			case "\\": opType = ast.ChainMember
+			case "@": opType = ast.ChainSubfield
+			case "#": opType = ast.ChainSignal
+			case "^": opType = ast.ChainReply
+			case "$": opType = ast.ChainProclamation
 			}
 			
-			// Check for PrefixOp (optional)
-			if i < len(children) {
-				if _, isPrefix := children[i].(*grammar.PrefixOpContext); isPrefix {
-					i++ // Skip prefix for now (TODO: Implement prefix logic in chain)
+			ident := getFieldText(fieldLit.(antlr.ParseTree))
+
+			// Flatten into ChainExpression if possible, else nest
+			if c, ok := currentExpr.(*ast.ChainExpression); ok {
+				c.Steps = append(c.Steps, ast.ChainStep{Op: opType, Ident: ident})
+			} else {
+				currentExpr = &ast.ChainExpression{
+					Base: currentExpr,
+					Steps: []ast.ChainStep{{Op: opType, Ident: ident}},
 				}
 			}
+			continue
+		}
+		
+		// CASE B: Open Bracket [ (Index or AccessOp)
+		if token, ok := child.(*antlr.TerminalNodeImpl); ok && token.GetSymbol().GetTokenType() == grammar.RhumbParserOpenBracket {
+			i++ // Consume [
+			if i >= len(children) { break }
 			
-			// Next should be fieldLiteral
+			if exprsCtx, ok := children[i].(*grammar.ExpressionsContext); ok {
+				// Index: [ expr ]
+				idxExprs := b.Visit(exprsCtx).([]ast.Expression)
+				if len(idxExprs) > 0 {
+					currentExpr = &ast.BinaryExpression{Left: currentExpr, Op: ast.OpIndex, Right: idxExprs[0]}
+				}
+				i++ // Consume expressions
+			} else if accessOpCtx, ok := children[i].(grammar.IAccessOpContext); ok {
+				// Postfix: [ # ]
+			op := b.Visit(accessOpCtx).(ast.OpType)
+				// Represent Postfix as Binary(Expr, Op, Nil) per convention established in builder
+				currentExpr = &ast.BinaryExpression{Left: currentExpr, Op: op, Right: nil}
+				i++ // Consume Op
+			} else if term, ok := children[i].(*antlr.TerminalNodeImpl); ok && term.GetSymbol().GetTokenType() == grammar.RhumbParserCloseBracket {
+				// Empty []
+				currentExpr = &ast.BinaryExpression{Left: currentExpr, Op: ast.OpIndex, Right: &ast.EmptyLiteral{}}
+			}
+			continue
+		}
+
+		// CASE C: Open Paren ( (Invocation)
+		if token, ok := child.(*antlr.TerminalNodeImpl); ok && token.GetSymbol().GetTokenType() == grammar.RhumbParserOpenParen {
+			i++ // Consume (
+			var args []ast.Expression
 			if i < len(children) {
-				if _, isLit := children[i].(*grammar.FieldLiteralContext); isLit {
-					// We use GetFieldLiteral(index) because ctx provides typed accessors
-					litCtx := ctx.FieldLiteral(fieldLitIndex)
-					fieldLitIndex++
-					
-					ident := litCtx.GetText() // Simple text extraction for now
-					
-					// Append to Chain
-					if chain, ok := currentExpr.(*ast.ChainExpression); ok {
-						chain.Steps = append(chain.Steps, ast.ChainStep{Op: stepType, Ident: ident})
-					} else {
-						currentExpr = &ast.ChainExpression{
-							Base:  currentExpr,
-							Steps: []ast.ChainStep{{Op: stepType, Ident: ident}},
-						}
-					}
-					i++
-				} else {
-					// Unexpected token after op
-					i++
+				if exprsCtx, ok := children[i].(*grammar.ExpressionsContext); ok {
+					args = b.Visit(exprsCtx).([]ast.Expression)
+					i++ // Consume expressions
 				}
 			}
-			
-		} else if _, ok := child.(*grammar.ExpressionsContext); ok {
-			// Handled via Invocation or similar, but here we skip to avoid crash
-			i++
-		} else {
-			// OpenBracket/Paren tokens or Terminators
-			i++
+			currentExpr = &ast.CallExpression{Callee: currentExpr, Args: args}
+			continue
 		}
 	}
 	
 	return currentExpr
+}
+
+// --- Other Expressions ---
+
+func (b *ASTBuilder) VisitInvocation(ctx *grammar.InvocationContext) interface{} {
+	// expression OpenParen ...
+	target := toExpr(b.Visit(ctx.Expression()))
+	
+	var args []ast.Expression
+	if ctx.Expressions() != nil {
+		res := b.Visit(ctx.Expressions())
+		if as, ok := res.([]ast.Expression); ok {
+			args = as
+		}
+	}
+	
+	return &ast.CallExpression{
+		Callee: target,
+		Args:   args,
+	}
 }
 
 func (b *ASTBuilder) VisitAccess(ctx *grammar.AccessContext) interface{} {
@@ -99,36 +152,20 @@ func (b *ASTBuilder) VisitAccess(ctx *grammar.AccessContext) interface{} {
 	target := toExpr(b.Visit(ctx.Expression()))
 	// Check AccessOp
 	if ctx.AccessOp() != nil {
-		opCtx := ctx.AccessOp()
-		var op ast.OpType
-		
-		switch opCtx.(type) {
-		case *grammar.LengthContext: op = ast.OpLength
-		case *grammar.EmptyContext: op = ast.OpIsEmpty
-		case *grammar.AllSubfieldsContext: op = ast.OpAllSub
-		case *grammar.AllFieldsContext: op = ast.OpAllFld
-		case *grammar.ElementsContext: op = ast.OpAllPos
-		case *grammar.FreezeContext: op = ast.OpFreeze
-		case *grammar.CopyContext: op = ast.OpCopy
-		case *grammar.ToDateContext: op = ast.OpToDate
-		case *grammar.ParametersContext: op = ast.OpGetParams
-		case *grammar.ConstructorContext: op = ast.OpGetCtor
-		case *grammar.BaseContext: op = ast.OpGetBase
-		case *grammar.ToNumberContext: op = ast.OpToNum
-		case *grammar.NegateNumberContext: op = ast.OpNegNum
-		case *grammar.ToTruthContext: op = ast.OpToBool
-		case *grammar.NegateTruthContext: op = ast.OpNegBool
-		case *grammar.VariadicContext: op = ast.OpSpread
-		case *grammar.ToKeyContext: op = ast.OpToKey
-		case *grammar.AppendContext: op = ast.OpAppend
-		case *grammar.UnshiftContext: op = ast.OpUnshift
-		default:
-			// Fallback or error
-			op = ast.OpEq
-		}
-		
-		return &ast.UnaryExpression{Op: op, Expr: target}
+		// Helper to get opcode
+		op := b.Visit(ctx.AccessOp()).(ast.OpType)
+		return &ast.BinaryExpression{Left: target, Op: op, Right: nil}
 	}
+	
+	// Indexing
+	if ctx.Expressions() != nil {
+		res := b.Visit(ctx.Expressions())
+		if exprs, ok := res.([]ast.Expression); ok && len(exprs) > 0 {
+			return &ast.BinaryExpression{Left: target, Op: ast.OpIndex, Right: exprs[0]}
+		}
+		return &ast.BinaryExpression{Left: target, Op: ast.OpIndex, Right: &ast.EmptyLiteral{}}
+	}
+	
 	return target
 }
 
@@ -154,3 +191,25 @@ func (b *ASTBuilder) VisitAssignLabel(ctx *grammar.AssignLabelContext) interface
 	
 	return &ast.BinaryExpression{Left: lhs, Op: op, Right: rhs}
 }
+
+// --- AccessOp Visitors (OpType) ---
+
+func (b *ASTBuilder) VisitAppend(ctx *grammar.AppendContext) interface{} { return ast.OpAppend }
+func (b *ASTBuilder) VisitUnshift(ctx *grammar.UnshiftContext) interface{} { return ast.OpUnshift }
+func (b *ASTBuilder) VisitLength(ctx *grammar.LengthContext) interface{} { return ast.OpLength }
+func (b *ASTBuilder) VisitEmpty(ctx *grammar.EmptyContext) interface{} { return ast.OpIsEmpty }
+func (b *ASTBuilder) VisitAllSubfields(ctx *grammar.AllSubfieldsContext) interface{} { return ast.OpAllSub }
+func (b *ASTBuilder) VisitAllFields(ctx *grammar.AllFieldsContext) interface{} { return ast.OpAllFld }
+func (b *ASTBuilder) VisitElements(ctx *grammar.ElementsContext) interface{} { return ast.OpAllPos }
+func (b *ASTBuilder) VisitFreeze(ctx *grammar.FreezeContext) interface{} { return ast.OpFreeze }
+func (b *ASTBuilder) VisitCopy(ctx *grammar.CopyContext) interface{} { return ast.OpCopy }
+func (b *ASTBuilder) VisitToDate(ctx *grammar.ToDateContext) interface{} { return ast.OpToDate }
+func (b *ASTBuilder) VisitParameters(ctx *grammar.ParametersContext) interface{} { return ast.OpGetParams }
+func (b *ASTBuilder) VisitConstructor(ctx *grammar.ConstructorContext) interface{} { return ast.OpGetCtor }
+func (b *ASTBuilder) VisitBase(ctx *grammar.BaseContext) interface{} { return ast.OpGetBase }
+func (b *ASTBuilder) VisitToNumber(ctx *grammar.ToNumberContext) interface{} { return ast.OpToNum }
+func (b *ASTBuilder) VisitNegateNumber(ctx *grammar.NegateNumberContext) interface{} { return ast.OpNegNum }
+func (b *ASTBuilder) VisitToTruth(ctx *grammar.ToTruthContext) interface{} { return ast.OpToBool }
+func (b *ASTBuilder) VisitNegateTruth(ctx *grammar.NegateTruthContext) interface{} { return ast.OpNegBool }
+func (b *ASTBuilder) VisitVariadic(ctx *grammar.VariadicContext) interface{} { return ast.OpSpread }
+func (b *ASTBuilder) VisitToKey(ctx *grammar.ToKeyContext) interface{} { return ast.OpToKey }

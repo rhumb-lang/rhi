@@ -7,10 +7,11 @@ import (
 )
 
 const StackMax = 2048
+const MaxFrames = 64
 
 type VM struct {
-	Chunk *Chunk
-	IP    int // Instruction Pointer
+	Frames [MaxFrames]CallFrame
+	FrameCount int
 	
 	Stack [StackMax]mapval.Value
 	SP    int // Stack Pointer (points to empty slot)
@@ -28,13 +29,30 @@ const (
 func NewVM() *VM {
 	return &VM{
 		SP: 0,
+		FrameCount: 0,
 	}
 }
 
+func (vm *VM) currentFrame() *CallFrame {
+	return &vm.Frames[vm.FrameCount-1]
+}
+
 // Interpret executes the chunk.
-func (vm *VM) Interpret(chunk *Chunk) (Result, error) {
-	vm.Chunk = chunk
-	vm.IP = 0
+func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
+	// Wrap chunk in script function/closure
+	fn := &mapval.Function{
+		Name: "<script>",
+		Chunk: chunk,
+	}
+	closure := &mapval.Closure{Fn: fn}
+	
+	vm.Frames[0] = CallFrame{
+		Closure: closure,
+		IP:      0,
+		Base:    0,
+	}
+	vm.FrameCount = 1
+	
 	return vm.run()
 }
 
@@ -60,10 +78,13 @@ func (vm *VM) peek(distance int) mapval.Value {
 }
 
 func (vm *VM) readShort() int {
-	byte1 := vm.Chunk.Code[vm.IP]
-	vm.IP++
-	byte2 := vm.Chunk.Code[vm.IP]
-	vm.IP++
+	frame := vm.currentFrame()
+	chunk := frame.Closure.Fn.Chunk
+	
+	byte1 := chunk.Code[frame.IP]
+	frame.IP++
+	byte2 := chunk.Code[frame.IP]
+	frame.IP++
 	return (int(byte1) << 8) | int(byte2)
 }
 
@@ -76,82 +97,147 @@ func (vm *VM) isTruthy(val mapval.Value) bool {
 }
 
 func (vm *VM) run() (Result, error) {
+	var frame *CallFrame
+	var chunk *mapval.Chunk
+	
+	// Cache current frame
+	frame = vm.currentFrame()
+	chunk = frame.Closure.Fn.Chunk
+
 	for {
+		// Re-fetch frame context each iter (for now, simpler than handling call/ret)
+		// Optimization: Only do this after CALL/RET/RETURN
+		frame = vm.currentFrame()
+		chunk = frame.Closure.Fn.Chunk
+		
 		// Fetch
-		if vm.IP >= len(vm.Chunk.Code) {
+		if frame.IP >= len(chunk.Code) {
 			return RuntimeError, fmt.Errorf("IP out of bounds")
 		}
 		
-		instruction := OpCode(vm.Chunk.Code[vm.IP])
-		vm.IP++
+		instruction := mapval.OpCode(chunk.Code[frame.IP])
+		frame.IP++
 		
 		// Decode & Execute
 		switch instruction {
-		case OP_HALT:
+		case mapval.OP_HALT:
 			return Ok, nil
 			
-		case OP_LOAD_CONST:
-			// Read 1 byte operand (index)
-			idx := vm.Chunk.Code[vm.IP]
-			vm.IP++
-			constant := vm.Chunk.Constants[idx]
+		case mapval.OP_LOAD_CONST:
+			idx := chunk.Code[frame.IP]
+			frame.IP++
+			constant := chunk.Constants[idx]
 			vm.push(constant)
 			
-		case OP_LOAD_LOC:
-			idx := vm.Chunk.Code[vm.IP]
-			vm.IP++
-			val := vm.Stack[idx]
+		case mapval.OP_LOAD_LOC:
+			idx := chunk.Code[frame.IP]
+			frame.IP++
+			// Local is relative to Frame Base
+			val := vm.Stack[frame.Base + int(idx)]
 			vm.push(val)
 
-		case OP_STORE_LOC:
-			idx := vm.Chunk.Code[vm.IP]
-			vm.IP++
+		case mapval.OP_STORE_LOC:
+			idx := chunk.Code[frame.IP]
+			frame.IP++
 			val := vm.peek(0)
-			vm.Stack[idx] = val
+			vm.Stack[frame.Base + int(idx)] = val
 			
-		case OP_JUMP:
+		case mapval.OP_JUMP:
 			offset := vm.readShort()
-			vm.IP += offset
+			frame.IP += offset
 
-		case OP_DUP:
+		case mapval.OP_DUP:
 			val := vm.peek(0)
 			vm.push(val)
 
-		case OP_POP:
+		case mapval.OP_POP:
 			vm.pop()
 
-		case OP_IF_TRUE:
+		case mapval.OP_IF_TRUE:
 			offset := vm.readShort()
 			val := vm.pop()
 			if vm.isFalsy(val) {
-				vm.IP += offset
+				frame.IP += offset
 			}
 
-		case OP_IF_FALSE:
+		case mapval.OP_IF_FALSE:
 			offset := vm.readShort()
 			val := vm.pop()
 			if vm.isTruthy(val) {
-				vm.IP += offset
+				frame.IP += offset
 			}
 			
-		case OP_ADD:
+		case mapval.OP_MAKE_FN:
+			idx := chunk.Code[frame.IP]
+			frame.IP++
+			fnVal := chunk.Constants[idx]
+			// Assume it's a Function object
+			fn := fnVal.Obj.(*mapval.Function)
+			closure := &mapval.Closure{Fn: fn}
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
+
+		case mapval.OP_CALL:
+			argCount := int(chunk.Code[frame.IP])
+			frame.IP++
+			
+			// Callee is below args
+			calleeVal := vm.peek(argCount)
+			if calleeVal.Type != mapval.ValObject {
+				return RuntimeError, fmt.Errorf("can only call closures")
+			}
+			
+			closure, ok := calleeVal.Obj.(*mapval.Closure)
+			if !ok {
+				return RuntimeError, fmt.Errorf("can only call closures")
+			}
+			
+			if argCount != closure.Fn.Arity {
+				return RuntimeError, fmt.Errorf("arity mismatch: expected %d, got %d", closure.Fn.Arity, argCount)
+			}
+			
+			if vm.FrameCount >= MaxFrames {
+				return RuntimeError, fmt.Errorf("stack overflow")
+			}
+			
+			// Push new frame
+			vm.Frames[vm.FrameCount] = CallFrame{
+				Closure: closure,
+				IP:      0,
+				Base:    vm.SP - argCount - 1,
+			}
+			vm.FrameCount++
+			// Loop will pick up new frame
+
+		case mapval.OP_RETURN:
+			result := vm.pop()
+			
+			vm.FrameCount--
+			if vm.FrameCount == 0 {
+				vm.pop() // Pop Main Script Closure?
+				return Ok, nil
+			}
+			
+			// Restore SP to before callee
+			// frame is the frame we are returning FROM
+			// vm.SP = frame.Base
+			vm.SP = frame.Base
+			vm.push(result)
+			// Loop will pick up parent frame
+
+		case mapval.OP_ADD:
 			b := vm.pop()
 			a := vm.pop()
-			// Check types. For MVP assume Int.
-			// TODO: Full type coercion logic
 			if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
 				vm.push(mapval.NewInt(a.Integer + b.Integer))
 			} else if a.Type == mapval.ValFloat || b.Type == mapval.ValFloat {
-				// Promote to float
 				fa := asFloat(a)
 				fb := asFloat(b)
 				vm.push(mapval.NewFloat(fa + fb))
 			} else {
-				// String concat?
 				return RuntimeError, fmt.Errorf("operands must be numbers for ADD")
 			}
 			
-		case OP_SUB:
+		case mapval.OP_SUB:
 			b := vm.pop()
 			a := vm.pop()
 			if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
@@ -160,7 +246,7 @@ func (vm *VM) run() (Result, error) {
 				vm.push(mapval.NewFloat(asFloat(a) - asFloat(b)))
 			}
 
-		case OP_MULT:
+		case mapval.OP_MULT:
 			b := vm.pop()
 			a := vm.pop()
 			if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
@@ -169,43 +255,43 @@ func (vm *VM) run() (Result, error) {
 				vm.push(mapval.NewFloat(asFloat(a) * asFloat(b)))
 			}
 			
-		case OP_DIV_FLOAT:
+		case mapval.OP_DIV_FLOAT:
 			b := vm.pop()
 			a := vm.pop()
 			vm.push(mapval.NewFloat(asFloat(a) / asFloat(b)))
 
-		case OP_EQ:
+		case mapval.OP_EQ:
 			b := vm.pop()
 			a := vm.pop()
 			vm.push(mapval.NewBoolean(isEqual(a, b)))
 		
-		case OP_NEQ:
+		case mapval.OP_NEQ:
 			b := vm.pop()
 			a := vm.pop()
 			vm.push(mapval.NewBoolean(!isEqual(a, b)))
 
-		case OP_GT:
+		case mapval.OP_GT:
 			b := vm.pop()
 			a := vm.pop()
 			res, err := numericCompare(a, b)
 			if err != nil { return RuntimeError, err }
 			vm.push(mapval.NewBoolean(res > 0))
 
-		case OP_LT:
+		case mapval.OP_LT:
 			b := vm.pop()
 			a := vm.pop()
 			res, err := numericCompare(a, b)
 			if err != nil { return RuntimeError, err }
 			vm.push(mapval.NewBoolean(res < 0))
 
-		case OP_GTE:
+		case mapval.OP_GTE:
 			b := vm.pop()
 			a := vm.pop()
 			res, err := numericCompare(a, b)
 			if err != nil { return RuntimeError, err }
 			vm.push(mapval.NewBoolean(res >= 0))
 
-		case OP_LTE:
+		case mapval.OP_LTE:
 			b := vm.pop()
 			a := vm.pop()
 			res, err := numericCompare(a, b)
