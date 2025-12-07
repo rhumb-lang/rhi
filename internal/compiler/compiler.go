@@ -1,8 +1,6 @@
 package compiler
 
 import (
-	"fmt"
-	
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
 	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
@@ -31,9 +29,25 @@ func (c *Compiler) Chunk() *mapval.Chunk {
 
 // Compile processes a document and returns the resulting chunk.
 func (c *Compiler) Compile(doc *ast.Document) (*mapval.Chunk, error) {
-	for _, expr := range doc.Expressions {
-		if err := c.compileExpression(expr); err != nil {
-			return nil, err
+	// Hoist locals
+	hoister := NewHoister()
+	locals := hoister.Hoist(doc)
+	for _, name := range locals {
+		c.Scope.addLocal(name)
+		c.emitConstant(mapval.NewEmpty()) // Reserve slot
+	}
+
+	if len(doc.Expressions) == 0 {
+		c.emitConstant(mapval.NewEmpty()) // Return empty if empty doc
+	} else {
+		for i, expr := range doc.Expressions {
+			if err := c.compileExpression(expr); err != nil {
+				return nil, err
+			}
+			// Pop result if not last
+			if i < len(doc.Expressions)-1 {
+				c.emit(mapval.OP_POP)
+			}
 		}
 	}
 	c.emit(mapval.OP_HALT)
@@ -68,7 +82,6 @@ func (c *Compiler) patchJump(offset int) {
 	c.Chunk().Code[offset+1] = byte(jump & 0xFF)
 }
 
-
 func (c *Compiler) makeConstant(val mapval.Value) int {
 	return c.Chunk().AddConstant(val)
 }
@@ -76,225 +89,8 @@ func (c *Compiler) makeConstant(val mapval.Value) int {
 func (c *Compiler) emitConstant(val mapval.Value) {
 	idx := c.makeConstant(val)
 	if idx > 255 {
-		// TODO: Handle OpConstantLong if > 255
 		panic("Too many constants")
 	}
 	c.emit(mapval.OP_LOAD_CONST)
 	c.Chunk().WriteByte(byte(idx), 0)
-}
-
-func (c *Compiler) compileExpression(expr ast.Expression) error {
-	switch e := expr.(type) {
-	case *ast.BinaryExpression:
-		return c.compileBinary(e)
-	case *ast.CallExpression:
-		return c.compileCall(e)
-	case *ast.IntegerLiteral:
-		c.emitConstant(mapval.NewInt(e.Value))
-	case *ast.RationalLiteral:
-		c.emitConstant(mapval.NewFloat(e.Value))
-	case *ast.LabelLiteral:
-		// Variable Access
-		idx := c.Scope.resolveLocal(e.Value)
-		if idx != -1 {
-			c.emit(mapval.OP_LOAD_LOC)
-			c.Chunk().WriteByte(byte(idx), 0)
-		} else {
-			return fmt.Errorf("undefined variable: %s", e.Value)
-		}
-	case *ast.TextLiteral:
-		// Simple text support for now (no interp)
-		if len(e.Segments) == 1 {
-			if s, ok := e.Segments[0].(*ast.StringSegment); ok {
-				c.emitConstant(mapval.NewText(s.Value))
-			} else {
-				return fmt.Errorf("interpolation not yet supported in compiler")
-			}
-		}
-	case *ast.EmptyLiteral:
-		c.emitConstant(mapval.NewEmpty())
-	case *ast.MapExpression:
-		return c.compileMap(e)
-	case *ast.RoutineExpression:
-		return c.compileRoutine(e)
-	default:
-		return fmt.Errorf("unsupported expression type: %T", expr)
-	}
-	return nil
-}
-
-func (c *Compiler) compileRoutine(r *ast.RoutineExpression) error {
-	if len(r.Expressions) == 0 {
-		c.emitConstant(mapval.NewEmpty())
-		return nil
-	}
-	for i, expr := range r.Expressions {
-		if err := c.compileExpression(expr); err != nil {
-			return err
-		}
-		// Pop result of previous expression if not last
-		if i < len(r.Expressions)-1 {
-			c.emit(mapval.OP_POP)
-		}
-	}
-	return nil
-}
-
-func (c *Compiler) compileCall(call *ast.CallExpression) error {
-	// 1. Compile Args
-	for _, arg := range call.Args {
-		if err := c.compileExpression(arg); err != nil {
-			return err
-		}
-	}
-	
-	// 2. Compile Callee
-	if err := c.compileExpression(call.Callee); err != nil {
-		return err
-	}
-	
-	// 3. Emit Call
-	c.emit(mapval.OP_CALL)
-	c.Chunk().WriteByte(byte(len(call.Args)), 0)
-	return nil
-}
-
-func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
-	// Function Definition
-	if bin.Op == ast.OpMakeFn {
-		// LHS is Params (Map), RHS is Body (Routine)
-		
-		// Create child compiler
-		child := NewCompiler()
-		child.Enclosing = c
-		child.Function.Name = "<anonymous>"
-		
-		// TODO: Parse params from LHS (bin.Left)
-		// If bin.Left is *ast.MapExpression, we extract keys.
-		// For now, assume simple positional args or empty.
-		if mapExpr, ok := bin.Left.(*ast.MapExpression); ok {
-			child.Function.Arity = len(mapExpr.Fields)
-			// We need to add these fields as locals in child scope
-			// iterating fields... (skipping for MVP)
-		}
-		
-		// Compile Body (RHS)
-		// Note: Rhumb routine (...) contains expressions.
-		// We need to compile them.
-		if err := child.compileExpression(bin.Right); err != nil {
-			return err
-		}
-		
-		// Ensure we return the last value (or empty)
-		// For MVP assume single expression body returns.
-		// Rhumb standard: Routine returns last expr.
-		child.emit(mapval.OP_RETURN)
-		
-		// Create Function Constant
-		fnVal := mapval.NewFunction(child.Function)
-		
-		// Add to current chunk constants (without emitting LOAD_CONST)
-		idx := c.makeConstant(fnVal)
-		c.emit(mapval.OP_MAKE_FN)
-		c.Chunk().WriteByte(byte(idx), 0)
-		
-		return nil
-	}
-
-	// Special handling for Assignment
-	if bin.Op == ast.OpAssignImm || bin.Op == ast.OpAssignMut {
-		// Check LHS
-		if label, ok := bin.Left.(*ast.LabelLiteral); ok {
-			// Variable Assignment: x .= 1
-			
-			// 1. Compile RHS
-			if err := c.compileExpression(bin.Right); err != nil {
-				return err
-			}
-			
-			// 2. Declare/Resolve Variable
-			// Check if it exists in current scope (or any scope for update)
-			idx := c.Scope.resolveLocal(label.Value)
-			
-			if idx != -1 {
-				// Update existing
-				// TODO: Check if immutable in scope metadata
-				c.emit(mapval.OP_STORE_LOC)
-				c.Chunk().WriteByte(byte(idx), 0)
-			} else {
-				// Define new
-				idx = c.Scope.addLocal(label.Value)
-				c.emit(mapval.OP_STORE_LOC)
-				c.Chunk().WriteByte(byte(idx), 0)
-			}
-			return nil
-		}
-		// Fallthrough for Map assignment (e.g. obj.x .= 1)
-	}
-
-	// Control Flow
-	if bin.Op == ast.OpIfTrue || bin.Op == ast.OpIfFalse {
-		// Compile condition (LHS)
-		if err := c.compileExpression(bin.Left); err != nil {
-			return err
-		}
-		
-		// Preserve condition for chaining
-		c.emit(mapval.OP_DUP)
-		
-		// Determine Jump Op
-		jumpOp := mapval.OP_IF_TRUE
-		if bin.Op == ast.OpIfFalse {
-			jumpOp = mapval.OP_IF_FALSE
-		}
-		
-		skipBody := c.emitJump(jumpOp)
-		
-		// Compile Body (RHS)
-		if err := c.compileExpression(bin.Right); err != nil {
-			return err
-		}
-		
-		// Discard body result, return condition (which is under body result)
-		c.emit(mapval.OP_POP)
-		
-		// Target for skip
-		c.patchJump(skipBody)
-		return nil
-	}
-
-	// Compile Left
-	if err := c.compileExpression(bin.Left); err != nil {
-		return err
-	}
-	// Compile Right
-	if err := c.compileExpression(bin.Right); err != nil {
-		return err
-	}
-	
-	// Emit Op
-	switch bin.Op {
-	case ast.OpAdd: c.emit(mapval.OP_ADD)
-	case ast.OpSub: c.emit(mapval.OP_SUB)
-	case ast.OpMult: c.emit(mapval.OP_MULT)
-	case ast.OpDivFloat: c.emit(mapval.OP_DIV_FLOAT)
-	case ast.OpAssignImm: c.emit(mapval.OP_ASSIGN_IMM) // For map fields
-	case ast.OpAssignMut: c.emit(mapval.OP_ASSIGN_MUT) // For map fields
-	case ast.OpEq: c.emit(mapval.OP_EQ)
-	case ast.OpNeq: c.emit(mapval.OP_NEQ)
-	case ast.OpGt: c.emit(mapval.OP_GT)
-	case ast.OpLt: c.emit(mapval.OP_LT)
-	case ast.OpGte: c.emit(mapval.OP_GTE)
-	case ast.OpLte: c.emit(mapval.OP_LTE)
-	default:
-		return fmt.Errorf("unsupported binary op: %v", bin.Op)
-	}
-	return nil
-}
-
-func (c *Compiler) compileMap(m *ast.MapExpression) error {
-	// For now, just create empty map
-	c.emit(mapval.OP_MAKE_MAP)
-	// TODO: Compile fields
-	return nil
 }

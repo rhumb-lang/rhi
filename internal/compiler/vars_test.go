@@ -46,15 +46,12 @@ func TestCompiler_Variables(t *testing.T) {
 	}
 	
 	// Verify stack state
-	// Stack should have: [x=1, y=3]
-	// Wait, assignment expression leaves value on stack.
-	// 1. x := 1 -> Stack: [1] (at index 0)
-	// 2. y := x + 2 -> Pushes x(1), 2, Add(3). Stack: [1, 3]. Store y at index 1. Stack: [1, 3].
-	// So final stack has 2 items.
+	// Stack should have: [x=1, y=3, result_of_y_assignment]
 	// x is at index 0. y is at index 1.
+	// result_of_y_assignment is 3.
 	
-	if machine.SP != 2 {
-		t.Errorf("Expected stack size 2, got %d", machine.SP)
+	if machine.SP != 3 {
+		t.Errorf("Expected stack size 3, got %d", machine.SP)
 	}
 	
 	xVal := machine.Stack[0]

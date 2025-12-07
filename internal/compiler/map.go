@@ -1,0 +1,88 @@
+package compiler
+
+import (
+	"fmt"
+	
+	"git.sr.ht/~madcapjake/rhi/internal/ast"
+	"git.sr.ht/~madcapjake/rhi/internal/map"
+)
+
+func (c *Compiler) compileMap(m *ast.MapExpression) error {
+	// Create empty map
+	c.emit(mapval.OP_MAKE_MAP)
+	
+	for _, field := range m.Fields {
+		// Duplicate map for setting field (receiver)
+		c.emit(mapval.OP_DUP)
+		
+		switch f := field.(type) {
+		case *ast.FieldDefinition:
+			// x: 1 or x. 1
+			keyName := ""
+			if label, ok := f.Key.(*ast.LabelLiteral); ok {
+				keyName = label.Value
+			} else if text, ok := f.Key.(*ast.TextLiteral); ok {
+				if s, ok := text.Segments[0].(*ast.StringSegment); ok {
+					keyName = s.Value
+				}
+			}
+			
+			if keyName == "" {
+				return fmt.Errorf("dynamic keys not supported in map literal yet")
+			}
+			
+			// Compile Value
+			if err := c.compileExpression(f.Value); err != nil {
+				return err
+			}
+			
+			// Emit Set
+			flags := byte(0)
+			if f.IsMutable {
+				flags = 1
+			}
+			
+			// Add Key Constant
+			keyIdx := c.makeConstant(mapval.NewText(keyName))
+			
+			c.emit(mapval.OP_SET_FIELD)
+			c.Chunk().WriteByte(byte(keyIdx), 0)
+			c.Chunk().WriteByte(flags, 0)
+			
+		case *ast.FieldPun:
+			// .x or :x
+			keyName := ""
+			if label, ok := f.Key.(*ast.LabelLiteral); ok {
+				keyName = label.Value
+			}
+			
+			if keyName == "" {
+				return fmt.Errorf("invalid pun key")
+			}
+			
+			// Load Local Variable
+			localIdx := c.Scope.resolveLocal(keyName)
+			if localIdx == -1 {
+				return fmt.Errorf("undefined variable in pun: %s", keyName)
+			}
+			c.emit(mapval.OP_LOAD_LOC)
+			c.Chunk().WriteByte(byte(localIdx), 0)
+			
+			// Emit Set
+			flags := byte(0)
+			if f.IsMutable {
+				flags = 1
+			}
+			
+			keyIdx := c.makeConstant(mapval.NewText(keyName))
+			c.emit(mapval.OP_SET_FIELD)
+			c.Chunk().WriteByte(byte(keyIdx), 0)
+			c.Chunk().WriteByte(flags, 0)
+			
+		default:
+			return fmt.Errorf("unsupported field type in map: %T", f)
+		}
+	}
+	
+	return nil
+}

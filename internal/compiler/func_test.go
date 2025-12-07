@@ -66,13 +66,15 @@ func TestCompiler_Function(t *testing.T) {
 		t.Errorf("Expected Ok result, got %v", res)
 	}
 	
-	// Stack should contain [f_closure, result_value]
-	// result_value should be 10
+	// Stack should contain [f_closure, result_value, result_expression_value]
+	// locals: f (0), result (1).
+	// result_value is 10.
 	
-	if vmMachine.SP != 2 {
-		t.Errorf("Expected 2 values on stack, got %d", vmMachine.SP)
+	if vmMachine.SP != 3 {
+		t.Errorf("Expected 3 values on stack, got %d", vmMachine.SP)
 	} else {
-		val := vmMachine.Stack[1] // result is second (index 1)
+		// Check variable 'result' at index 1
+		val := vmMachine.Stack[1] 
 		if val.Type != mapval.ValInteger || val.Integer != 10 {
 			t.Errorf("Expected 10, got %v", val)
 		}

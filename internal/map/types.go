@@ -62,6 +62,35 @@ type Map struct {
 
 func (m *Map) Type() ObjectType { return ObjTypeMap }
 
+// FieldKind distinguishes between immutable (.) and mutable (:) fields.
+type FieldKind uint8
+
+const (
+	FieldImmutable FieldKind = iota // Defined via '.'
+	FieldMutable                    // Defined via ':'
+)
+
+// FieldDesc describes a single field in a Legend.
+type FieldDesc struct {
+	Name string    // The label/key of the field
+	Kind FieldKind // Mutable or Immutable
+}
+
+// LegendType distinguishes between Map (Linear), Dictionary (Hash), etc.
+type LegendType uint8
+
+const (
+	LegendMap        LegendType = iota // Linear scan
+	LegendDictionary                   // Hash map
+)
+
+// Legend represents the Schema of a Map (Hidden Class).
+type Legend struct {
+	Kind        LegendType
+	Fields      []FieldDesc       // Linear scan (Map Mode)
+	Lookup      map[string]int    // Hash map (Dictionary Mode)
+}
+
 // Function represents compiled bytecode (Prototype Activation Record)
 type Function struct {
 	Name         string

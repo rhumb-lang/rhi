@@ -10,6 +10,7 @@ const (
 	OP_POP              // Pop top of stack
 	OP_CALL             // CALL <arg_count>
 	OP_RETURN           // RETURN
+	OP_MAKE_FN          // MAKE_FN <const_idx>
 	OP_SELECT           // SELECT (Start Pattern Match)
 	OP_MATCH_STRUCT     // Match structural pattern
 
@@ -22,7 +23,8 @@ const (
 	OP_MATCH_BIND       // Bind match to var
 
 	// --- BANK 2: Map & Inheritance ---
-	OP_SEND             // SEND <key_const_index>
+	OP_SEND             // SEND <key_const_index> (Get Field)
+	OP_SET_FIELD        // SET_FIELD <key_const_index> <flags> (Set Field)
 	OP_SELF             // Push 'self' (!)
 	OP_LOAD_PARENT      // Push 'parent' (@)
 	OP_MAKE_MAP         // Create empty map
@@ -37,7 +39,6 @@ const (
 	// --- NATIVE INTRINSICS (Operators) ---
 	
 	// Function
-	OP_MAKE_FN
 	OP_LET_FN
 	OP_BIND_FN
 	OP_REBIND

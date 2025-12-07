@@ -1,20 +1,20 @@
 package vm
 
 import (
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"fmt"
+	
+	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
 const StackMax = 2048
 const MaxFrames = 64
 
 type VM struct {
-	Frames     [MaxFrames]CallFrame
+	Frames [MaxFrames]CallFrame
 	FrameCount int
-
+	
 	Stack [StackMax]mapval.Value
 	SP    int // Stack Pointer (points to empty slot)
-	
-	Debug bool // Enable instruction tracing
 }
 
 // Result code for the VM interpretation
@@ -28,9 +28,8 @@ const (
 
 func NewVM() *VM {
 	return &VM{
-		SP:         0,
+		SP: 0,
 		FrameCount: 0,
-		Debug:      false,
 	}
 }
 
@@ -40,20 +39,19 @@ func (vm *VM) currentFrame() *CallFrame {
 
 // Interpret executes the chunk.
 func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
-	// Wrap chunk in script function/closure
 	fn := &mapval.Function{
-		Name:  "<script>",
+		Name: "<script>",
 		Chunk: chunk,
 	}
 	closure := &mapval.Closure{Fn: fn}
-
+	
 	vm.Frames[0] = CallFrame{
 		Closure: closure,
 		IP:      0,
 		Base:    0,
 	}
 	vm.FrameCount = 1
-
+	
 	return vm.run()
 }
 
@@ -73,7 +71,6 @@ func (vm *VM) pop() mapval.Value {
 	return vm.Stack[vm.SP]
 }
 
-// peek returns value at distance from top (0 is top)
 func (vm *VM) peek(distance int) mapval.Value {
 	return vm.Stack[vm.SP-1-distance]
 }
@@ -81,10 +78,78 @@ func (vm *VM) peek(distance int) mapval.Value {
 func (vm *VM) readShort() int {
 	frame := vm.currentFrame()
 	chunk := frame.Closure.Fn.Chunk
-
 	byte1 := chunk.Code[frame.IP]
 	frame.IP++
 	byte2 := chunk.Code[frame.IP]
 	frame.IP++
 	return (int(byte1) << 8) | int(byte2)
+}
+
+func (vm *VM) readByte() byte {
+	frame := vm.currentFrame()
+	b := frame.Closure.Fn.Chunk.Code[frame.IP]
+	frame.IP++
+	return b
+}
+
+func (vm *VM) run() (Result, error) {
+	for {
+		frame := vm.currentFrame()
+		chunk := frame.Closure.Fn.Chunk
+		
+		if frame.IP >= len(chunk.Code) {
+			return RuntimeError, fmt.Errorf("IP out of bounds")
+		}
+		
+		instruction := mapval.OpCode(chunk.Code[frame.IP])
+		frame.IP++
+		
+		var err error
+		
+		switch instruction {
+		case mapval.OP_HALT: return Ok, nil
+		
+		// Stack
+		case mapval.OP_LOAD_CONST: vm.opLoadConst()
+		case mapval.OP_LOAD_LOC:   vm.opLoadLoc()
+		case mapval.OP_STORE_LOC:  vm.opStoreLoc()
+		case mapval.OP_DUP:        vm.opDup()
+		case mapval.OP_POP:        vm.opPop()
+		
+		// Flow
+		case mapval.OP_JUMP:       vm.opJump()
+		case mapval.OP_IF_TRUE:    vm.opIfTrue()
+		case mapval.OP_IF_FALSE:   vm.opIfFalse()
+		case mapval.OP_CALL:       err = vm.opCall()
+		case mapval.OP_RETURN:     
+			res, e := vm.opReturn()
+			if res != 0 { return Ok, nil } // Halt
+			if e != nil { err = e }
+		case mapval.OP_MAKE_FN:    vm.opMakeFn()
+		
+		// Map
+		case mapval.OP_MAKE_MAP:   vm.opMakeMap()
+		case mapval.OP_SEND:       err = vm.opSend()
+		case mapval.OP_SET_FIELD:  err = vm.opSetField()
+		
+		// Math
+		case mapval.OP_ADD:        err = vm.opAdd()
+		case mapval.OP_SUB:        err = vm.opSub()
+		case mapval.OP_MULT:       err = vm.opMult()
+		case mapval.OP_DIV_FLOAT:  err = vm.opDivFloat()
+		case mapval.OP_EQ:         vm.opEq()
+		case mapval.OP_NEQ:        vm.opNeq()
+		case mapval.OP_GT:         err = vm.opGt()
+		case mapval.OP_LT:         err = vm.opLt()
+		case mapval.OP_GTE:        err = vm.opGte()
+		case mapval.OP_LTE:        err = vm.opLte()
+		
+		default:
+			return RuntimeError, fmt.Errorf("unknown opcode: %d", instruction)
+		}
+		
+		if err != nil {
+			return RuntimeError, err
+		}
+	}
 }
