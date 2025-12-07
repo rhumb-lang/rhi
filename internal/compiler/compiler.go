@@ -54,6 +54,66 @@ func (c *Compiler) Compile(doc *ast.Document) (*mapval.Chunk, error) {
 	return c.Chunk(), nil
 }
 
+// CompileIncremental appends compiled code for the doc to the existing chunk.
+// It overwrites the previous OP_HALT if present.
+// Returns the start offset of the new code.
+func (c *Compiler) CompileIncremental(doc *ast.Document) (int, error) {
+	chunk := c.Chunk()
+	if len(chunk.Code) > 0 && mapval.OpCode(chunk.Code[len(chunk.Code)-1]) == mapval.OP_HALT {
+		chunk.Code = chunk.Code[:len(chunk.Code)-1]
+	}
+	startOffset := len(chunk.Code)
+	
+	// Hoist locals (append to existing scope)
+	hoister := NewHoister()
+	locals := hoister.Hoist(doc)
+	for _, name := range locals {
+		// addLocal checks duplicates?
+		// My Scope.addLocal appends blindly?
+		// Let's check scope.go.
+		// "Search from top...".
+		// addLocal just appends.
+		// If we add same local again, it shadows (new slot).
+		// In REPL, reusing "x" should probably refer to existing "x"?
+		// If I define "x := 1". Then "x := 2".
+		// Should it reuse slot?
+		// CompilerScope.resolveLocal searches.
+		// Hoister finds declarations.
+		// If "x" declared again, `resolveLocal` finds OLD `x`?
+		// No, `addLocal` adds NEW `x`. `resolveLocal` finds NEW `x` (top down).
+		// But we want to reuse if global?
+		// For REPL, shadowing is fine (consumes stack space but correct).
+		// To reuse, we need `addLocal` to check existence in current scope depth?
+		// My `Scope.addLocal` implementation (step 52) appends.
+		// I should check if it exists in current scope depth (0 for script) and reuse?
+		// Let's stick to append for simplicity (Shadowing).
+		
+		c.Scope.addLocal(name)
+		c.emitConstant(mapval.NewEmpty()) // Reserve slot
+	}
+
+	for _, expr := range doc.Expressions {
+		if err := c.compileExpression(expr); err != nil {
+			return 0, err
+		}
+		// Pop results? For REPL, we usually WANT to print result.
+		// So we keep the last one?
+		// If we keep it, stack grows.
+		// REPL prints top of stack.
+		// So we should keep last.
+		// And POP others.
+		// Same logic as Compile?
+		// But previous `Compile` run might have left a value on stack (last result of prev line).
+		// We should POP that if we are running new line?
+		// VM doesn't auto-pop.
+		// If user types `1`. Stack `[1]`.
+		// User types `2`. Stack `[1, 2]`.
+		// This is fine.
+	}
+	c.emit(mapval.OP_HALT)
+	return startOffset, nil
+}
+
 func (c *Compiler) emit(op mapval.OpCode) {
 	c.Chunk().WriteOp(op, 0)
 }

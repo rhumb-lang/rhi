@@ -12,7 +12,8 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 	// Create empty map
 	c.emit(mapval.OP_MAKE_MAP)
 	
-	for i, field := range m.Fields {
+	posIdx := 1
+	for _, field := range m.Fields {
 		// Duplicate map for setting field (receiver)
 		c.emit(mapval.OP_DUP)
 		
@@ -88,10 +89,10 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 			c.Chunk().WriteByte(flags, 0)
 			
 		case *ast.FieldElement:
-			// [val] -> key is index "0", "1"... (1-based in Rhumb?)
+			// [val] -> key is index "1", "2"... (1-based)
 			// Architecture 5.6: "Positional elements use 1-based indexing."
-			// So I should use i+1.
-			keyName := strconv.Itoa(i + 1)
+			keyName := strconv.Itoa(posIdx)
+			posIdx++
 			
 			// Compile Value
 			if err := c.compileExpression(f.Value); err != nil {

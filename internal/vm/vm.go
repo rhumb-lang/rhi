@@ -55,6 +55,15 @@ func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
 	return vm.run()
 }
 
+// Continue resumes execution from the given offset in the script frame.
+func (vm *VM) Continue(offset int) (Result, error) {
+	if vm.FrameCount == 0 {
+		return RuntimeError, fmt.Errorf("no active frame to continue")
+	}
+	vm.Frames[0].IP = offset
+	return vm.run()
+}
+
 func (vm *VM) push(val mapval.Value) {
 	if vm.SP >= StackMax {
 		panic("Stack overflow")
@@ -104,6 +113,8 @@ func (vm *VM) run() (Result, error) {
 		
 		instruction := mapval.OpCode(chunk.Code[frame.IP])
 		frame.IP++
+		
+		// fmt.Printf("IP: %d OP: %d\n", frame.IP-1, instruction)
 		
 		var err error
 		
@@ -173,7 +184,7 @@ func (vm *VM) run() (Result, error) {
 		case mapval.OP_GTE:        err = vm.opGte()
 		case mapval.OP_LTE:        err = vm.opLte()
 		
-		default:
+default:
 			return RuntimeError, fmt.Errorf("unknown opcode: %d", instruction)
 		}
 		
