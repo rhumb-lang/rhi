@@ -243,6 +243,17 @@ Rhumb uses **Capability-based Privacy** via **Keys** (`` ` ``).
   * **Private Fields:** Defined with Key names. Accessible only by scopes holding the Key object.
   * **Reflection Safety:** The All Fields operator `[*]` **ignores** Key fields. It only returns Text/Label names.
 
+### 5.6 Hybrid Storage (Fields vs. Elements)
+
+Maps serve as both "Objects" (named fields) and "Lists" (positional elements).
+
+  * **Unified Mechanism:** Internally, positional elements are treated as Fields where the **Name** is a **Number**.
+  * **Indexing:** Positional elements use **1-based** indexing. [cite_start]The index `0` is reserved to represent the aggregate of all positional elements[cite: 1097, 1200].
+  * **Separation of Concern (Operators):**
+      * **`[*]` (All Fields):** Returns a list of **Text** labels only (keys). It ignores Keys (`` ` ``) and Numbers.
+      * **`[0]` (All Positional):** Returns a new Map containing only the fields with **Number** names (elements).
+  * **Iteration (`<>`):** By default, the Foreach operator iterates over **Positional Elements** (1..N). To iterate over fields, you must explicitly apply `[*]` first (e.g., `map[*] <> key -> ...`).
+
 -----
 
 ## 6\. The Virtual Machine (RhumbVM)
@@ -322,7 +333,7 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 | **If True**  | `=>`   | `OP_IF_TRUE`    | Execute if LHS is yes                                       |
 | **If False** | `~>`   | `OP_IF_FALSE`   | Execute if LHS is no/empty                                  |
 | **While**    | `\|>`  | `OP_WHILE`      | Loop LHS until no                                           |
-| **Foreach**  | `<>`   | `OP_FOREACH`    | Iterate Map / Lifecycle                                     |
+| **Foreach**  | `<>`   | `OP_FOREACH`    | Iterate Positional Elements / Lifecycle                     |
 | **Pipe**     | `\|\|` | `OP_PIPE`       | Functional Pipe                                             |
 | **Default**  | `??`   | `OP_COALESCE`   | Return LHS unless empty                                     |
 | **Match**    | `..`   | `OP_MATCH_CONS` | Select & Consume (Stop)                                     |
