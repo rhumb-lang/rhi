@@ -79,10 +79,26 @@ func (c *Compiler) patchJump(offset int) {
 	}
 	
 	c.Chunk().Code[offset] = byte((jump >> 8) & 0xFF)
-	c.Chunk().Code[offset+1] = byte(jump & 0xFF)
-}
-
-func (c *Compiler) makeConstant(val mapval.Value) int {
+		c.Chunk().Code[offset+1] = byte(jump & 0xFF)
+	}
+	
+	// emitJumpBack emits a backward jump to the target offset.
+	func (c *Compiler) emitJumpBack(op mapval.OpCode, target int) {
+		// Offset = target - (current_len + 3)
+		// Because IP will be at current_len + 3 after reading this instruction
+		offset := target - (len(c.Chunk().Code) + 3)
+		
+		if offset < -32768 {
+			panic("Loop body too large")
+		}
+		
+		c.emit(op)
+		c.Chunk().WriteByte(byte((offset >> 8) & 0xFF), 0)
+		c.Chunk().WriteByte(byte(offset & 0xFF), 0)
+	}
+	
+	func (c *Compiler) makeConstant(val mapval.Value) int {
+	
 	return c.Chunk().AddConstant(val)
 }
 

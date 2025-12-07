@@ -163,10 +163,10 @@ func TestCompiler_MapDelegation(t *testing.T) {
 	machine := vm.NewVM()
 	machine.Interpret(chunk)
 	
-	// Stack: [parent, child, res, res_val]
-	// SP=4.
-	// parent(0), child(1), res(2), res_val(3).
-	// res_val should be 99.
+	// Stack: [parent, child, res_val, res_val] (SP=4)
+	// Locals: parent(0), child(1), res(2).
+	// Stack[2] updated to 99.
+	// Stack[3] is expression result (99).
 	
 	if machine.SP != 4 {
 		t.Errorf("Expected 4 values on stack, got %d", machine.SP)

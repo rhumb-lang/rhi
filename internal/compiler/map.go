@@ -31,6 +31,10 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 				return fmt.Errorf("dynamic keys not supported in map literal yet")
 			}
 			
+			if f.IsSub {
+				keyName = "@" + keyName
+			}
+			
 			// Compile Value
 			if err := c.compileExpression(f.Value); err != nil {
 				return err
@@ -58,6 +62,10 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 			
 			if keyName == "" {
 				return fmt.Errorf("invalid pun key")
+			}
+			
+			if f.IsSub {
+				keyName = "@" + keyName
 			}
 			
 			// Load Local Variable

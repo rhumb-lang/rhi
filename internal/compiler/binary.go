@@ -203,7 +203,34 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	case ast.OpCoalesce: c.emit(mapval.OP_COALESCE)
 	case ast.OpPipe: c.emit(mapval.OP_PIPE)
 	case ast.OpForeach: c.emit(mapval.OP_FOREACH)
-	case ast.OpWhile: c.emit(mapval.OP_WHILE)
+	case ast.OpWhile:
+		loopStart := len(c.Chunk().Code)
+		
+		// Compile Condition
+		if err := c.compileExpression(bin.Left); err != nil {
+			return err
+		}
+		
+		// Jump to End if False
+		exitJump := c.emitJump(mapval.OP_IF_TRUE)
+		
+		// Compile Body
+		if err := c.compileExpression(bin.Right); err != nil {
+			return err
+		}
+		
+		// Discard body result
+		c.emit(mapval.OP_POP)
+		
+		// Jump back to Start
+		c.emitJumpBack(mapval.OP_JUMP, loopStart)
+		
+		// Patch Exit
+		c.patchJump(exitJump)
+		
+		// Loop expression result
+		c.emitConstant(mapval.NewEmpty())
+		
 	default:
 		return fmt.Errorf("unsupported binary op: %v", bin.Op)
 	}

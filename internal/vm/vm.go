@@ -82,7 +82,8 @@ func (vm *VM) readShort() int {
 	frame.IP++
 	byte2 := chunk.Code[frame.IP]
 	frame.IP++
-	return (int(byte1) << 8) | int(byte2)
+	val := uint16(byte1)<<8 | uint16(byte2)
+	return int(int16(val))
 }
 
 func (vm *VM) readByte() byte {
@@ -150,6 +151,15 @@ func (vm *VM) run() (Result, error) {
 		case mapval.OP_ROOT:       err = vm.opRoot()
 		case mapval.OP_SCI_NOT:    err = vm.opSciNot()
 		case mapval.OP_DEV:        err = vm.opDev()
+		
+		// Structure
+		case mapval.OP_COALESCE:   vm.opCoalesce()
+		case mapval.OP_CONCAT:     vm.opConcat()
+		case mapval.OP_RANGE:      vm.opRange()
+		case mapval.OP_HAS_SUBFIELD: vm.opHasSub()
+		case mapval.OP_ACCESS_NESTED: vm.opAccessNested()
+		case mapval.OP_PIPE:       vm.opPipe()
+		case mapval.OP_FOREACH:    vm.opForeach()
 		
 		// Logic
 		case mapval.OP_AND:        vm.opAnd()

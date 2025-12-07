@@ -14,6 +14,7 @@ const (
 	ValEmpty             // The ___ literal
 	ValBoolean           // Packed in Integer
 	ValDate              // Packed in Integer
+	ValRange             // Range Object
 )
 
 type Value struct {
@@ -43,7 +44,20 @@ const (
 	ObjTypeFunction
 	ObjTypeClosure
 	ObjTypeNative
+	ObjTypeRange
 )
+
+// ...
+
+// Range represents a lazy sequence.
+type Range struct {
+	Start int64
+	End   int64
+}
+
+func (r *Range) Type() ObjectType { return ObjTypeRange }
+
+// ---------------------------------------------------------
 
 // Object is the common interface for heap entities
 type Object interface {
