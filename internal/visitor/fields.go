@@ -1,6 +1,7 @@
 package visitor
 
 import (
+	"fmt"
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
 	"git.sr.ht/~madcapjake/rhi/internal/grammar"
 )
@@ -16,6 +17,10 @@ func (b *ASTBuilder) visitFieldLiteral(ctx grammar.IFieldLiteralContext) ast.Nod
 	// TODO: Implement full literal extraction properly
 	// For now, return a LabelLiteral with text to unblock
 	return &ast.LabelLiteral{Value: c.GetText()}
+}
+
+func (b *ASTBuilder) VisitFieldLiteral(ctx *grammar.FieldLiteralContext) interface{} {
+	return b.visitFieldLiteral(ctx)
 }
 
 // --- Fields ---
@@ -63,9 +68,25 @@ func (b *ASTBuilder) VisitPrefixSlurpSpread(ctx *grammar.PrefixSlurpSpreadContex
 }
 
 func (b *ASTBuilder) VisitAssignMutField(ctx *grammar.AssignMutFieldContext) interface{} {
+	// Debug
+	fmt.Printf("Visiting AssignMutField: %s\n", ctx.GetText())
+	
+	expr := ctx.Expression()
+	if expr == nil {
+		fmt.Println("Error: AssignMutField has nil expression context")
+		return nil
+	}
+	
+	valNode := b.Visit(expr)
+	if valNode == nil {
+		fmt.Println("Error: Visiting expression returned nil")
+	}
+	
+	val := toExpr(valNode)
+	
 	return &ast.FieldDefinition{
 		Key:       b.visitFieldLiteral(ctx.FieldLiteral()),
-		Value:     toExpr(b.Visit(ctx.Expression())),
+		Value:     val,
 		IsMutable: true,
 		IsSub:     false,
 	}
