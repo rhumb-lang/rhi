@@ -132,6 +132,13 @@ func (vm *VM) run() (Result, error) {
 		case mapval.OP_SEND:       err = vm.opSend()
 		case mapval.OP_SET_FIELD:  err = vm.opSetField()
 		
+		// Space
+		case mapval.OP_POST:       err = vm.opPost()
+		case mapval.OP_INJECT:     err = vm.opInject()
+		case mapval.OP_WRITE:      err = vm.opWrite()
+		case mapval.OP_SUBSCRIBE:  err = vm.opSubscribe()
+		case mapval.OP_NEW_REALM:  vm.opNewRealm()
+		
 		// Math
 		case mapval.OP_ADD:        err = vm.opAdd()
 		case mapval.OP_SUB:        err = vm.opSub()
