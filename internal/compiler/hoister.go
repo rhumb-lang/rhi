@@ -50,7 +50,13 @@ func (h *Hoister) visit(node ast.Node) {
 				h.add(label.Value)
 			}
 		}
-		// Recurse (e.g. nested assignments? or just flow)
+		
+		// Do NOT recurse into Function Body (Scope Boundary)
+		if n.Op == ast.OpMakeFn {
+			h.visit(n.Left) // Visit params
+			return
+		}
+		
 		h.visit(n.Left)
 		h.visit(n.Right)
 	
@@ -60,21 +66,8 @@ func (h *Hoister) visit(node ast.Node) {
 			h.visit(arg)
 		}
 		
+	// Stop at Selector boundary (creates new scope)
 	case *ast.SelectorExpression:
-		for _, pat := range n.Patterns {
-			if p, ok := pat.(*ast.PatternDefinition); ok {
-				// Check Target for bindings (LabelLiteral)
-				if label, ok := p.Target.(*ast.LabelLiteral); ok {
-					h.add(label.Value)
-				}
-				h.visit(p.Action)
-			} else if def, ok := pat.(*ast.PatternDefault); ok {
-				h.visit(def.Value)
-			}
-		}
-	// For now, we only hoist from current scope boundaries.
-	// Does `->` create new scope? Yes. `Hoister` should NOT descend into `OpMakeFn`'s Routine.
-	// But `hoist` is called on the Body of the function by the Child Compiler.
-	// So we just need to STOP recursing at function boundaries.
+		return
 	}
 }

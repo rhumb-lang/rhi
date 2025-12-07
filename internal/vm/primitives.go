@@ -2,8 +2,8 @@ package vm
 
 import (
 	"fmt"
-
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"math"
+	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
 // --- Stack Ops ---
@@ -82,6 +82,85 @@ func (vm *VM) opDivFloat() error {
 	a := vm.pop()
 	vm.push(mapval.NewFloat(asFloat(a) / asFloat(b)))
 	return nil
+}
+
+func (vm *VM) opDivInt() error {
+	b := vm.pop()
+	a := vm.pop()
+	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
+		if b.Integer == 0 { return fmt.Errorf("division by zero") }
+		vm.push(mapval.NewInt(a.Integer / b.Integer))
+	} else {
+		vm.push(mapval.NewInt(int64(asFloat(a) / asFloat(b))))
+	}
+	return nil
+}
+
+func (vm *VM) opMod() error {
+	b := vm.pop()
+	a := vm.pop()
+	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
+		if b.Integer == 0 { return fmt.Errorf("division by zero") }
+		vm.push(mapval.NewInt(a.Integer % b.Integer))
+	} else {
+		vm.push(mapval.NewFloat(math.Mod(asFloat(a), asFloat(b))))
+	}
+	return nil
+}
+
+func (vm *VM) opPow() error {
+	b := vm.pop()
+	a := vm.pop()
+	vm.push(mapval.NewFloat(math.Pow(asFloat(a), asFloat(b))))
+	return nil
+}
+
+func (vm *VM) opRoot() error {
+	b := vm.pop() // y (root)
+	a := vm.pop() // x (base)
+	// x^(1/y)
+	vm.push(mapval.NewFloat(math.Pow(asFloat(a), 1.0/asFloat(b))))
+	return nil
+}
+
+func (vm *VM) opSciNot() error {
+	b := vm.pop() // exponent
+	a := vm.pop() // base
+	// a * 10^b
+	vm.push(mapval.NewFloat(asFloat(a) * math.Pow(10, asFloat(b))))
+	return nil
+}
+
+func (vm *VM) opDev() error {
+	// Deviation (+-)
+	// Usually returns a range or deviation object?
+	// For now, return float addition? Or not implemented?
+	// Placeholder.
+	vm.pop()
+	vm.pop()
+	vm.push(mapval.NewEmpty())
+	return nil
+}
+
+// --- Logic Ops ---
+
+func (vm *VM) opAnd() {
+	b := vm.pop()
+	a := vm.pop()
+	res := vm.isTruthy(a) && vm.isTruthy(b)
+	vm.push(mapval.NewBoolean(res))
+}
+
+func (vm *VM) opOr() {
+	b := vm.pop()
+	a := vm.pop()
+	res := vm.isTruthy(a) || vm.isTruthy(b)
+	vm.push(mapval.NewBoolean(res))
+}
+
+func (vm *VM) opNot() {
+	val := vm.pop()
+	vm.push(mapval.NewBoolean(vm.isFalsy(val)))
 }
 
 // --- Comparison Ops ---
@@ -203,7 +282,7 @@ func (vm *VM) opCall() error {
 	vm.Frames[vm.FrameCount] = CallFrame{
 		Closure: closure,
 		IP:      0,
-		Base:    vm.SP - argCount - 1,
+		Base:    vm.SP - argCount,
 	}
 	vm.FrameCount++
 	return nil
@@ -219,7 +298,7 @@ func (vm *VM) opReturn() (int, error) {
 		return 1, nil // Done
 	}
 
-	vm.SP = frame.Base
+	vm.SP = frame.Base - 1
 	vm.push(result)
 	return 0, nil
 }
@@ -258,7 +337,16 @@ func isEqual(a, b mapval.Value) bool {
 }
 
 func (vm *VM) isFalsy(val mapval.Value) bool {
-	return val.Type == mapval.ValEmpty || (val.Type == mapval.ValBoolean && val.Integer == 0)
+	if val.Type == mapval.ValEmpty {
+		return true
+	}
+	if val.Type == mapval.ValBoolean && val.Integer == 0 {
+		return true
+	}
+	if val.Type == mapval.ValInteger && val.Integer == 0 {
+		return true
+	}
+	return false
 }
 
 func (vm *VM) isTruthy(val mapval.Value) bool {

@@ -52,7 +52,7 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 
 	// Special handling for Assignment
 	if bin.Op == ast.OpAssignImm || bin.Op == ast.OpAssignMut {
-		// Check LHS
+		// Check LHS: Label (Local)
 		if label, ok := bin.Left.(*ast.LabelLiteral); ok {
 			// Variable Assignment: x .= 1
 			
@@ -72,7 +72,62 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 			c.Chunk().WriteByte(byte(idx), 0)
 			return nil
 		}
-		// Fallthrough for Map assignment (e.g. obj.x .= 1)
+		
+		// Check LHS: Chain (Map Field) e.g. obj\x .= 1
+		if chain, ok := bin.Left.(*ast.ChainExpression); ok {
+			if len(chain.Steps) == 0 {
+				return fmt.Errorf("invalid assignment target")
+			}
+			lastStep := chain.Steps[len(chain.Steps)-1]
+			if lastStep.Op != ast.ChainMember && lastStep.Op != ast.ChainSubfield {
+				return fmt.Errorf("can only assign to fields")
+			}
+			
+			// Compile Receiver (Base + Steps[:-1])
+			if err := c.compileExpression(chain.Base); err != nil {
+				return err
+			}
+			for i := 0; i < len(chain.Steps)-1; i++ {
+				step := chain.Steps[i]
+				// Logic from compileChain
+				switch step.Op {
+				case ast.ChainMember:
+					idx := c.makeConstant(mapval.NewText(step.Ident))
+					c.emit(mapval.OP_SEND)
+					c.Chunk().WriteByte(byte(idx), 0)
+				case ast.ChainSubfield:
+					idx := c.makeConstant(mapval.NewText("@" + step.Ident))
+					c.emit(mapval.OP_SEND)
+					c.Chunk().WriteByte(byte(idx), 0)
+				default:
+					return fmt.Errorf("unsupported chain step in assignment target")
+				}
+			}
+			
+			// Compile Value
+			if err := c.compileExpression(bin.Right); err != nil {
+				return err
+			}
+			
+			// Emit Set
+			flags := byte(0)
+			if bin.Op == ast.OpAssignMut {
+				flags = 1
+			}
+			
+			keyName := lastStep.Ident
+			if lastStep.Op == ast.ChainSubfield {
+				keyName = "@" + keyName
+			}
+			
+			keyIdx := c.makeConstant(mapval.NewText(keyName))
+			c.emit(mapval.OP_SET_FIELD)
+			c.Chunk().WriteByte(byte(keyIdx), 0)
+			c.Chunk().WriteByte(flags, 0)
+			return nil
+		}
+		
+		return fmt.Errorf("invalid assignment target type: %T", bin.Left)
 	}
 
 	// Control Flow
@@ -121,6 +176,14 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	case ast.OpSub: c.emit(mapval.OP_SUB)
 	case ast.OpMult: c.emit(mapval.OP_MULT)
 	case ast.OpDivFloat: c.emit(mapval.OP_DIV_FLOAT)
+	case ast.OpDivInt: c.emit(mapval.OP_DIV_INT)
+	case ast.OpMod: c.emit(mapval.OP_MOD)
+	case ast.OpPow: c.emit(mapval.OP_POW)
+	case ast.OpRoot: c.emit(mapval.OP_ROOT)
+	case ast.OpSciNot: c.emit(mapval.OP_SCI_NOT)
+	case ast.OpDev: c.emit(mapval.OP_DEV)
+	case ast.OpAnd: c.emit(mapval.OP_AND)
+	case ast.OpOr: c.emit(mapval.OP_OR)
 	case ast.OpAssignImm: c.emit(mapval.OP_ASSIGN_IMM) // For map fields
 	case ast.OpAssignMut: c.emit(mapval.OP_ASSIGN_MUT) // For map fields
 	case ast.OpEq: c.emit(mapval.OP_EQ)
@@ -129,6 +192,18 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	case ast.OpLt: c.emit(mapval.OP_LT)
 	case ast.OpGte: c.emit(mapval.OP_GTE)
 	case ast.OpLte: c.emit(mapval.OP_LTE)
+	case ast.OpRange: c.emit(mapval.OP_RANGE)
+	case ast.OpHasSub: c.emit(mapval.OP_HAS_SUBFIELD)
+	case ast.OpNotHasSub: c.emit(mapval.OP_NOT_HAS_SUB)
+	case ast.OpHasFld: c.emit(mapval.OP_HAS_FIELD)
+	case ast.OpNotHasFld: c.emit(mapval.OP_NOT_HAS_FLD)
+	case ast.OpTempSub: c.emit(mapval.OP_TEMP_SUBFIELD)
+	case ast.OpConcat: c.emit(mapval.OP_CONCAT)
+	case ast.OpNested: c.emit(mapval.OP_ACCESS_NESTED)
+	case ast.OpCoalesce: c.emit(mapval.OP_COALESCE)
+	case ast.OpPipe: c.emit(mapval.OP_PIPE)
+	case ast.OpForeach: c.emit(mapval.OP_FOREACH)
+	case ast.OpWhile: c.emit(mapval.OP_WHILE)
 	default:
 		return fmt.Errorf("unsupported binary op: %v", bin.Op)
 	}

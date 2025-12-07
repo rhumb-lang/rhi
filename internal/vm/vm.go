@@ -144,6 +144,18 @@ func (vm *VM) run() (Result, error) {
 		case mapval.OP_SUB:        err = vm.opSub()
 		case mapval.OP_MULT:       err = vm.opMult()
 		case mapval.OP_DIV_FLOAT:  err = vm.opDivFloat()
+		case mapval.OP_DIV_INT:    err = vm.opDivInt()
+		case mapval.OP_MOD:        err = vm.opMod()
+		case mapval.OP_POW:        err = vm.opPow()
+		case mapval.OP_ROOT:       err = vm.opRoot()
+		case mapval.OP_SCI_NOT:    err = vm.opSciNot()
+		case mapval.OP_DEV:        err = vm.opDev()
+		
+		// Logic
+		case mapval.OP_AND:        vm.opAnd()
+		case mapval.OP_OR:         vm.opOr()
+		case mapval.OP_NOT:        vm.opNot()
+		
 		case mapval.OP_EQ:         vm.opEq()
 		case mapval.OP_NEQ:        vm.opNeq()
 		case mapval.OP_GT:         err = vm.opGt()

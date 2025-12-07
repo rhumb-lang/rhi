@@ -19,9 +19,30 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 	// We do NOT emitConstant for it.
 	child.Scope.addLocal("_") 
 	
-	// Hoist locals from patterns (Action bodies)
+	// Hoist locals
 	hoister := NewHoister()
-	locals := hoister.Hoist(s)
+	for _, pat := range s.Patterns {
+		if p, ok := pat.(*ast.PatternDefinition); ok {
+			// Binding in Target
+			if label, ok := p.Target.(*ast.LabelLiteral); ok {
+				hoister.add(label.Value)
+			}
+			// Locals in Action
+			childLocals := hoister.Hoist(p.Action)
+			// Hoist returns the list. Since `hoister` is stateful (Locals field), calling Hoist accumulates?
+			// `Hoist` calls `visit`. `visit` appends to `h.Locals`.
+			// `Hoist` returns `h.Locals`.
+			// So `hoister.Locals` grows.
+			// We don't need to iterate `childLocals` if we use the same `hoister` instance?
+			// But `Hoist` returns `[]string`.
+			// Just calling `Hoist` populates `hoister.Locals`.
+			_ = childLocals
+		} else if def, ok := pat.(*ast.PatternDefault); ok {
+			hoister.Hoist(def.Value)
+		}
+	}
+	
+	locals := hoister.Locals
 	for _, name := range locals {
 		if name == "_" { continue } // Already added
 		child.Scope.addLocal(name)
@@ -42,7 +63,8 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 			}
 			
 			// Jump if False (No Match) -> Next Pattern
-			nextJump := child.emitJump(mapval.OP_IF_FALSE)
+			// OP_IF_TRUE jumps if Falsy (Branch If False)
+			nextJump := child.emitJump(mapval.OP_IF_TRUE)
 			
 			// Match! Execute Action.
 			if err := child.compileExpression(p.Action); err != nil {
