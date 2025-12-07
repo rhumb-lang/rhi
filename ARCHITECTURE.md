@@ -328,6 +328,15 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 | **Match**    | `..`   | `OP_MATCH_CONS` | Select & Consume (Stop)                                     |
 | **Peek**     | `::`   | `OP_MATCH_PEEK` | Select & Continue (Fallthrough)                             |
 
+#### Space & Concurrency
+All Space operations consume their operands and **must push a result** to maintain stack integrity.
+
+| Operator      | Syntax | Native Opcode  | Semantics                  | Stack Return  |
+|:--------------|:-------|:---------------|:---------------------------|:--------------|
+| **Signal**    | `#`    | `OP_POST`      | Emit Event (Bubble Up)     | `___` (Empty) |
+| **Reply**     | `^`    | `OP_INJECT`    | Inject Event (Drill Down)  | `___` (Empty) |
+| **Proclaim**  | `$`    | `OP_WRITE`     | Set State (Persistent)     | `___` (Empty) |
+| **Subscribe** | `<>`   | `OP_SUBSCRIBE` | Register Reactive Listener | `___` (Empty) |
 
 #### Field Operators (Postfix `[]`)
 
@@ -474,7 +483,7 @@ Rhumb replaces the traditional Call Stack with a **Hierarchical Tuplespace** bas
 
 ### 7.2 Operator Taxonomy
 
-The syntax distinguishes between ephemeral events and persistent state to prevent race conditions.
+The syntax distinguishes between ephemeral events and persistent state to prevent race conditions. **All operators evaluate to ___ (Empty).**
 
 | Feature          | Symbol   | Type  | Direction        | Semantics                                                                                                               |
 |:-----------------|:---------|:------|:-----------------|:------------------------------------------------------------------------------------------------------------------------|
