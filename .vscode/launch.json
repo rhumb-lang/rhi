@@ -16,20 +16,21 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "cmd/rhumb/main.go",
+            "program": "cmd/rhi/main.go",
             "args": [
                 "line",
-                // "--disassemble",
+                "--disassemble",
                 "--last-value",
 
                 // "foo := 1; bar .= 2; foo ++ bar",
 
-                "foo .= [1;2;3]"
+                "foo .= [a] -> (a ** a); foo(10)"
                 // "foo .= 10",
                 // "bar .= 3",
                 // "foo ++ 5"
             ],
             "env": {
+                "GOEXPERIMENT": "arenas",
                 "RHUMB_VISITOR_DEBUG": "1",
                 "RHUMB_CODE_ARRAY_DEBUG": "1",
                 "RHUMB_VM_DEBUG": "1"
@@ -46,6 +47,7 @@
                 "repl"
             ],
             "env": {
+                "GOEXPERIMENT": "arenas",
                 "RHUMB_VISITOR_DEBUG": "0",
                 "RHUMB_CODE_ARRAY_DEBUG": "0",
                 "RHUMB_VM_DEBUG": "0"

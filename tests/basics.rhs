@@ -1,0 +1,77 @@
+% binary operators (assignment)
+f .= 10 % local immutable field assign
+f := 10 % local mutable field assign
+f .. 10 % map\file immutable field assign
+f :: 10 % map\file mutable field assign
+[`a; `b; `c] %= [0..`a; 1..`b; 2..`c]
+
+% binary ops (math)
+
+1 ++ 2 %= 3
+1 -- 2 %= -1
+1 ** 2 %= 2
+1 // 2 %= 0.5
+2 ^^ 2 %= 4
+
+1 *^ 2 %= 1**10^^2
+2 ^/ 25 %= 5
+10 +/ 4 %= 2
+10 -/ 3 %= 1
+
+10 =/ 5 % divisible by
+10 ~/ 5 % not divisible by
+
+% binary ops (logic)
+
+x == y % equality
+x ~~ y % inequality
+x =@ y % has subfield
+x ~@ y % doesn't have subfield
+x[^] == y % is constructed from
+<x> =! y % is bound to
+<x> ~! y % is not bound to
+
+
+x >> y % greater than
+x >= y % greater than or equal
+x << y % less than
+x <= y % less than or equal
+
+x =\ y % has
+x ~\ y % doesn't have
+x[@] =\ y % has (in subfields)
+
+
+% (both operands evaluated)
+x /\ y % logical and
+x \/ y % logical or
+
+% binary ops (control)
+
+% (only first operand evaluated if condition not met)
+x => y % short-circuit and "ifTrue"
+x ~> y % short-circuit or  "ifFalse"
+
+x || y % pipe (result of x is supplied as argument to y)
+
+x := [1;2;3] || reverse || head % 3
+
+x ?? y % default (if lefthand is empty or never signals)
+
+xs <> x -> x\foo % foreach 
+xs .= [xs <> x -> x\foo] % list comprehension
+foo <> $1 == yes % all positional eelements are true
+
+some-condition |> some-expression % while
+cur := :xs
+cur {[x; &xs.1] .. x >> 0} |> (cur := xs.1; console\log(x))
+
+sum-to-test .= sum-to(from::1 to::10,000)
+sum-to .= [start; end] -> (
+  result := 0
+  [start|end] <> [i] -> result := result ++ i
+  #(result)
+)
+
+recurse-test .= recurse(14)
+recurse .= <(#1 == 0 ~> (recurse($1--1); recurse($1--1)))>
