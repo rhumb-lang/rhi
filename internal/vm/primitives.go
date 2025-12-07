@@ -19,6 +19,7 @@ func (vm *VM) opLoadLoc() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
 	val := vm.Stack[frame.Base+int(idx)]
+	// fmt.Printf("LOAD %d: %v\n", idx, val)
 	vm.push(val)
 }
 
@@ -26,6 +27,7 @@ func (vm *VM) opStoreLoc() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
 	val := vm.peek(0)
+	// fmt.Printf("STORE %d: %v\n", idx, val)
 	vm.Stack[frame.Base+int(idx)] = val
 }
 
@@ -49,8 +51,19 @@ func (vm *VM) opAdd() error {
 		fa := asFloat(a)
 		fb := asFloat(b)
 		vm.push(mapval.NewFloat(fa + fb))
+	} else if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
+		mapA, okA := a.Obj.(*mapval.Map)
+		mapB, okB := b.Obj.(*mapval.Map)
+		if okA && okB {
+			newMap := mapval.NewMap()
+			newMap.Fields = append(newMap.Fields, mapA.Fields...)
+			newMap.Fields = append(newMap.Fields, mapB.Fields...)
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: newMap})
+		} else {
+			return fmt.Errorf("operands must be numbers or maps for ADD")
+		}
 	} else {
-		return fmt.Errorf("operands must be numbers for ADD")
+		return fmt.Errorf("operands must be numbers or maps for ADD")
 	}
 	return nil
 }

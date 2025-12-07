@@ -17,11 +17,32 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		child.Enclosing = c
 		child.Function.Name = "<anonymous>"
 		
-		// TODO: Parse params from LHS (bin.Left)
+		// Parse params from LHS (bin.Left)
 		if mapExpr, ok := bin.Left.(*ast.MapExpression); ok {
 			child.Function.Arity = len(mapExpr.Fields)
-			// We need to add these fields as locals in child scope
-			// iterating fields... (skipping for MVP)
+			for _, field := range mapExpr.Fields {
+				var name string
+				switch f := field.(type) {
+				case *ast.FieldDefinition:
+					if label, ok := f.Key.(*ast.LabelLiteral); ok {
+						name = label.Value
+					}
+				case *ast.FieldPun:
+					if label, ok := f.Key.(*ast.LabelLiteral); ok {
+						name = label.Value
+					}
+				case *ast.FieldElement:
+					if label, ok := f.Value.(*ast.LabelLiteral); ok {
+						name = label.Value
+					}
+				}
+				
+				if name != "" {
+					child.Scope.addLocal(name)
+				} else {
+					return fmt.Errorf("unsupported parameter type")
+				}
+			}
 		}
 		
 		// Hoist locals for function body

@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"strconv"
 	
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
 	"git.sr.ht/~madcapjake/rhi/internal/map"
@@ -11,7 +12,7 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 	// Create empty map
 	c.emit(mapval.OP_MAKE_MAP)
 	
-	for _, field := range m.Fields {
+	for i, field := range m.Fields {
 		// Duplicate map for setting field (receiver)
 		c.emit(mapval.OP_DUP)
 		
@@ -46,7 +47,6 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 				flags = 1
 			}
 			
-			// Add Key Constant
 			keyIdx := c.makeConstant(mapval.NewText(keyName))
 			
 			c.emit(mapval.OP_SET_FIELD)
@@ -81,6 +81,25 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 			if f.IsMutable {
 				flags = 1
 			}
+			
+			keyIdx := c.makeConstant(mapval.NewText(keyName))
+			c.emit(mapval.OP_SET_FIELD)
+			c.Chunk().WriteByte(byte(keyIdx), 0)
+			c.Chunk().WriteByte(flags, 0)
+			
+		case *ast.FieldElement:
+			// [val] -> key is index "0", "1"... (1-based in Rhumb?)
+			// Architecture 5.6: "Positional elements use 1-based indexing."
+			// So I should use i+1.
+			keyName := strconv.Itoa(i + 1)
+			
+			// Compile Value
+			if err := c.compileExpression(f.Value); err != nil {
+				return err
+			}
+			
+			// Emit Set (Immutable default)
+			flags := byte(0)
 			
 			keyIdx := c.makeConstant(mapval.NewText(keyName))
 			c.emit(mapval.OP_SET_FIELD)
