@@ -101,13 +101,20 @@ func (b *ASTBuilder) VisitPrefix(ctx *grammar.PrefixContext) interface{} {
 
 func (b *ASTBuilder) VisitEffect(ctx *grammar.EffectContext) interface{} {
 	// expression OpenCurly ... patterns ... CloseCurly
-	// This is for Attached Selectors (Monitors)
-	// Represent as Binary Op? Or specific node?
-	// Architecture says: Attached Mode.
-	// Let's use a BinaryExpression with OpMatchCons or specialized.
-	// For now, treat as a generic Expression.
-	// TODO: Implement AttachedSelector node in AST.
-	// Returning nil for now to avoid panic if used, but likely causes panic if not handled.
-	// Let's return a dummy to be safe.
-	return &ast.SelectorExpression{} // Placeholder
+	// Acts as applying the selector to the expression: (Selector)(Expr)
+	target := toExpr(b.Visit(ctx.Expression()))
+	
+	sel := &ast.SelectorExpression{Patterns: []ast.Pattern{}}
+	if ctx.Patterns() != nil {
+		res := b.Visit(ctx.Patterns())
+		if pats, ok := res.([]ast.Pattern); ok {
+			sel.Patterns = pats
+		}
+	}
+	
+	// Transform into CallExpression: Selector(Target)
+	return &ast.CallExpression{
+		Callee: sel,
+		Args:   []ast.Expression{target},
+	}
 }

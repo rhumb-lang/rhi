@@ -60,7 +60,18 @@ func (h *Hoister) visit(node ast.Node) {
 			h.visit(arg)
 		}
 		
-	// TODO: Handle Maps, Selectors, etc. for nested definitions if needed.
+	case *ast.SelectorExpression:
+		for _, pat := range n.Patterns {
+			if p, ok := pat.(*ast.PatternDefinition); ok {
+				// Check Target for bindings (LabelLiteral)
+				if label, ok := p.Target.(*ast.LabelLiteral); ok {
+					h.add(label.Value)
+				}
+				h.visit(p.Action)
+			} else if def, ok := pat.(*ast.PatternDefault); ok {
+				h.visit(def.Value)
+			}
+		}
 	// For now, we only hoist from current scope boundaries.
 	// Does `->` create new scope? Yes. `Hoister` should NOT descend into `OpMakeFn`'s Routine.
 	// But `hoist` is called on the Body of the function by the Child Compiler.

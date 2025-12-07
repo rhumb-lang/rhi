@@ -43,6 +43,8 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		return c.compileRoutine(e)
 	case *ast.ChainExpression:
 		return c.compileChain(e)
+	case *ast.SelectorExpression:
+		return c.compileSelector(e)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}
