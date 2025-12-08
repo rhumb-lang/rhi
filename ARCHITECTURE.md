@@ -546,25 +546,36 @@ The Cactus Stack enables the **Reply (`^`)** operator to traverse "forward" into
 2.  **Traversal:** It walks down the linked list of Zombie Frames that were "popped" to reach the current state.
 3.  **Resume:** If a matching trap is found in a Zombie, the VM creates a new branch (Green Thread) resuming execution at that Zombie's IP, effectively "forking" the history.
 
-### 6.5 Function Semantics & Currying
+### 6.5 Subroutine Semantics
 
-Rhumb functions adhere to a **"Loose Argument"** policy with explicit support for Partial Application (Currying).
+Rhumb defines specific roles for Logic units, separating the executable code from its interface and invocation state.
 
-#### Loose Invocation: `foo(...)`
+1.  **Subroutine `<(...)>`**: The **Fundamental Unit of Code Execution**.
+      * It is a **Reference** to logic (Bytecode Chunk).
+      * It is **Anonymous** and has no inherent parameter names (uses positional `$1`, `$2`).
+      * **Invocation:** Accessing a label bound to a subroutine *executes* it immediately.
+          * `foo` executes `foo`.
+          * `foo()` executes `foo` with empty arguments (if any were missing).
+2.  **Function `[...] -> (...)`**: A syntactic construct that combines a **Submap** (Parameters) with a **Subroutine**.
+      * `->` is a **Constructor Operator**.
+      * It converts the LHS `[]` into a Parameter Schema (Submap).
+      * It converts the RHS `()` into a Subroutine.
+      * **Invocation:** `foo(1)` binds `1` to the Submap labels, then executes the Subroutine.
 
-When a function is called directly:
+#### Loose Argument Policy
 
-  * **Missing Args:** If the function expects 3 args but gets 1, the remaining args are filled with **`___` (Empty)**.
-  * **Extra Args:** If the function expects 1 arg but gets 3, the extras are ignored (but available via `$`).
-  * **Result:** The function executes immediately.
+When a function is called (`foo(...)`):
 
-#### Partial Application (Currying): `<foo>(...)`
+  * **Missing Args:** If fewer arguments are provided than parameters defined in the submap, the remaining parameters are bound to **`___` (Empty)**.
+  * **Extra Args:** If more arguments are provided than parameters, the extra values are ignored by the named binding but remain accessible via the variadic argument operator **`$`** (e.g., `$0` for all args, or `$N` for the Nth).
 
-When a function is wrapped in Angle Brackets `<...>`:
+#### Referencing & Currying
 
-  * **Mechanism:** The VM creates a **New Closure**.
-  * **Binding:** The supplied arguments are bound to the parameters of the *original* function.
-  * **Result:** Returns a **New Function** expecting the *remaining* arguments. It does **not** execute the body.
+  * **Referencing (No Call):** The **Only Way** to pass a subroutine or function without executing it is to wrap it in Angle Brackets `<...>`.
+      * `foo` $\rightarrow$ Executes.
+      * `<foo>` $\rightarrow$ Pushes the Function Object onto the stack.
+  * **Partial Application (Currying):** Syntax sugar for creating a new closure.
+      * `<foo>(1)` $\rightarrow$ References `foo`, applies `1`, and returns a **New Function** (Closure) waiting for the remaining arguments. It does *not* execute.
 
 
 -----
