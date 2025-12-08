@@ -19,4 +19,6 @@ internal/grammar/rhumbparser_base_listener.go
 internal/grammar/rhumbparser_base_visitor.go
 internal/grammar/rhumbparser_listener.go
 internal/grammar/rhumbparser_visitor.go
+internal/grammar/**/*.interp
+internal/grammar/**/*.tokens
 internal/grammar/.antlr
