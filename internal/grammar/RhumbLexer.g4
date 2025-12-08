@@ -119,8 +119,16 @@ HookLabel
 Label
     : LabelStart ((LabelPart+ | LabelSymbol LabelPart+)* LabelPart)?
     ;
-Letter
-    : 'a' .. 'z' | 'A' .. 'Z'
+
+// Fragment: A Letter is any Unicode Letter, Number-Letter, or Symbol (Emoji).
+// We use Unicode Properties (\p) which are mutually exclusive, preventing
+// the "used multiple times" error.
+fragment Letter
+    : [\p{L}]        // Unicode Letters (Latin, Greek, Cyrillic, CJK, etc.)
+    | [\p{Mn}]       // Nonspacing Marks (Diacritics & emoji-forcing variation selector-16)
+    | [\p{Nl}]       // Number Letters (e.g. Roman Numerals)
+    | [\p{So}]       // Symbol Other (Includes most Emojis 🚀, 🧮, 🐚)
+    | [\u200D]       // Zero-Width Joiner (Essential for complex Emojis)
     ;
 fragment LabelStart  : Star | '_' | Letter ;
 fragment LabelPart   : LabelStart | '-' | '.' | Zero | Digit ;

@@ -62,7 +62,7 @@ fieldLiteral
 
 expression
     : OpenBracket fields? CloseBracket # map
-    | OpenCurly (Label Pipe)? text Pipe Version CloseCurly # library
+    | OpenCurly libraryResolver Pipe libraryPath+ Pipe (Version | Dash) CloseCurly # library
     | OpenAnglet Dollar CloseAnglet # childRealm      // <$>
     | OpenAnglet Pipe CloseAnglet   # detachedRealm   // <|>
     | OpenCurly patterns? CloseCurly # selector
@@ -85,6 +85,25 @@ expression
     | literal # simpleExpression
     ;
 
+libraryResolver
+    : Bang
+    | Dash
+    | Label
+    ;
+
+libraryPath
+    : libraryPathComponent+
+    ;
+
+libraryPathComponent
+    : Label
+    | FSlash
+    | BSlash
+    | Dot
+    | Dash
+    | NumberPart
+    | HookLabel
+    ;
 
 chainExpression
     : fieldLiteral
