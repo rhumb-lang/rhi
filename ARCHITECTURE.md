@@ -173,20 +173,60 @@ Resolves concurrency events and state.
 
 ## 4\. Storage & Source (The "Babel" Layer)
 
-Rhumb uses a **Semantic Storage** model. Source code is never plain text.
+Rhumb decouples the **Logic** (Structure) from the **Language** (Presentation). To support this in a file-system friendly way, we use a multi-artifact strategy.
 
-### 4.1 The "Twin-File" Persistence
+### 4.1 Script Mode (`.rh`)
 
-To support Git merging and Localization, every module consists of:
+For quick scripts, prototypes, or files written outside the IDE.
 
-1.  **Logic Node (`.rnode`):** Contains the AST using immutable IDs.
-      * **Logic:** Canonical OpCodes e.g., `@OP_ADD`.
-      * **Values:** Booleans are stored as `1` or `0`.
-2.  **Translation Map (`.rlabel`):** Maps IDs and Values to human-readable strings.
-      * **Localization:** Supports full matrix (Afrikaans `ja` to Zulu `yebo`).
-      * `en-US`: `$x9A` -\> "velocity", `1` -\> "yes"
+  * **Filename:** `script.rh`
+  * **Content:** Standard text source code.
+  * **Language:** Unspecified by filename.
+  * **Metadata:** Users can optionally declare the language using a special comment directive.
+    ```rhumb
+    % meta: language=en_US
+    print("Hello")
+    ```
 
-### 4.2 Dependency Resolution
+### 4.2 Project Mode (The Artifact System)
+
+In a full project (managed by the IDE or Compiler Tooling), source code is split into **Generated Artifacts** and **Translation Maps**. This allows code repositories to be browsable in any language (GitHub friendly).
+
+#### A. Localized Source Artifacts (`.<lang>.rh`)
+
+These files contain the executable logic, rendered in a specific human language.
+
+  * **Format:** `filename.<lang_code>.rh` (e.g., `game.en_US.rh`, `game.ja_JP.rh`).
+  * **Content:** Valid Rhumb source code using localized identifiers.
+      * `game.en_US.rh`: `velocity .= distance // time`
+      * `game.fr_FR.rh`: `vitesse .= distance // temps`
+  * **Role:** These are **generated** by the IDE when saving. They serve as the "Read-Only View" for web browsers and external tools.
+
+#### B. Raw ID Source (`.__.rh`)
+
+This is the canonical "Logic Node" representation on disk.
+
+  * **Format:** `filename.__.rh` (Double underscore indicates "No Language").
+  * **Content:** Valid Rhumb source code using **Raw IDs** (`$SSID` or `$GUID`) instead of names.
+      * `game.__.rh`: `$x9A .= $d1B // $t4C`
+  * **Role:** This ensures referential integrity during refactors.
+
+#### C. Translation Map (`.yaml`)
+
+This file stores the mapping between Raw IDs and Human Languages.
+
+  * **Format:** `filename.yaml`
+  * **Content:** A standard YAML configuration map.
+    ```yaml
+    $x9A:
+      en_US: velocity
+      fr_FR: vitesse
+    $d1B:
+      en_US: distance
+      fr_FR: distance
+    ```
+
+### 4.3 Dependency Resolution
 
 External dependencies use a **Resolver Protocol** in the file header.
 
