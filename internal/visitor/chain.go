@@ -89,16 +89,25 @@ func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) i
 			i++ // Consume [
 			if i >= len(children) { break }
 			
-			if exprsCtx, ok := children[i].(*grammar.ExpressionsContext); ok {
-				// Index: [ expr ]
-				idxExprs := b.Visit(exprsCtx).([]ast.Expression)
-				if len(idxExprs) > 0 {
-					currentExpr = &ast.BinaryExpression{Left: currentExpr, Op: ast.OpIndex, Right: idxExprs[0]}
+			// Skip terminators
+			for {
+				if _, ok := children[i].(grammar.ITerminatorContext); ok {
+					i++
+					if i >= len(children) { break }
+				} else {
+					break
 				}
-				i++ // Consume expressions
+			}
+			if i >= len(children) { break }
+
+			if exprCtx, ok := children[i].(grammar.IExpressionContext); ok {
+				// Index: [ expr ]
+				idxExpr := toExpr(b.Visit(exprCtx.(antlr.ParseTree)))
+				currentExpr = &ast.BinaryExpression{Left: currentExpr, Op: ast.OpIndex, Right: idxExpr}
+				i++ // Consume expression
 			} else if accessOpCtx, ok := children[i].(grammar.IAccessOpContext); ok {
 				// Postfix: [ # ]
-			op := b.Visit(accessOpCtx).(ast.OpType)
+				op := b.Visit(accessOpCtx).(ast.OpType)
 				// Represent Postfix as Binary(Expr, Op, Nil) per convention established in builder
 				currentExpr = &ast.BinaryExpression{Left: currentExpr, Op: op, Right: nil}
 				i++ // Consume Op

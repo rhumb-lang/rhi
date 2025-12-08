@@ -288,20 +288,20 @@ func (vm *VM) opCall() error {
 		return fmt.Errorf("arity mismatch: expected %d, got %d", closure.Fn.Arity, argCount)
 	}
 
-	if vm.FrameCount >= MaxFrames {
-		return fmt.Errorf("stack overflow")
-	}
-
-	vm.Frames[vm.FrameCount] = CallFrame{
+	// Cactus Stack: Allocate new frame on heap
+	newFrame := &CallFrame{
+		Parent:  vm.CurrentFrame,
 		Closure: closure,
 		IP:      0,
 		Base:    vm.SP - argCount,
 	}
+
+	vm.CurrentFrame = newFrame
+	
 	// Debug Arg0
 	if argCount > 0 {
 		fmt.Printf("CALL Arg0=%v\n", vm.Stack[vm.SP-argCount])
 	}
-	vm.FrameCount++
 	return nil
 }
 
@@ -309,8 +309,9 @@ func (vm *VM) opReturn() (int, error) {
 	result := vm.pop()
 	frame := vm.currentFrame() // Frame returning FROM
 
-	vm.FrameCount--
-	if vm.FrameCount == 0 {
+	vm.CurrentFrame = frame.Parent // Pop frame
+	
+	if vm.CurrentFrame == nil {
 		vm.pop()      // Pop Main Script Closure
 		return 1, nil // Done
 	}

@@ -7,11 +7,10 @@ import (
 )
 
 const StackMax = 2048
-const MaxFrames = 64
+const MaxFrames = 64 // Kept for legacy limits if needed, but not used for storage
 
 type VM struct {
-	Frames [MaxFrames]CallFrame
-	FrameCount int
+	CurrentFrame *CallFrame
 	
 	Stack [StackMax]mapval.Value
 	SP    int // Stack Pointer (points to empty slot)
@@ -29,12 +28,12 @@ const (
 func NewVM() *VM {
 	return &VM{
 		SP: 0,
-		FrameCount: 0,
+		CurrentFrame: nil,
 	}
 }
 
 func (vm *VM) currentFrame() *CallFrame {
-	return &vm.Frames[vm.FrameCount-1]
+	return vm.CurrentFrame
 }
 
 // Interpret executes the chunk.
@@ -45,22 +44,22 @@ func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
 	}
 	closure := &mapval.Closure{Fn: fn}
 	
-	vm.Frames[0] = CallFrame{
+	vm.CurrentFrame = &CallFrame{
 		Closure: closure,
 		IP:      0,
 		Base:    0,
+		Parent:  nil,
 	}
-	vm.FrameCount = 1
 	
 	return vm.run()
 }
 
 // Continue resumes execution from the given offset in the script frame.
 func (vm *VM) Continue(offset int) (Result, error) {
-	if vm.FrameCount == 0 {
+	if vm.CurrentFrame == nil {
 		return RuntimeError, fmt.Errorf("no active frame to continue")
 	}
-	vm.Frames[0].IP = offset
+	vm.CurrentFrame.IP = offset
 	return vm.run()
 }
 
