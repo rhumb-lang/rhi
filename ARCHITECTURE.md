@@ -984,7 +984,7 @@ In Rhumb, the standard library is not a global namespace but a set of
 resolver.
 
 ```rhumb
-math := {!|🧮|-}
+math := {!|🧮|-} % each standard library has an emoji identifier
 area .= c ** math\π
 ```
 
