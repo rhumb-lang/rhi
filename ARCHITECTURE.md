@@ -1,8 +1,11 @@
 # ARCHITECTURE.md
 
 **Project:** Rhumb Programming Language
+
 **Architecture:** Image-Based, Prototype-Oriented, Reactive Tuplespace
+
 **Host Implementation:** Go (Golang)
+
 **UI Strategy:** Wayland-Native (Gio/OpenGL), Stacked Window Manager
 
 -----
