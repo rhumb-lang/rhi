@@ -183,7 +183,7 @@ Rhumb adopts a unique nomenclature for its file artifacts to distinguish between
 | **Book** | **Module / Package**. A single file containing library code. Accesses its Shelf directly. | `.rh` | `.rhb` |
 | **Shelf** | **Folder**. A directory containing Books. No metadata attached. | N/A | N/A |
 | **Library** | **External Package**. A collection of Shelves/Books brought in from outside. | N/A | N/A |
-| **Catalog** | **Metadata**. Defines Library properties. | `.rhy` | '.rh.yaml' |
+| **Catalog** | **Metadata**. Defines Library properties. | `.rhy` | `.rh.yaml` |
 
 ### 4.2 Shelf Organization
 
