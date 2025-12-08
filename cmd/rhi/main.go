@@ -24,6 +24,7 @@ var (
 	traceStack    = flag.Bool("trace-stack", false, "Enable stack tracing")
 	traceSpace    = flag.Bool("trace-space", false, "Enable space/concurrency tracing")
 	lastValue     = flag.Bool("last-value", false, "Print the last value of the execution")
+	testMode      = flag.Bool("test", false, "Run in test mode (check assertions)")
 )
 
 type Session struct {
@@ -129,7 +130,7 @@ func (s *Session) execute(input string) {
 	}
 
 	// 2. Build AST
-	builder := visitor.NewASTBuilder()
+	builder := visitor.NewASTBuilder(stream, *testMode)
 	astNode := builder.Visit(tree)
 	if astNode == nil {
 		return

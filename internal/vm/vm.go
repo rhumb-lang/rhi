@@ -193,6 +193,9 @@ func (vm *VM) run() (Result, error) {
 		case mapval.OP_LT:         err = vm.opLt()
 		case mapval.OP_GTE:        err = vm.opGte()
 		case mapval.OP_LTE:        err = vm.opLte()
+
+		// Testing
+		case mapval.OP_ASSERT_EQ:  vm.opAssertEq()
 		
 default:
 			return RuntimeError, fmt.Errorf("unknown opcode: %d", instruction)

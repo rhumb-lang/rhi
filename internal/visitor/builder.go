@@ -12,11 +12,15 @@ import (
 // ASTBuilder converts the ANTLR parse tree into our internal AST.
 type ASTBuilder struct {
 	*grammar.BaseRhumbParserVisitor
+	TokenStream *antlr.CommonTokenStream
+	IsTestMode  bool
 }
 
-func NewASTBuilder() *ASTBuilder {
+func NewASTBuilder(stream *antlr.CommonTokenStream, isTestMode bool) *ASTBuilder {
 	return &ASTBuilder{
 		BaseRhumbParserVisitor: &grammar.BaseRhumbParserVisitor{},
+		TokenStream:            stream,
+		IsTestMode:             isTestMode,
 	}
 }
 
@@ -47,6 +51,19 @@ func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface
 	for _, e := range ctx.AllExpression() {
 		res := b.Visit(e)
 		if expr, ok := res.(ast.Expression); ok {
+			// Check for assertion (Test Mode)
+			if b.IsTestMode {
+				if prc, ok := e.(antlr.ParserRuleContext); ok {
+					expectedStr, found := b.getAssertion(prc)
+					if found {
+						expectedExpr := b.parseFragment(expectedStr)
+						expr = &ast.AssertionWrapper{
+							Actual:   expr,
+							Expected: expectedExpr,
+						}
+					}
+				}
+			}
 			exprs = append(exprs, expr)
 		}
 	}
@@ -57,8 +74,42 @@ func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface
 // This is the main dispatcher for all expression types.
 func (b *ASTBuilder) VisitExpression(ctx *grammar.ExpressionContext) interface{} {
 	// Delegate to the specific visitor method via Accept.
-	// The concrete context type (e.g. SimpleExpressionContext) will call the correct method.
 	return ctx.Accept(b)
+}
+
+func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
+	stop := ctx.GetStop()
+	if stop == nil {
+		return "", false
+	}
+	stopIndex := stop.GetTokenIndex()
+	hiddenTokens := b.TokenStream.GetHiddenTokensToRight(stopIndex, antlr.TokenHiddenChannel)
+
+	for _, t := range hiddenTokens {
+		text := t.GetText()
+		if strings.HasPrefix(text, "%=") {
+			return strings.TrimSpace(strings.TrimPrefix(text, "%=")), true
+		}
+	}
+	return "", false
+}
+
+func (b *ASTBuilder) parseFragment(code string) ast.Expression {
+	is := antlr.NewInputStream(code)
+	lexer := grammar.NewRhumbLexer(is)
+	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	parser := grammar.NewRhumbParser(stream)
+
+	tree := parser.Expression()
+
+	childBuilder := NewASTBuilder(stream, false)
+	res := childBuilder.Visit(tree)
+
+	if expr, ok := res.(ast.Expression); ok {
+		return expr
+	}
+	// Fallback to empty if parse failed or returned something else
+	return &ast.EmptyLiteral{}
 }
 
 // --- Specific Labeled Alternative Visitors ---

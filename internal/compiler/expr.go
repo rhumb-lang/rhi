@@ -45,6 +45,19 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		return c.compileChain(e)
 	case *ast.SelectorExpression:
 		return c.compileSelector(e)
+	case *ast.AssertionWrapper:
+		// Compile Actual
+		if err := c.compileExpression(e.Actual); err != nil {
+			return err
+		}
+		// Dup Actual so the program continues with the value
+		c.emit(mapval.OP_DUP)
+		// Compile Expected
+		if err := c.compileExpression(e.Expected); err != nil {
+			return err
+		}
+		// Assert (Pops Expected, Actual)
+		c.emit(mapval.OP_ASSERT_EQ)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}

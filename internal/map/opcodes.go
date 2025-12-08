@@ -113,6 +113,9 @@ const (
 	OP_BOOL_NEG
 	OP_SPREAD
 	OP_COERCE_KEY
+	
+	// Testing
+	OP_ASSERT_EQ
 )
 
 func (op OpCode) String() string {
@@ -198,6 +201,7 @@ func (op OpCode) String() string {
 	case OP_BOOL_NEG: return "OP_BOOL_NEG"
 	case OP_SPREAD: return "OP_SPREAD"
 	case OP_COERCE_KEY: return "OP_COERCE_KEY"
+	case OP_ASSERT_EQ: return "OP_ASSERT_EQ"
 	default: return fmt.Sprintf("OP_UNKNOWN(%d)", op)
 	}
 }

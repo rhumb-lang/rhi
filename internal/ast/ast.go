@@ -39,3 +39,13 @@ func (d *Document) String() string {
 	return sb.String()
 }
 
+// AssertionWrapper wraps an expression that has an attached test assertion.
+type AssertionWrapper struct {
+	Actual   Expression
+	Expected Expression
+}
+
+func (a *AssertionWrapper) expressionNode() {}
+func (a *AssertionWrapper) String() string {
+	return a.Actual.String() + " \"%=\" " + a.Expected.String()
+}
