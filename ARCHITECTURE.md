@@ -30,45 +30,76 @@ The codebase follows a "Small File" philosophy with strict separation between Ru
 ├── go.mod                # Dependencies
 ├── Makefile              # Build scripts (ANTLR, Tests)
 ├── /cmd
-│   ├── /rhi              # Rhumb Interpreter - CLI Runner / REPL
-│   └── /rhide            # Rhumb IDE - Graphical Environment (Wayland)
-├── /api                  # Bridge interfaces between UI and VM
+│   └── /rhi              # Rhumb Interpreter - CLI Runner / REPL
 ├── /internal             # Core Logic (Private)
-│   ├── /grammar          # ANTLR .g4 source & generated Go files
 │   ├── /ast              # Abstract Syntax Tree definitions
+│   ├── /cli              # CLI Entrypoint Helpers
+│   ├── /color            # Terminal Output Styling
 │   ├── /compiler         # Source -> Bytecode transformation
-│   ├── /visitor          # ANTLR Visitor Implementation (Bytecode Gen)
-│   ├── /map              # Universal Legend & Primitives
-│   ├── /vm               # Bytecode Interpreter
-│   ├── /space            # Concurrency & Tuplespace
-│   └── /storage          # Twin-File IO (.rnode/.rlabel)
-├── /ui                   # Desktop Environment Logic
-│   ├── /wm               # Window Manager (Stacking/Tabs logic)
-│   ├── /views            # The "Apps" (Library, Book, Session)
-│   └── /editor           # Code Projection Engine
-└── /test                 # End-to-End Tests
-    ├── /vm_spec          # .rnode files for opcode verification
-    └── /scenarios        # Full system integration tests
+│   ├── /config           # Runtime Configuration (Flags/Env)
+│   ├── /grammar          # ANTLR .g4 source & generated Go files
+│   ├── /legacy           # Reference implementations (Pre-Architecture)
+│   ├── /map              # Data Model & Opcodes (formerly 'object')
+│   ├── /parser_util      # Syntax Error Formatting
+│   ├── /testing          # Test Harness Utilities
+│   ├── /visitor          # AST Builder (Parse Tree -> AST)
+│   └── /vm               # Bytecode Interpreter & Cactus Stack
+└── /tests                # Integration Scripts (*.rhs)
 ```
 
 ### 2.1 Core Logic Sub-Folders (`/internal`)
 
-  * **`/internal/grammar`**: Holds the ANTLR4 definitions.
-  * **`/internal/visitor`**: **The Code Generator.**
-      * `base_visitor.go`: Setup and common helpers.
-      * `visit_selector.go`: Generates `SELECT`, `JUMP`.
-      * `visit_lexical.go`: Generates `LOAD_LOC`, `STORE_LOC`.
-      * `visit_map.go`: Generates `SEND`, `SELF`, `DELEGATE`.
-      * `visit_space.go`: Generates `POST`, `SUBSCRIBE`, `NEW_REALM`.
-      * `visit_math.go`: Generates Native Intrinsics (`+/`, `//`, `>>`).
-      * `visit_proclamation.go`: Generates `WRITE` ($) logic.
-      * `visit_function.go`: Generates `MAKE_FN`, `BIND_FN`, `LET_FN`, `CURRY_FN`.
-  * **`/internal/map`**: Implements the "Universal Legend" and Primitives.
-  * **`/internal/vm`**: The Bytecode Interpreter.
-  * **`/internal/space`**: The Concurrency Model.
-  * **`/internal/storage`**: The "Twin-File" System.
+* **`/internal/grammar`**: Holds the ANTLR4 definitions.
+    * `Rhumb.g4`: The master grammar file.
+    * `generate.go` & `generate.sh`: Generation scripts.
+    * *(Generated files: `parser.go`, `lexer.go`, `tokens`, etc.)*
+
+* **`/internal/ast`**: Abstract Syntax Tree definitions.
+    * `ast.go`: Base Node interfaces and Document root.
+    * `literals.go`: Value nodes (Number, String, Key, Empty).
+    * `fields.go`: Map field definitions.
+    * `structures.go`: Complex structures (Maps, Selectors, Realms).
+    * `operators.go`: Operator constants.
+
+* **`/internal/compiler`**: **The Bytecode Compiler.** Converts AST to Chunks.
+    * `compiler.go`: Main compiler driver.
+    * `hoister.go`: Lexical scope analysis and variable hoisting.
+    * `scope.go`: Symbol table management.
+    * `expr.go`, `binary.go`, `chain.go`: Expression compilation.
+    * `call.go`, `routine.go`: Function and call compilation.
+    * `selector.go`, `map.go`: Structure compilation.
+
+* **`/internal/visitor`**: **The AST Builder.** Converts Parse Tree (ANTLR) to AST.
+    * `builder.go`: Main visitor entry point.
+    * `chain.go`: "Fold Left" logic for chains (`a\b`, `realm#sig`).
+    * `fields.go`: Map field parsing.
+    * `ops.go`, `more_ops.go`: Operator parsing.
+
+* **`/internal/map`**: **The Data Model.** (Formerly `object`).
+    * `types.go`: Defines `Value`, `Object`, `Map`, `Legend`, `Function`, `Chunk`, `Upvalue`.
+    * `opcodes.go`: Definition of all Bytecode Instructions.
+    * `logic.go`: Boolean logic helpers.
+
+* **`/internal/vm`**: **The Runtime Engine.**
+    * `vm.go`: The main Fetch/Decode/Execute loop.
+    * `frame.go`: Cactus Stack Frame implementation.
+    * `primitives.go`: Native math and logic intrinsics.
+    * `map_ops.go`: Object/Map manipulation instructions.
+    * `space_ops.go`: Concurrency instructions (`POST`, `SUBSCRIBE`).
+    * `structure_ops.go`: Flow control and pattern matching.
+
+* **`/internal/config`**: Runtime configuration (Flags, Trace options).
+    * `config.go`: `Config` struct.
+
+* **`/internal/cli`**: Command-line interface logic.
+    * `cli.go`: Entry point helpers.
+
+* **`/internal/parser_util`**: Error handling utilities.
+    * `errors.go`: Custom syntax error formatting.
 
 ### 2.2 UI Sub-Folders (`/ui`)
+
+Coming soon!
 
   * **`/ui/wm` (Window Manager)**: Handles the "Physics" of the desktop.
   * **`/ui/views` (The Content)**: The actual tools (Library, Book, Tools, Session).
