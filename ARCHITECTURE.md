@@ -716,7 +716,28 @@ A pyramid approach to ensure language stability.
 
 ## 9\. Language Grammar & Symbols
 
-The final reserved symbol table for the parser.
+### Comments & Meta-Syntax
+
+Rhumb uses the percent sign (`%`) for comments and meta-annotations.
+
+| Symbol      | Name          | Syntax        | Semantics                                                                                                                                                                |
+|:------------|:--------------|:--------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`%`**     | Line Comment  | `% text`      | Ignored by Parser. Continues to end of line.                                                                                                                             |
+| **`%( %)`** | Block Comment | `%( text %)`  | Ignored by Parser. Can be nested.                                                                                                                                        |
+| **`%=`**    | Assertion     | `expr %= val` | **Meta-Operator.** Ignored by the Runtime (treated as a comment). Used by IDEs & Test Runners to assert that the expression on the left evals to the value on the right. |
+
+#### Implementation Note for `RhumbLexer.g4`
+
+To support this, the `LineComment` rule consumes everything after `%`, including the `=` in `%=`.
+
+```antlr
+// RhumbLexer.g4
+LineComment : '%' (~[\r\n] ~[\r\n]*)? -> channel(HIDDEN) ;
+```
+
+Since `%=` starts with `%`, the Lexer treats it as a comment and hides it from
+the Parser. An IDE, however, can scan the hidden channel tokens to find `%=` and
+run the assertions.
 
 ### General Symbols
 
