@@ -975,9 +975,29 @@ run the assertions.
 | **`\|\|`** | Pipe   | Flow   | `x \|\| y` | Functional Pipe  |
 | **`??`**   | Ques   | Flow   | `x ?? y`   | Default/Coalesce |
 
-## 10\. Standard Library
+## 10\. Proposed Standard Library
 
 Here's the current draft of our upcoming standard library.
+
+In Rhumb, the standard library is not a global namespace but a set of
+**Resolvable Artifacts**. To use them, you must import them using the `!`
+resolver.
+
+```rhumb
+math := {!|🧮|-}
+area .= c ** math\π
+```
+
+The emoji are not directly available in your project files because Rhumb doesn't
+bring anything extra into the global namespace without explicitly telling it to
+do so but you could choose to label them with emoji if you like:
+
+```rhumb
+🧮 := {!|🧮|-}
+area .= c ** 🧮\π
+```
+
+### 10.1 Standard Library Examples
 
 #### 🐚 Shell (UI & TTY)
 **Emoji:** Spiral Shell (`U+1F41A`)
