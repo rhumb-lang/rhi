@@ -22,6 +22,8 @@ var (
 	traceParser   = flag.Bool("trace-parser", false, "Enable parser tracing")
 	traceBytecode = flag.Bool("trace-bytecode", false, "Enable bytecode tracing")
 	traceStack    = flag.Bool("trace-stack", false, "Enable stack tracing")
+	traceSpace    = flag.Bool("trace-space", false, "Enable space/concurrency tracing")
+	lastValue     = flag.Bool("last-value", false, "Print the last value of the execution")
 )
 
 type Session struct {
@@ -52,11 +54,15 @@ func main() {
 	if !*traceStack && os.Getenv("RHI_TRACE_STACK") == "1" {
 		*traceStack = true
 	}
+	if !*traceSpace && os.Getenv("RHI_TRACE_SPACE") == "1" {
+		*traceSpace = true
+	}
 
 	cfg := &config.Config{
 		TraceParser:   *traceParser,
 		TraceBytecode: *traceBytecode,
 		TraceStack:    *traceStack,
+		TraceSpace:    *traceSpace,
 	}
 
 	args := flag.Args()
@@ -225,7 +231,7 @@ func (s *Session) execute(input string) {
 	}
 	
 	// 5. Print Result and Reset Stack (keep locals)
-	if s.IsRepl {
+	if s.IsRepl || *lastValue {
 		// If stack has values beyond locals, print top
 		numLocals := len(s.Compiler.Scope.Locals)
 		if s.VM.SP > numLocals {

@@ -5,6 +5,7 @@ type Config struct {
 	TraceParser   bool
 	TraceBytecode bool
 	TraceStack    bool
+	TraceSpace    bool
 }
 
 // DefaultConfig returns the default configuration.
@@ -13,5 +14,6 @@ func DefaultConfig() *Config {
 		TraceParser:   false,
 		TraceBytecode: false,
 		TraceStack:    false,
+		TraceSpace:    false,
 	}
 }

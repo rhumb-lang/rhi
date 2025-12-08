@@ -68,9 +68,6 @@ func (b *ASTBuilder) VisitPrefixSlurpSpread(ctx *grammar.PrefixSlurpSpreadContex
 }
 
 func (b *ASTBuilder) VisitAssignMutField(ctx *grammar.AssignMutFieldContext) interface{} {
-	// Debug
-	fmt.Printf("Visiting AssignMutField: %s\n", ctx.GetText())
-	
 	expr := ctx.Expression()
 	if expr == nil {
 		fmt.Println("Error: AssignMutField has nil expression context")

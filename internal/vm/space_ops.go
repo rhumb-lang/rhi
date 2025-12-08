@@ -13,7 +13,9 @@ func (vm *VM) opPost() error {
 		vm.pop() // Pop arg
 	}
 	vm.pop() // Pop receiver
-	fmt.Println("DEBUG: Signal Posted")
+	if vm.Config.TraceSpace {
+		fmt.Println("TRACE: Signal Posted")
+	}
 	vm.push(mapval.NewEmpty())
 	return nil
 }
@@ -26,7 +28,9 @@ func (vm *VM) opInject() error {
 		vm.pop() // Pop arg
 	}
 	vm.pop() // Pop receiver
-	fmt.Println("DEBUG: Reply Injected")
+	if vm.Config.TraceSpace {
+		fmt.Println("TRACE: Reply Injected")
+	}
 	vm.push(mapval.NewEmpty())
 	return nil
 }
@@ -39,7 +43,9 @@ func (vm *VM) opWrite() error {
 		vm.pop() // Pop arg
 	}
 	vm.pop() // Pop receiver
-	fmt.Println("DEBUG: Proclamation Written")
+	if vm.Config.TraceSpace {
+		fmt.Println("TRACE: Proclamation Written")
+	}
 	vm.push(mapval.NewEmpty())
 	return nil
 }
@@ -47,7 +53,9 @@ func (vm *VM) opWrite() error {
 func (vm *VM) opSubscribe() error {
 	// Stub
 	// Subscribe takes logic?
-	fmt.Println("DEBUG: Subscribed")
+	if vm.Config.TraceSpace {
+		fmt.Println("TRACE: Subscribed")
+	}
 	vm.push(mapval.NewEmpty())
 	return nil
 }
@@ -55,6 +63,8 @@ func (vm *VM) opSubscribe() error {
 func (vm *VM) opNewRealm() {
 	// Stub
 	// vm.push(Realm)
-	fmt.Println("DEBUG: New Realm")
+	if vm.Config.TraceSpace {
+		fmt.Println("TRACE: New Realm")
+	}
 	vm.push(mapval.NewEmpty())
 }

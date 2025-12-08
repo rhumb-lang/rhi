@@ -19,7 +19,6 @@ func (vm *VM) opLoadLoc() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
 	val := vm.Stack[frame.Base+int(idx)]
-	fmt.Printf("LOAD %d: %v\n", idx, val)
 	vm.push(val)
 }
 
@@ -27,7 +26,6 @@ func (vm *VM) opStoreLoc() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
 	val := vm.peek(0)
-	fmt.Printf("STORE %d: %v\n", idx, val)
 	vm.Stack[frame.Base+int(idx)] = val
 }
 
@@ -298,10 +296,6 @@ func (vm *VM) opCall() error {
 
 	vm.CurrentFrame = newFrame
 	
-	// Debug Arg0
-	if argCount > 0 {
-		fmt.Printf("CALL Arg0=%v\n", vm.Stack[vm.SP-argCount])
-	}
 	return nil
 }
 
