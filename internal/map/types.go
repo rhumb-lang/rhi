@@ -15,6 +15,8 @@ const (
 	ValBoolean           // Packed in Integer
 	ValDate              // Packed in Integer
 	ValRange             // Range Object
+	ValVersion           // Packed SemVer
+	ValKey               // Interned Global ID
 )
 
 type Value struct {
@@ -205,4 +207,15 @@ func NewBoolean(b bool) Value {
 
 func NewFunction(f *Function) Value {
 	return Value{Type: ValObject, Obj: f}
+}
+
+func NewVersion(major, minor uint16, patch uint32) Value {
+	encoded := int64(major) << 48
+	encoded |= int64(minor) << 32
+	encoded |= int64(patch)
+	return Value{Type: ValVersion, Integer: encoded}
+}
+
+func NewKey(id int64) Value {
+	return Value{Type: ValKey, Integer: id}
 }

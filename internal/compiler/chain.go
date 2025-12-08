@@ -32,18 +32,21 @@ func (c *Compiler) compileChain(chain *ast.ChainExpression) error {
 			idx := c.makeConstant(mapval.NewText(step.Ident))
 			c.emit(mapval.OP_POST)
 			c.Chunk().WriteByte(byte(idx), 0)
+			c.Chunk().WriteByte(0, 0) // Arg count 0
 			
 		case ast.ChainReply:
 			// ^identifier -> OP_INJECT identifier
 			idx := c.makeConstant(mapval.NewText(step.Ident))
 			c.emit(mapval.OP_INJECT)
 			c.Chunk().WriteByte(byte(idx), 0)
+			c.Chunk().WriteByte(0, 0) // Arg count 0
 			
 		case ast.ChainProclamation:
 			// $identifier -> OP_WRITE identifier
 			idx := c.makeConstant(mapval.NewText(step.Ident))
 			c.emit(mapval.OP_WRITE)
 			c.Chunk().WriteByte(byte(idx), 0)
+			c.Chunk().WriteByte(0, 0) // Arg count 0
 			
 		default:
 			return fmt.Errorf("unsupported chain op: %v", step.Op)

@@ -8,7 +8,11 @@ import (
 func (vm *VM) opPost() error {
 	// Stub
 	vm.readByte() // Consume index
-	vm.pop()      // Pop receiver
+	argc := int(vm.readByte())
+	for i := 0; i < argc; i++ {
+		vm.pop() // Pop arg
+	}
+	vm.pop() // Pop receiver
 	fmt.Println("DEBUG: Signal Posted")
 	vm.push(mapval.NewEmpty())
 	return nil
@@ -17,7 +21,11 @@ func (vm *VM) opPost() error {
 func (vm *VM) opInject() error {
 	// Stub
 	vm.readByte() // Consume index
-	vm.pop()      // Pop receiver
+	argc := int(vm.readByte())
+	for i := 0; i < argc; i++ {
+		vm.pop() // Pop arg
+	}
+	vm.pop() // Pop receiver
 	fmt.Println("DEBUG: Reply Injected")
 	vm.push(mapval.NewEmpty())
 	return nil
@@ -26,7 +34,11 @@ func (vm *VM) opInject() error {
 func (vm *VM) opWrite() error {
 	// Stub
 	vm.readByte() // Consume index
-	vm.pop()      // Pop receiver
+	argc := int(vm.readByte())
+	for i := 0; i < argc; i++ {
+		vm.pop() // Pop arg
+	}
+	vm.pop() // Pop receiver
 	fmt.Println("DEBUG: Proclamation Written")
 	vm.push(mapval.NewEmpty())
 	return nil
