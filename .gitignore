@@ -4,6 +4,7 @@ __debug_bin*.exe
 rhi
 
 # Generated ANTLR files
+*.java
 internal/grammar/rhumb_lexer.go
 internal/grammar/rhumb_parser.go
 internal/grammar/rhumbparser_base_listener.go
