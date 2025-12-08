@@ -1,0 +1,13 @@
+% FizzBuzz Logic Test
+
+% Case 1: Divisible by 15
+15 { _ -/ 15 == 0 .. 'FizzBuzz'; _ } %= 'FizzBuzz'
+
+% Case 2: Divisible by 5
+5 { _ -/ 15 == 0 .. 'FizzBuzz'; _ -/ 5 == 0 .. 'Buzz'; _ } %= 'Buzz'
+
+% Case 3: Divisible by 3
+3 { _ -/ 15 == 0 .. 'FizzBuzz'; _ -/ 5 == 0 .. 'Buzz'; _ -/ 3 == 0 .. 'Fizz'; _ } %= 'Fizz'
+
+% Case 4: Fallback
+1 { _ -/ 15 == 0 .. 'FizzBuzz'; _ -/ 5 == 0 .. 'Buzz'; _ -/ 3 == 0 .. 'Fizz'; n .. n } %= 1

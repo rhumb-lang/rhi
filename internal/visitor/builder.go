@@ -100,6 +100,17 @@ func (b *ASTBuilder) VisitSelector(ctx *grammar.SelectorContext) interface{} {
 	return sel
 }
 
+func (b *ASTBuilder) VisitPatterns(ctx *grammar.PatternsContext) interface{} {
+	var pats []ast.Pattern
+	for _, p := range ctx.AllPattern() {
+		res := b.Visit(p)
+		if pat, ok := res.(ast.Pattern); ok {
+			pats = append(pats, pat)
+		}
+	}
+	return pats
+}
+
 func (b *ASTBuilder) VisitChildRealm(ctx *grammar.ChildRealmContext) interface{} {
 	return &ast.ChildRealmLiteral{}
 }
