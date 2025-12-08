@@ -182,9 +182,9 @@ For quick scripts, prototypes, or files written outside the IDE.
   * **Filename:** `script.rh`
   * **Content:** Standard text source code.
   * **Language:** Unspecified by filename.
-  * **Metadata:** Users can optionally declare the language using a special comment directive.
+  * **Shebang:** Users can optionally declare the language using the shebang and a command line flag
     ```rhumb
-    % meta: language=en_US
+    %! /bin/rhi -lang en_US
     print("Hello")
     ```
 
