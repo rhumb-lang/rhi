@@ -238,7 +238,7 @@ External dependencies use a **Resolver Protocol** in the file header.
 
 ## 5\. The Map Model (Self-Style)
 
-Rhumb uses a high-performance **Prototype** system.
+Rhumb uses a high-performance **Prototype** system inspired by the [Self programming language](https://selflanguage.org).
 
 ### 5.1 Terminology
 
