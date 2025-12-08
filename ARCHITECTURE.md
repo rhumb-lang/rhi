@@ -124,11 +124,16 @@ Resolves concurrency events and state.
       * Check each Zombie Frame for a `TRAP_REPLY` matching the signal name.
 5.  **Inject:** If a match is found, transfer execution control *back* into that Zombie Frame at the handler offset.
 
-#### Algorithm: Proclamation (`$`) - Pin & Notify
+#### Algorithm: Proclamation (`$`) - Pin, Notify & Retract
 
-1.  **Write:** Pin directly to Local Space storage.
-2.  **Notify:** Check Local Listeners (`<>`). If any match the new state, spawn a handler immediately.
-3.  **Persist:** Remains until explicit removal.
+1.  **Check Value:**
+    * **If Value is Present:** Write/Update the tuple in Local Space storage.
+    * **If Value is `___` (Empty):** **Remove** the tuple from Local Space storage (Retraction).
+2.  **Notify:** Check Local Listeners (`<>`).
+    * **On Update:** If the new value matches a pattern, spawn a handler immediately.
+    * **On Retraction:** If the tuple was removed, inject the **`$empty`** signal into all active threads subscribed to that topic.
+3.  **Persist:** The state (or absence thereof) persists until the next Proclamation.
+
 
 -----
 
@@ -234,6 +239,15 @@ The concept of `nil` or `null` is represented by **`___` (Triple Underscore)**.
   * **Behavior:** Represents the absence of a value.
   * **Semantics:** Any label not yet defined is considered `empty` (`___`) by default.
   * **Logic:** `___` is falsy in boolean expressions.
+  * **Retraction:** Assigning `___` to a Proclamation (`realm$state(___)`) removes the state from the Tuplespace.
+
+#### Summary of the Retraction Mechanism
+* **User Action:** `realm$topic(___)`
+* **VM Action:**
+    1.  Deletes the `$topic` tuple from `realm.Storage`.
+    2.  Finds all threads subscribed to `$topic`.
+    3.  Sends `$empty` signal to those threads.
+* **Thread Action:** Executes `empty .. log("Deleted")` block and terminates.
 
 ### 5.5 Privacy & Encapsulation
 
@@ -342,12 +356,13 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 #### Space & Concurrency
 All Space operations consume their operands and **must push a result** to maintain stack integrity.
 
-| Operator      | Syntax | Native Opcode  | Semantics                  | Stack Return  |
-|:--------------|:-------|:---------------|:---------------------------|:--------------|
-| **Signal**    | `#`    | `OP_POST`      | Emit Event (Bubble Up)     | `___` (Empty) |
-| **Reply**     | `^`    | `OP_INJECT`    | Inject Event (Drill Down)  | `___` (Empty) |
-| **Proclaim**  | `$`    | `OP_WRITE`     | Set State (Persistent)     | `___` (Empty) |
-| **Subscribe** | `<>`   | `OP_SUBSCRIBE` | Register Reactive Listener | `___` (Empty) |
+| Operator      | Syntax | Native Opcode  | Semantics                       | Stack Return               |
+|:--------------|:-------|:---------------|:--------------------------------|:---------------------------|
+| **Signal**    | `#`    | `OP_POST`      | Emit & Suspend. Wait for Reply. | **Reply Value** (or `___`) |
+| **Reply**     | `^`    | `OP_INJECT`    | Resume Zombie Frame with Value. | `___` (Empty)              |
+| **Proclaim**  | `$`    | `OP_WRITE`     | Set State & Notify.             | `___` (Empty)              |
+| **Subscribe** | `<>`   | `OP_SUBSCRIBE` | Register Listener.              | `___` (Empty)              |
+
 
 #### Field Operators (Postfix `[]`)
 
@@ -534,14 +549,13 @@ Rhumb replaces the traditional Call Stack with a **Hierarchical Tuplespace** bas
 
 ### 7.2 Operator Taxonomy
 
-The syntax distinguishes between ephemeral events and persistent state to prevent race conditions. **All operators evaluate to ___ (Empty).**
+The syntax distinguishes between ephemeral events and persistent state to prevent race conditions.
 
-| Feature          | Symbol   | Type  | Direction        | Semantics                                                                                                               |
-|:-----------------|:---------|:------|:-----------------|:------------------------------------------------------------------------------------------------------------------------|
-| **Signal**       | **`#`**  | Event | **Up** (Bubble)  | **Ephemeral.** "I am emitting this event now." Travels from Child $\to$ Parent. If not caught immediately, it vanishes. |
-| **Reply**        | **`^`**  | Event | **Down** (Drill) | **Ephemeral.** "I am replying to this specific context." Travels from Parent $\to$ Zombie Frame.                        |
-| **Proclamation** | **`$`**  | State | **Static** (Pin) | **Persistent.** "I am AT this state." Sticks to the Local Space until explicitly removed.                               |
-| **Subscription** | **`<>`** | Logic | **N/A**          | **Reactive.** "Watch this Space." Spawns a handler when a matching Tuple appears.                                       |
+| Feature          | Symbol  | Type  | Direction        | Semantics                                                                                                       |
+|:-----------------|:--------|:------|:-----------------|:----------------------------------------------------------------------------------------------------------------|
+| **Signal**       | **`#`** | Event | **Up** (Bubble)  | **Request.** Pauses execution. Bubbles up. Resumes with result of `^Reply` (or `___` if unhandled).             |
+| **Reply**        | **`^`** | Event | **Down** (Drill) | **Response.** Targets a paused Zombie Frame. Injects a payload and resumes that frame.                          |
+| **Proclamation** | **`$`** | State | **Static** (Pin) | **Persistent.** Sticks to the Local Space. To **Retract** (delete), assert the Empty Value: `realm$state(___)`. |
 
 ### 7.3 Realm Syntax & Lifecycle
 
@@ -561,10 +575,10 @@ Realms are reified Spaces that can be assigned to variables.
 
 To prevent memory leaks in long-running servers, Signals (`#`) are active agents of transport.
 
-1.  **Post:** Instruction `POST #sig` is executed.
-2.  **Check:** VM checks the **Current Space's** active listeners (`<>`).
-3.  **Deliver:** If a listener matches, the Signal is handed off, and propagation stops.
-4.  **Ascend:** If no listener matches, the Signal immediately moves to `Space.Parent`.
+1.  **Post & Pause:** Instruction `POST` suspends the `CurrentFrame` (marking it Zombie).
+2.  **Bubble:** The signal bubbles up looking for a listener.
+3.  **Outcome A (Replied):** A listener traps it and executes `INJECT ^val`. The Zombie resumes with `val` on the stack.
+4.  **Outcome B (Unhandled):** The signal hits `World`. The Zombie resumes with `___` on the stack.
 5.  **Garbage Collection:** If the Signal reaches `World` (Root) and is still uncaught, it is **discarded**. This ensures that "fire-and-forget" events do not accumulate in memory.
 
 ### 7.5 The "Zombie Walk" Algorithm (Reply Injection)
@@ -581,11 +595,17 @@ Replies (`^`) allow a helper process to inject data back into a paused requestor
 
 The syntax `realm <> [ pattern ] -> { body }` acts as a generic lifecycle manager.
 
-  * **Initialization:** The `SUBSCRIBE` opcode registers a daemon on the target Space.
-  * **Arrival (Spawn):** When a Tuple (Signal/Proclamation) matches `pattern`, a new Green Thread is spawned.
-      * **Implicit Pinning:** Variables defined in `pattern` (e.g., `who`) act as **Filters**. The thread only wakes for tuples matching that specific value.
-  * **Departure (Teardown):** If a Proclamation is retracted (removed), the VM injects a special `$empty` signal into the thread.
-      * The user handles this via `empty .. log("Left")`.
+  * **Initialization:** The `SUBSCRIBE` opcode registers a daemon on the target
+    Space.
+  * **Arrival (Spawn):** When a Tuple (Signal/Proclamation) matches `pattern`, a
+    new Green Thread is spawned.
+      * **Implicit Pinning:** Variables defined in `pattern` (e.g., `who`) act
+        as **Filters**. The thread only wakes for tuples matching that specific
+        value.
+  * **Departure (Teardown):** When a Proclamation is updated to **`___`
+    (Empty)**, it is considered **Retracted**. The VM removes the tuple from
+    storage and injects a special `$empty` signal into any active subscriber
+    threads to trigger their cleanup handlers.
 
 ### 7.7 Vassals (Facets & Attenuation)
 
