@@ -501,11 +501,9 @@ When attached to a function call (e.g., `func() { ... }`), the selector becomes 
   * **Proclamations (`$`):** Can react to state changes within the function's local space. If the function executes `$status("working")`, the attached selector can match `$status(s) .. log(s)`.
 
 
-To implement the **Zombie Frame** behavior required for your Reply (`^`) system, Rhumb cannot use a standard linear stack (like C or Java). It must use a **Cactus Stack** (also known as a Spaghetti Stack or Parent-Pointer Tree).
+To implement the **Zombie Frame** behavior required for the Reply (`^`) system, Rhumb cannot use a standard linear stack (like C or Java). It must use a **Cactus Stack** (also known as a Spaghetti Stack or Parent-Pointer Tree).
 
-This structure allows execution branches to fork, pause, and persist independently, which is the foundation of your concurrency model.
-
-Here is the detailed **Section 6.4** to add to your `ARCHITECTURE.md`.
+This structure allows execution branches to fork, pause, and persist independently, which is the foundation of the concurrency model.
 
 -----
 
