@@ -44,7 +44,7 @@ The codebase follows a "Small File" philosophy with strict separation between Ru
 │   ├── /testing          # Test Harness Utilities
 │   ├── /visitor          # AST Builder (Parse Tree -> AST)
 │   └── /vm               # Bytecode Interpreter & Cactus Stack
-└── /tests                # Integration Scripts (*.rhs)
+└── /tests                # Integration Scripts (*.rh)
 ```
 
 ### 2.1 Core Logic Sub-Folders (`/internal`)
@@ -851,7 +851,7 @@ need to prove it is deadlock-free.
 A language-agnostic test suite defined in `.__.rh` files, similar to `test262`
 for JavaScript.
 * **Structure:** A folder of thousands of tiny files, each testing one edge case
-  (e.g., `math-div-zero.__.rhs`, `realm-retract-empty.__.rh`).
+  (e.g., `math-div-zero.__.rh`, `realm-retract-empty.__.rh`).
 * **Metadata:** Each file contains a header defining the expected result or
   expected error code.
 * **Role:** This allows future alternative VMs (e.g., a Rust or C++
