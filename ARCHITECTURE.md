@@ -452,12 +452,52 @@ When attached to a function call (e.g., `func() { ... }`), the selector becomes 
   * **Proclamations (`$`):** Can react to state changes within the function's local space. If the function executes `$status("working")`, the attached selector can match `$status(s) .. log(s)`.
 
 
-### 6.4 Zombie Frames
+To implement the **Zombie Frame** behavior required for your Reply (`^`) system, Rhumb cannot use a standard linear stack (like C or Java). It must use a **Cactus Stack** (also known as a Spaghetti Stack or Parent-Pointer Tree).
 
-To support Zombie Frames, the VM does not destroy a Stack Frame upon `RETURN` if
-that frame has active Reply Traps. Instead, it marks the frame as 'Dormant'.
-Dormant frames are garbage collected only when their Child processes terminate
-or the Reply Trap handles are released.
+This structure allows execution branches to fork, pause, and persist independently, which is the foundation of your concurrency model.
+
+Here is the detailed **Section 6.4** to add to your `ARCHITECTURE.md`.
+
+-----
+
+### 6.4 Memory Model: The Cactus Stack
+
+To support **Zombie Frames** and **Resumable Replies**, the VM does not use a contiguous block of memory for the stack. Instead, it uses a **Cactus Stack** (a tree of linked frames allocated on the Heap).
+
+#### A. Structure
+
+  * **Heap Allocation:** Every `CallFrame` is a struct allocated on the Go Heap.
+  * **Parent Pointers:** Each frame holds a pointer to its **Caller** (`Parent`).
+  * **The Tree:** Because multiple closures or concurrent processes can be spawned from the same context, a single Parent Frame may have multiple active Child Frames (branches), giving the stack a cactus-like shape.
+
+<!-- end list -->
+
+```go
+type CallFrame struct {
+    Parent   *CallFrame  // Link to the caller (Shallow)
+    Closure  *Closure    // The code being executed
+    IP       int         // Instruction Pointer
+    Locals   []Value     // Local variables
+    State    FrameState  // Active, Zombie, or Dead
+}
+```
+
+#### B. Lifecycle & Zombies
+
+  * **Call (`OP_CALL`):** Creates a new Frame, links `Parent = CurrentFrame`, and sets `CurrentFrame = NewFrame`.
+  * **Return (`OP_RETURN`):**
+    1.  The VM marks the Current Frame as **Zombie** (Dormant).
+    2.  It sets `CurrentFrame = CurrentFrame.Parent`.
+    3.  **Crucial:** The returned frame is **not deallocated**. It remains reachable via any **Reply Traps** or **Closures** that captured it.
+  * **Garbage Collection:** The Go GC handles memory. If a Zombie Frame is no longer referenced by any active Process, Listener, or Child, it is automatically swept.
+
+#### C. The "Drill Down" Mechanism
+
+The Cactus Stack enables the **Reply (`^`)** operator to traverse "forward" into history.
+
+1.  **Lookup:** When `^reply` is issued, the VM inspects the **Zombie List** associated with the current process.
+2.  **Traversal:** It walks down the linked list of Zombie Frames that were "popped" to reach the current state.
+3.  **Resume:** If a matching trap is found in a Zombie, the VM creates a new branch (Green Thread) resuming execution at that Zombie's IP, effectively "forking" the history.
 
 ### 6.5 Function Semantics & Currying
 
