@@ -296,7 +296,7 @@ Rhumb uses **Capability-based Privacy** via **Keys** (`` ` ``).
 Maps serve as both "Objects" (named fields) and "Lists" (positional elements).
 
   * **Unified Mechanism:** Internally, positional elements are treated as Fields where the **Name** is a **Number**.
-  * **Indexing:** Positional elements use **1-based** indexing. [cite_start]The index `0` is reserved to represent the aggregate of all positional elements[cite: 1097, 1200].
+  * **Indexing:** Positional elements use **1-based** indexing. The index `0` is reserved to represent the aggregate of all positional elements.
   * **Separation of Concern (Operators):**
       * **`[*]` (All Fields):** Returns a list of **Text** labels only (keys). It ignores Keys (`` ` ``) and Numbers.
       * **`[0]` (All Positional):** Returns a new Map containing only the fields with **Number** names (elements).
