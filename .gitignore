@@ -1,7 +1,15 @@
-cmd/rhumb/__debug_bin
-__debug_bin*.exe
+# 1. Ignore the specific build output directory
+/bin/
+/dist/
+
+# 2. Ignore standard Go build artifacts
+*.exe
+*.test
+*.out
+*.prof
+
+# Drawio temp files
 .$diagrams.drawio.svg.dtmp
-rhi
 
 # Generated ANTLR files
 *.java
