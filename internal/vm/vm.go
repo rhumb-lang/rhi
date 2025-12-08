@@ -3,6 +3,7 @@ package vm
 import (
 	"fmt"
 	
+	"git.sr.ht/~madcapjake/rhi/internal/config"
 	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
@@ -14,6 +15,8 @@ type VM struct {
 	
 	Stack [StackMax]mapval.Value
 	SP    int // Stack Pointer (points to empty slot)
+	
+	Config *config.Config
 }
 
 // Result code for the VM interpretation
@@ -29,6 +32,7 @@ func NewVM() *VM {
 	return &VM{
 		SP: 0,
 		CurrentFrame: nil,
+		Config: config.DefaultConfig(),
 	}
 }
 
@@ -110,10 +114,17 @@ func (vm *VM) run() (Result, error) {
 			return RuntimeError, fmt.Errorf("IP out of bounds")
 		}
 		
+		if vm.Config.TraceStack {
+			fmt.Print("          ")
+			for i := 0; i < vm.SP; i++ {
+				fmt.Printf("[ %s ]", vm.Stack[i])
+			}
+			fmt.Println()
+			fmt.Printf("%04d %s\n", frame.IP, mapval.OpCode(chunk.Code[frame.IP]))
+		}
+
 		instruction := mapval.OpCode(chunk.Code[frame.IP])
 		frame.IP++
-		
-		// fmt.Printf("IP: %d OP: %d\n", frame.IP-1, instruction)
 		
 		var err error
 		

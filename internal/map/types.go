@@ -1,5 +1,7 @@
 package mapval
 
+import "fmt"
+
 // ---------------------------------------------------------
 // 1. The Value Struct (Stack Allocated / Passed by Value)
 // ---------------------------------------------------------
@@ -33,6 +35,34 @@ type Value struct {
 
 	// Slot D: Heap Pointer (Interface avoids "Fat Struct")
 	Obj Object
+}
+
+func (v Value) String() string {
+	switch v.Type {
+	case ValInteger:
+		return fmt.Sprintf("%d", v.Integer)
+	case ValFloat:
+		return fmt.Sprintf("%f", v.Float)
+	case ValText:
+		return fmt.Sprintf("'%s'", v.Str)
+	case ValBoolean:
+		if v.Integer == 1 { return "yes" }
+		return "no"
+	case ValEmpty:
+		return "___"
+	case ValObject:
+		if v.Obj == nil { return "nil" }
+		return fmt.Sprintf("<Object %T>", v.Obj)
+	case ValRange:
+		return "<Range>"
+	case ValVersion:
+		maj, min, pat := v.VersionUnpack()
+		return fmt.Sprintf("v%d.%d.%d", maj, min, pat)
+	case ValKey:
+		return fmt.Sprintf(":key(%d)", v.Integer)
+	default:
+		return fmt.Sprintf("?%d", v.Type)
+	}
 }
 
 // ---------------------------------------------------------
