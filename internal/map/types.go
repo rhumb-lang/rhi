@@ -217,5 +217,45 @@ func NewVersion(major, minor uint16, patch uint32) Value {
 }
 
 func NewKey(id int64) Value {
+
 	return Value{Type: ValKey, Integer: id}
+
+}
+
+
+
+// VersionUnpack returns the major, minor, and patch components of a Version value.
+
+func (v Value) VersionUnpack() (uint16, uint16, uint32) {
+
+	if v.Type != ValVersion {
+
+		return 0, 0, 0
+
+	}
+
+	major := uint16(uint64(v.Integer) >> 48)
+
+	minor := uint16((uint64(v.Integer) >> 32) & 0xFFFF)
+
+	patch := uint32(uint64(v.Integer) & 0xFFFFFFFF)
+
+	return major, minor, patch
+
+}
+
+
+
+// KeyID returns the unique ID of a Key value.
+
+func (v Value) KeyID() int64 {
+
+	if v.Type != ValKey {
+
+		return -1
+
+	}
+
+	return v.Integer
+
 }
