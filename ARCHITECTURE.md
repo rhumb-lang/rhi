@@ -239,6 +239,11 @@ Dependencies are imported using the **Resolver Protocol**.
 | **Local** | `-` | Internal Code | `{-;path\to\testing;-}` |
 | **Remote** | `git` | External Libs | `{git\|https://github...\|v1}` |
 
+**Circular Dependencies:** Rhumb supports circular references between Shelves for
+*declarations* (functions/classes) because of the multi-pass Hoister. However,
+circular *initialization logic* (top-level code that depends on another file's
+top-level code executing first) will trigger a **Runtime Cycle Error**.
+
 -----
 
 ## 5\. The Map Model (Self-Style)
@@ -440,12 +445,13 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 #### Space & Concurrency
 All Space operations consume their operands and **must push a result** to maintain stack integrity.
 
-| Operator      | Syntax | Native Opcode  | Semantics                       | Stack Return               |
-|:--------------|:-------|:---------------|:--------------------------------|:---------------------------|
-| **Signal**    | `#`    | `OP_POST`      | Emit & Suspend. Wait for Reply. | **Reply Value** (or `___`) |
-| **Reply**     | `^`    | `OP_INJECT`    | Resume Zombie Frame with Value. | `___` (Empty)              |
-| **Proclaim**  | `$`    | `OP_WRITE`     | Set State & Notify.             | `___` (Empty)              |
-| **Subscribe** | `<>`   | `OP_SUBSCRIBE` | Register Listener.              | `___` (Empty)              |
+| Operator        | Syntax     | Native Opcode    | Semantics                              | Stack Return               |
+|:----------------|:-----------|:-----------------|:---------------------------------------|:---------------------------|
+| **Signal**      | `#`        | `OP_POST`        | Emit & Suspend. Wait for Reply.        | **Reply Value** (or `___`) |
+| **Reply**       | `^`        | `OP_INJECT`      | Resume Zombie Frame with Value.        | `___` (Empty)              |
+| **Proclaim**    | `$`        | `OP_WRITE`       | Set State & Notify.                    | `___` (Empty)              |
+| **Subscribe**   | `<>`       | `OP_SUBSCRIBE`   | Register Listener.                     | `___` (Empty)              |
+| **Match Tuple** | (internal) | `OP_MATCH_TUPLE` | Efficiently checks Tuple Kind (#/^/$). | `yes` / `no`               |
 
 
 #### Field Operators (Postfix `[]`)
