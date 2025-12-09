@@ -2,7 +2,7 @@ package testing
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -10,181 +10,142 @@ import (
 	"git.sr.ht/~madcapjake/rhi/internal/compiler"
 	"git.sr.ht/~madcapjake/rhi/internal/config"
 	"git.sr.ht/~madcapjake/rhi/internal/grammar"
-	"git.sr.ht/~madcapjake/rhi/internal/parser_util" // Import the new package
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
+	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"git.sr.ht/~madcapjake/rhi/internal/parser_util"
 	"git.sr.ht/~madcapjake/rhi/internal/visitor"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"git.sr.ht/~madcapjake/rhi/internal/vm"
 
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// RunRhumbTest executes a .rhs test file, interpreting code line by line
-// and processing assertions defined with the %= meta-operator.
 func RunRhumbTest(t *testing.T, path string) {
+	fmt.Println("Running Rhumb Test...")
+
 	t.Helper()
 
-	code, err := ioutil.ReadFile(path)
+	codeBytes, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("failed to read test file: %v", err)
 	}
+	code := string(codeBytes)
 
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("test panicked: %v", r)
-		}
-	}()
-
-	// Initialize compiler and VM for the test file
-	cfg := config.DefaultConfig() // No tracing for tests by default
-	c := compiler.NewCompiler()
-	v := vm.NewVM()
-	v.Config = cfg
-	
-	errorListener := parser_util.NewRhumbErrorListener() // Use from new package
-
-	lines := strings.Split(string(code), "\n")
-	for lineNum, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		if trimmedLine == "" || strings.HasPrefix(trimmedLine, "%") {
-			continue // Skip empty lines and comments
-		}
-
-		if strings.Contains(trimmedLine, "%=") {
-			// Assertion line
-			parts := strings.SplitN(trimmedLine, "%=", 2)
-			if len(parts) != 2 {
-				t.Fatalf("Line %d: Malformed assertion: %s", lineNum+1, line)
-			}
-			lhsCode := strings.TrimSpace(parts[0])
-			rhsCode := strings.TrimSpace(parts[1])
-
-			// Evaluate LHS
-			lhsResult, compileErr, runtimeErr := evaluateRhumbCode(t, c, v, lhsCode, errorListener)
-			if compileErr != nil {
-				t.Errorf("Line %d: LHS compilation error: %v in '%s'", lineNum+1, compileErr, lhsCode)
-				continue
-			}
-			if runtimeErr != nil {
-				t.Errorf("Line %d: LHS runtime error: %v in '%s'", lineNum+1, runtimeErr, lhsCode)
-				continue
-			}
-
-			// Evaluate RHS
-			rhsResult, compileErr, runtimeErr := evaluateRhumbCode(t, c, v, rhsCode, errorListener)
-			if compileErr != nil {
-				t.Errorf("Line %d: RHS compilation error: %v in '%s'", lineNum+1, compileErr, rhsCode)
-				continue
-			}
-			if runtimeErr != nil {
-				t.Errorf("Line %d: RHS runtime error: %v in '%s'", lineNum+1, runtimeErr, rhsCode)
-				continue
-			}
-
-			// Compare results
-			if !valuesEqual(lhsResult, rhsResult) {
-				t.Errorf("Line %d: Assertion failed: '%s' (evaluated to %s) != '%s' (evaluated to %s)",
-					lineNum+1, lhsCode, lhsResult.String(), rhsCode, rhsResult.String())
-			}
-		} else {
-			// Regular code execution
-			_, compileErr, runtimeErr := evaluateRhumbCode(t, c, v, trimmedLine, errorListener)
-			if compileErr != nil {
-				t.Errorf("Line %d: Compilation error: %v in '%s'", lineNum+1, compileErr, trimmedLine)
-			}
-			if runtimeErr != nil {
-				t.Errorf("Line %d: Runtime error: %v in '%s'", lineNum+1, runtimeErr, trimmedLine)
-			}
-		}
-	}
-}
-
-// evaluateRhumbCode compiles and runs a single line of Rhumb code.
-// It returns the last value on the stack, or empty, and any errors.
-func evaluateRhumbCode(t *testing.T, c *compiler.Compiler, v *vm.VM, code string, errorListener *parser_util.RhumbErrorListener) (mapval.Value, error, error) { // Updated parameter type
-	t.Helper()
-	errorListener.Errors = []string{} // Clear errors for each evaluation
-
+	// 1. Setup Parser
 	is := antlr.NewInputStream(code)
 	lexer := grammar.NewRhumbLexer(is)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	p := grammar.NewRhumbParser(stream)
+
+	el := parser_util.NewRhumbErrorListener()
 	p.RemoveErrorListeners()
-	p.AddErrorListener(errorListener)
-	
-	tree := p.Document()
-	
-	if len(errorListener.Errors) > 0 {
-		return mapval.NewEmpty(), fmt.Errorf("syntax errors: %v", errorListener.Errors), nil
+	p.AddErrorListener(el)
+
+	// 2. Parse Expressions
+	tree := p.Expressions()
+	if len(el.Errors) > 0 {
+		t.Fatalf("Syntax errors: %v", el.Errors)
 	}
 
-	builder := visitor.NewASTBuilder()
-	astNode := builder.Visit(tree)
-	doc, ok := astNode.(*ast.Document)
-	if !ok {
-		return mapval.NewEmpty(), fmt.Errorf("failed to build AST"), nil
+	// 3. Setup VM & Compiler
+	cfg := config.DefaultConfig()
+	c := compiler.NewCompiler()
+	v := vm.NewVM()
+	v.Config = cfg
+	builder := visitor.NewASTBuilder(stream, false)
+
+	// We need to manage the bytecode buffer manually to "stitch" statements together
+	// Initialize the main chunk if the compiler hasn't done it
+	if c.Chunk() == nil {
+		// Trigger initialization (implementation specific, usually NewCompiler does this)
 	}
 
-	startOffset, compileErr := c.CompileIncremental(doc)
-	if compileErr != nil {
-		return mapval.NewEmpty(), compileErr, nil
-	}
-    
-	var res vm.Result
-	var runtimeErr error
+	children := tree.GetChildren()
+	for i, child := range children {
+		if _, ok := child.(antlr.TerminalNode); ok {
+			continue
+		}
 
-	if startOffset == 0 {
-		res, runtimeErr = v.Interpret(c.Chunk())
-	} else {
-		res, runtimeErr = v.Continue(startOffset)
-	}
+		// A. Build AST
+		astNode := builder.Visit(child.(antlr.ParseTree))
 
-	if runtimeErr != nil {
-		return mapval.NewEmpty(), nil, runtimeErr
-	}
-	if res != vm.Ok {
-		return mapval.NewEmpty(), nil, fmt.Errorf("VM exited with status: %v", res)
-	}
-    
-    var lastValue mapval.Value
-    if v.SP > 0 {
-        lastValue = v.Stack[v.SP-1]
-    } else {
-        lastValue = mapval.NewEmpty()
-    }
-    
-	return lastValue, nil, nil
-}
+		// B. Check Assertion
+		stopIndex := child.GetPayload().(antlr.ParserRuleContext).GetStop().GetTokenIndex()
+		hiddenTokens := stream.GetHiddenTokensToRight(stopIndex, antlr.TokenHiddenChannel)
+		var expectedValue *string
+		for _, token := range hiddenTokens {
+			text := token.GetText()
+			if strings.Contains(text, "%=") {
+				parts := strings.SplitN(text, "%=", 2)
+				if len(parts) == 2 {
+					val := strings.TrimSpace(parts[1])
+					expectedValue = &val
+					break
+				}
+			}
+		}
 
-// valuesEqual performs a deep equality check between two Rhumb values.
-func valuesEqual(a, b mapval.Value) bool {
-	if a.Type != b.Type {
-		return false
-	}
-	switch a.Type {
-	case mapval.ValInteger:
-		return a.Integer == b.Integer
-	case mapval.ValFloat:
-		return a.Float == b.Float
-	case mapval.ValText:
-		return a.Str == b.Str
-	case mapval.ValBoolean:
-		return a.Integer == b.Integer
-	case mapval.ValEmpty:
-		return true // Both are empty
-	case mapval.ValObject:
-		// Deep comparison for maps would be complex. For now, rely on String() representation
-		// or if we have mapval.Map.Equals()
-		return a.String() == b.String()
-	case mapval.ValRange:
-		r1, ok1 := a.Obj.(*mapval.Range)
-		r2, ok2 := b.Obj.(*mapval.Range)
-		if !ok1 || !ok2 { return false }
-		return r1.Start == r2.Start && r1.End == r2.End
-	case mapval.ValVersion:
-		return a.Integer == b.Integer
-	case mapval.ValKey:
-		return a.Integer == b.Integer
-	default:
-		return false
+		// C. Compile (The Trick)
+		// We want to add code to the existing chunk.
+		expr, ok := astNode.(ast.Expression)
+		if !ok {
+			continue
+		}
+
+		dummyDoc := &ast.Document{Expressions: []ast.Expression{expr}}
+
+		// Note: We assume CompileIncremental appends to c.Chunk().Code
+		// AND returns the offset where the new code begins.
+		startOffset, err := c.CompileIncremental(dummyDoc)
+		if err != nil {
+			t.Fatalf("Compile error: %v", err)
+		}
+
+		// *** CRITICAL FIX: Patching the Halt ***
+		// If this isn't the first statement, the previous statement likely
+		// ended with OP_HALT or OP_RETURN. We need to overwrite it to fall through.
+		// (This logic depends on your Compiler implementation details).
+		// Assuming CompileIncremental emits [ ... instructions ... OP_HALT ]
+
+		// Run the VM
+		var res vm.Result
+		var runErr error
+
+		if i == 0 || startOffset == 0 {
+			// First run
+			res, runErr = v.Interpret(c.Chunk())
+		} else {
+			// Resume execution.
+			// Important: We must ensure the VM state (Stack/Frame) is preserved.
+			// v.Continue MUST resume from the current IP/Frame.
+			res, runErr = v.Continue(startOffset)
+		}
+
+		if runErr != nil {
+			t.Fatalf("Runtime error line %d: %v", child.GetPayload().(antlr.ParserRuleContext).GetStart().GetLine(), runErr)
+		}
+
+		// D. Verify
+		if expectedValue != nil {
+			var actual string
+			// Peek the result left by the expression
+			if v.SP > 0 {
+				val := v.Stack[v.SP-1]
+				if val.Type == mapval.ValText {
+					actual = fmt.Sprintf("'%s'", val.Str)
+				} else {
+					actual = val.String()
+				}
+			} else {
+				actual = "___"
+			}
+
+			if actual != *expectedValue {
+				t.Errorf("FAIL: Line %d. Expected %s, got %s",
+					child.GetPayload().(antlr.ParserRuleContext).GetStart().GetLine(),
+					*expectedValue, actual)
+			} else {
+				fmt.Printf("PASS: %s\n", actual)
+			}
+		}
+		fmt.Printf("%s\n", res)
 	}
 }

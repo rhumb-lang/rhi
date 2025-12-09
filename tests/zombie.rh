@@ -1,0 +1,25 @@
+% zombie.rh
+
+% Verify the Cactus Stack and Reply Injection (^). We recurse deep, pause, and
+% then the main loop drills down to resume the bottom frame.
+
+% 1. Define the recursive function that pauses at the bottom
+dive .= [depth] -> depth == 0 {
+  yes .. (
+    % At the bottom! Send a signal to pause execution.
+    % We wait for a reply value to be injected here.
+    val := #hit-bottom
+    val % Return the injected value back up the chain
+  )
+  no .. dive(depth -- 1)
+}
+
+% 2. Run the test
+% We attach a selector to the function call to trap the signal bubbling up.
+result .= dive(1000) {
+  % When we catch the signal, the stack is 1000 frames deep (Zombies).
+  % We use ^ (Reply) to drill back down to the bottom frame.
+  #hit-bottom .. ^("Resurrected!") 
+}
+
+result %= "Resurrected!"

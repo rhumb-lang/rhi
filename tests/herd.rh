@@ -1,0 +1,33 @@
+% herd.rh
+
+% Stress test the "Helium Balloon" algorithm (Recursive Signal Bubble-up). We
+% create a deep chain of nested realms and fire a signal from the bottom that is
+% only caught at the top.
+
+depth .= 100
+
+% Recursive builder that spawns a thread inside a child realm
+build-tower .= [level] -> level == depth {
+  yes .. (
+    % Bottom level: Fire the signal!
+    #fire("From the deep")
+  )
+  no .. (
+    % Create a child realm
+    child .= <$>;
+    
+    % Spawn the next level DOWN inside that child realm.
+    % Signals from 'child' will bubble up to US, and then to OUR parent.
+    child -> build-tower(level ++ 1)
+  )
+}
+
+% Main Thread: The Ceiling
+% We trap the signal here.
+wrapped-call .= [] -> build-tower(0)
+
+result .= wrapped-call {
+  #fire(msg) .. "Caught: $msg"
+}
+
+result %= "Caught: From the deep"

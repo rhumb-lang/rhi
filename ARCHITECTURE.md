@@ -910,6 +910,44 @@ Headers**.
       * **Yes:** Accept and run.
       * **No:** Reject (or optionally request the missing library blob).
 
+### 7.10 Syntactic Symmetries
+
+The Concurrency primitives exhibit powerful symmetries that allow developers to
+choose between **Inline Logic** (Subscriptions) and **Reusable Logic**
+(Vassals).
+
+#### A. The Monitor Symmetry (`<>` vs `{}`)
+
+Listening to a Realm via an empty subscription is identical to attaching a
+Selector directly to the Realm (Attachment Mode).
+
+  * **Syntax A:** `realm <> [] -> { ... }`
+      * *Meaning:* "Subscribe to `realm`. Filter nothing (`[]`). Execute block for every event."
+  * **Syntax B:** `realm { ... }`
+      * *Meaning:* "Attach monitor to `realm`. Trap all signals bubbling up."
+  * **Equivalence:** `realm <> []` $\equiv$ `realm` (as a Monitor Source).
+
+#### B. The Filter Symmetry (Vassals vs Patterns)
+
+Applying a Vassal to a Realm is identical to Subscribing with a Pattern. Both
+act as filters on the event stream.
+
+  * **Scenario:** We want to listen only for `#sig`.
+  * **Approach A (Inline Pattern):**
+    ```rhumb
+    realm <> [#sig] -> { ... }
+    ```
+      * *Mechanism:* The **Pattern** inside the subscription performs the filtering.
+  * **Approach B (Applied Vassal):**
+    ```rhumb
+    v .= <{ .#sig }>   % Define Vassal (Allow #sig)
+    v(realm) { ... }   % Apply Vassal -> Attach Monitor
+    ```
+      * *Mechanism:* The **Vassal** performs the filtering before the Monitor sees it.
+  * **Conclusion:** **Submaps are ephemeral Vassals.** When you write `[#sig]`,
+    you are defining a temporary attenuation strategy for that specific
+    subscription.
+
 -----
 
 ## 8\. Testing Strategy

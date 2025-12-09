@@ -12,13 +12,13 @@ const (
 	ValInteger ValueType = iota
 	ValFloat             // The "Separate Slot" from architecture discussion
 	ValText
-	ValObject            // Heap Object (Map, Func, etc.)
-	ValEmpty             // The ___ literal
-	ValBoolean           // Packed in Integer
-	ValDate              // Packed in Integer
-	ValRange             // Range Object
-	ValVersion           // Packed SemVer
-	ValKey               // Interned Global ID
+	ValObject  // Heap Object (Map, Func, etc.)
+	ValEmpty   // The ___ literal
+	ValBoolean // Packed in Integer
+	ValDate    // Packed in Integer
+	ValRange   // Range Object
+	ValVersion // Packed SemVer
+	ValKey     // Interned Global ID
 )
 
 type Value struct {
@@ -46,20 +46,27 @@ func (v Value) String() string {
 	case ValText:
 		return fmt.Sprintf("'%s'", v.Str)
 	case ValBoolean:
-		if v.Integer == 1 { return "yes" }
+		if v.Integer == 1 {
+			return "yes"
+		}
 		return "no"
 	case ValEmpty:
 		return "___"
 	case ValRange:
 		return "<Range>"
 	case ValObject:
-		if v.Obj == nil { return "nil" }
+		if v.Obj == nil {
+			return "nil"
+		}
 		if t, ok := v.Obj.(*Tuple); ok {
 			kind := ""
 			switch t.Kind {
-			case TupleSignal: kind = "#"
-			case TupleReply: kind = "^"
-			case TupleProclamation: kind = "$"
+			case TupleSignal:
+				kind = "#"
+			case TupleReply:
+				kind = "^"
+			case TupleProclamation:
+				kind = "$"
 			}
 			return fmt.Sprintf("<%s%s>", kind, t.Topic)
 		}
@@ -129,8 +136,8 @@ type Object interface {
 
 // Map represents the Self-style Object
 type Map struct {
-	Legend *Legend
-	Fields []Value // Linear storage matching the Legend offsets
+	Legend    *Legend
+	Fields    []Value // Linear storage matching the Legend offsets
 	Listeners []Value // List of Selectors (Listeners)
 }
 
@@ -160,9 +167,9 @@ const (
 
 // Legend represents the Schema of a Map (Hidden Class).
 type Legend struct {
-	Kind        LegendType
-	Fields      []FieldDesc       // Linear scan (Map Mode)
-	Lookup      map[string]int    // Hash map (Dictionary Mode)
+	Kind   LegendType
+	Fields []FieldDesc    // Linear scan (Map Mode)
+	Lookup map[string]int // Hash map (Dictionary Mode)
 }
 
 // Function represents compiled bytecode (Prototype Activation Record)
@@ -289,8 +296,6 @@ func NewKey(id int64) Value {
 
 }
 
-
-
 // VersionUnpack returns the major, minor, and patch components of a Version value.
 
 func (v Value) VersionUnpack() (uint16, uint16, uint32) {
@@ -310,8 +315,6 @@ func (v Value) VersionUnpack() (uint16, uint16, uint32) {
 	return major, minor, patch
 
 }
-
-
 
 // KeyID returns the unique ID of a Key value.
 

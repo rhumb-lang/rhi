@@ -3,7 +3,8 @@ package vm
 import (
 	"fmt"
 	"math"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+
+	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
 // --- Stack Ops ---
@@ -42,11 +43,11 @@ func (vm *VM) opLoadUpvalue() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
 	closure := frame.Closure
-	
+
 	if int(idx) >= len(closure.Upvalues) {
 		panic(fmt.Sprintf("upvalue index %d out of bounds (len %d)", idx, len(closure.Upvalues)))
 	}
-	
+
 	upvalue := closure.Upvalues[idx]
 	if upvalue.Location != nil {
 		vm.push(*upvalue.Location)
@@ -59,14 +60,14 @@ func (vm *VM) opStoreUpvalue() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
 	closure := frame.Closure
-	
+
 	if int(idx) >= len(closure.Upvalues) {
 		panic(fmt.Sprintf("upvalue index %d out of bounds (len %d)", idx, len(closure.Upvalues)))
 	}
-	
+
 	val := vm.peek(0)
 	upvalue := closure.Upvalues[idx]
-	
+
 	if upvalue.Location != nil {
 		*upvalue.Location = val
 	} else {
@@ -135,7 +136,9 @@ func (vm *VM) opDivInt() error {
 	b := vm.pop()
 	a := vm.pop()
 	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
-		if b.Integer == 0 { return fmt.Errorf("division by zero") }
+		if b.Integer == 0 {
+			return fmt.Errorf("division by zero")
+		}
 		vm.push(mapval.NewInt(a.Integer / b.Integer))
 	} else {
 		vm.push(mapval.NewInt(int64(asFloat(a) / asFloat(b))))
@@ -147,7 +150,9 @@ func (vm *VM) opMod() error {
 	b := vm.pop()
 	a := vm.pop()
 	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
-		if b.Integer == 0 { return fmt.Errorf("division by zero") }
+		if b.Integer == 0 {
+			return fmt.Errorf("division by zero")
+		}
 		vm.push(mapval.NewInt(a.Integer % b.Integer))
 	} else {
 		vm.push(mapval.NewFloat(math.Mod(asFloat(a), asFloat(b))))
@@ -302,19 +307,19 @@ func (vm *VM) opMakeFn() {
 	fnVal := frame.Closure.Fn.Chunk.Constants[idx]
 	fn := fnVal.Obj.(*mapval.Function)
 	closure := &mapval.Closure{Fn: fn}
-	
+
 	closure.Upvalues = make([]*mapval.Upvalue, fn.UpvalueCount)
 	for i := 0; i < fn.UpvalueCount; i++ {
 		isLocal := vm.readByte()
 		index := vm.readByte()
-		
+
 		if isLocal == 1 {
 			closure.Upvalues[i] = vm.captureUpvalue(frame.Base + int(index))
 		} else {
 			closure.Upvalues[i] = frame.Closure.Upvalues[index]
 		}
 	}
-	
+
 	vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
 }
 
@@ -322,7 +327,7 @@ func (vm *VM) captureUpvalue(location int) *mapval.Upvalue {
 	// TODO: Reuse open upvalues (list in VM/Frame?) to support aliasing.
 	// For now, always create new (no aliasing support between closures yet).
 	// Proper implementation requires keeping a linked list of open upvalues.
-	
+
 	val := &vm.Stack[location]
 	return &mapval.Upvalue{Location: val}
 }
@@ -353,7 +358,7 @@ func (vm *VM) opCall() error {
 	}
 
 	vm.CurrentFrame = newFrame
-	
+
 	return nil
 }
 
@@ -362,7 +367,7 @@ func (vm *VM) opReturn() (int, error) {
 	frame := vm.currentFrame() // Frame returning FROM
 
 	vm.CurrentFrame = frame.Parent // Pop frame
-	
+
 	if vm.CurrentFrame == nil {
 		vm.pop()      // Pop Main Script Closure
 		return 1, nil // Done
@@ -456,22 +461,20 @@ func numericCompare(a, b mapval.Value) (int, error) {
 	if fa < fb {
 		return -1, nil
 	}
-		if fa > fb {
-			return 1, nil
-		}
-		return 0, nil
+	if fa > fb {
+		return 1, nil
 	}
-	
-	// --- Testing Ops ---
-	
-	func (vm *VM) opAssertEq() {
-		expected := vm.pop()
-		actual := vm.pop()
-		
-		if isEqual(actual, expected) {
-			fmt.Printf("PASS: %s\n", actual)
-		} else {
-			fmt.Printf("FAIL: Expected %s, got %s\n", expected, actual)
-		}
+	return 0, nil
+}
+
+// --- Testing Ops ---
+
+func (vm *VM) opAssertEq() {
+	expected := vm.pop()
+	actual := vm.pop()
+
+	if !isEqual(actual, expected) {
+		fmt.Printf("FAIL: Expected %s, got %s\n", expected, actual)
 	}
-	
+	fmt.Printf("PASS: %s\n", actual)
+}

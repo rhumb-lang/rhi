@@ -16,65 +16,53 @@ type ASTBuilder struct {
 	IsTestMode  bool
 }
 
-func NewASTBuilder(stream *antlr.CommonTokenStream, isTestMode bool) *ASTBuilder {
-	return &ASTBuilder{
-		BaseRhumbParserVisitor: &grammar.BaseRhumbParserVisitor{},
-		TokenStream:            stream,
-		IsTestMode:             isTestMode,
-	}
-}
-
-func (b *ASTBuilder) Visit(tree antlr.ParseTree) interface{} {
-	return tree.Accept(b)
-}
-
-// VisitDocument visits the document rule.
 func (b *ASTBuilder) VisitDocument(ctx *grammar.DocumentContext) interface{} {
-	doc := &ast.Document{
-		Expressions: []ast.Expression{},
+	// The root of the AST is a Document containing a list of expressions
+	exprs := b.Visit(ctx.Expressions())
+
+	// Safety check in case VisitExpressions returns nil
+	if exprs == nil {
+		return &ast.Document{Expressions: []ast.Expression{}}
 	}
 
-	if ctx.Expressions() != nil {
-		// We need to cast the result of visiting Expressions to []ast.Expression
-		// However, VisitExpressions returns []ast.Expression directly.
-		exprs := b.Visit(ctx.Expressions())
-		if val, ok := exprs.([]ast.Expression); ok {
-			doc.Expressions = val
-		}
+	return &ast.Document{
+		Expressions: exprs.([]ast.Expression),
 	}
-	return doc
 }
 
-// VisitExpressions visits the expressions rule.
 func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface{} {
 	var exprs []ast.Expression
-	for _, e := range ctx.AllExpression() {
-		res := b.Visit(e)
+
+	// Iterate over all children to preserve order and handle interleaved terminators
+	// However, using ctx.AllExpression() is cleaner if we just want the expressions.
+	// We need the Context for each expression to check for assertions.
+
+	for _, exprCtx := range ctx.AllExpression() {
+		res := b.Visit(exprCtx)
 		if expr, ok := res.(ast.Expression); ok {
-			// Check for assertion (Test Mode)
+
+			// 1. Check for Assertion (Test Mode)
+			// If -test flag is active, we look for the %= comment
 			if b.IsTestMode {
-				if prc, ok := e.(antlr.ParserRuleContext); ok {
-					expectedStr, found := b.getAssertion(prc)
-					if found {
-						expectedExpr := b.parseFragment(expectedStr)
-						expr = &ast.AssertionWrapper{
-							Actual:   expr,
-							Expected: expectedExpr,
-						}
+				// We pass the rule context to find hidden tokens to its right
+				if assertCode, found := b.getAssertion(exprCtx); found {
+					// Parse the expected value (e.g. "10")
+					expected := b.parseFragment(assertCode)
+
+					// Wrap the expression in an AssertionWrapper
+					// The Compiler will generate OP_ASSERT_EQ for this
+					expr = &ast.AssertionWrapper{
+						Actual:   expr,
+						Expected: expected,
 					}
 				}
 			}
+
 			exprs = append(exprs, expr)
 		}
 	}
-	return exprs
-}
 
-// VisitExpression visits the generic expression rule.
-// This is the main dispatcher for all expression types.
-func (b *ASTBuilder) VisitExpression(ctx *grammar.ExpressionContext) interface{} {
-	// Delegate to the specific visitor method via Accept.
-	return ctx.Accept(b)
+	return exprs
 }
 
 func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
@@ -87,11 +75,23 @@ func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
 
 	for _, t := range hiddenTokens {
 		text := t.GetText()
-		if strings.HasPrefix(text, "%=") {
-			return strings.TrimSpace(strings.TrimPrefix(text, "%=")), true
+		if after, ok := strings.CutPrefix(text, "%="); ok {
+			return strings.TrimSpace(after), true
 		}
 	}
 	return "", false
+}
+
+func NewASTBuilder(stream *antlr.CommonTokenStream, isTestMode bool) *ASTBuilder {
+	return &ASTBuilder{
+		BaseRhumbParserVisitor: &grammar.BaseRhumbParserVisitor{},
+		TokenStream:            stream,
+		IsTestMode:             isTestMode,
+	}
+}
+
+func (b *ASTBuilder) Visit(tree antlr.ParseTree) interface{} {
+	return tree.Accept(b)
 }
 
 func (b *ASTBuilder) parseFragment(code string) ast.Expression {

@@ -2,9 +2,9 @@ package compiler
 
 import (
 	"fmt"
-	
+
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
 func (c *Compiler) compileExpression(expr ast.Expression) error {
@@ -18,20 +18,35 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 	case *ast.RationalLiteral:
 		c.emitConstant(mapval.NewFloat(e.Value))
 	case *ast.LabelLiteral:
-		// Variable Access
+		// 1. Variable Access (Local)
 		idx := c.Scope.resolveLocal(e.Value)
 		if idx != -1 {
 			c.emit(mapval.OP_LOAD_LOC)
 			c.Chunk().WriteByte(byte(idx), 0)
-		} else {
-			up := c.resolveUpvalue(e.Value)
-			if up != -1 {
-				c.emit(mapval.OP_LOAD_UPVALUE)
-				c.Chunk().WriteByte(byte(up), 0)
-			} else {
-				return fmt.Errorf("undefined variable: %s", e.Value)
-			}
+			return nil
 		}
+
+		// 2. Variable Access (Upvalue)
+		up := c.resolveUpvalue(e.Value)
+		if up != -1 {
+			c.emit(mapval.OP_LOAD_UPVALUE)
+			c.Chunk().WriteByte(byte(up), 0)
+			return nil
+		}
+
+		// 3. Special Boolean Literals
+		// TODO: Add international support
+		if e.Value == "yes" {
+			c.emitConstant(mapval.NewBoolean(true))
+			return nil
+		}
+		if e.Value == "no" {
+			c.emitConstant(mapval.NewBoolean(false))
+			return nil
+		}
+
+		// 4. Fallback
+		return fmt.Errorf("undefined variable: %s", e.Value)
 	case *ast.TextLiteral:
 		// Simple text support for now (no interp)
 		if len(e.Segments) == 1 {

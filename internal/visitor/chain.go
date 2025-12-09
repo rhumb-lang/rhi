@@ -198,7 +198,11 @@ func (b *ASTBuilder) VisitAssignLabel(ctx *grammar.AssignLabelContext) interface
 	default: op = ast.OpAssignImm
 	}
 	
-	return &ast.BinaryExpression{Left: lhs, Op: op, Right: rhs}
+	return &ast.BinaryExpression{
+		Left:  lhs,
+		Op:    op,
+		Right: rhs,
+	}
 }
 
 // --- AccessOp Visitors (OpType) ---

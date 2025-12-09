@@ -7,15 +7,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/antlr4-go/antlr/v4"
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
 	"git.sr.ht/~madcapjake/rhi/internal/compiler"
 	"git.sr.ht/~madcapjake/rhi/internal/config"
 	"git.sr.ht/~madcapjake/rhi/internal/grammar"
+	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 	"git.sr.ht/~madcapjake/rhi/internal/parser_util" // Import the new package
 	"git.sr.ht/~madcapjake/rhi/internal/visitor"
 	"git.sr.ht/~madcapjake/rhi/internal/vm"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 var (
@@ -44,7 +44,7 @@ func NewSession(cfg *config.Config) *Session {
 
 func main() {
 	flag.Parse()
-	
+
 	// Environment variable overrides
 	if !*traceParser && os.Getenv("RHI_TRACE_PARSER") == "1" {
 		*traceParser = true
@@ -67,9 +67,9 @@ func main() {
 	}
 
 	args := flag.Args()
-	
+
 	session := NewSession(cfg)
-	
+
 	if len(args) == 0 {
 		session.IsRepl = true
 		session.runREPL()
@@ -109,13 +109,13 @@ func (s *Session) execute(input string) {
 	lexer := grammar.NewRhumbLexer(is)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	p := grammar.NewRhumbParser(stream)
-	
+
 	p.RemoveErrorListeners()
 	errorListener := parser_util.NewRhumbErrorListener() // Use from new package
 	p.AddErrorListener(errorListener)
-	
+
 	tree := p.Document()
-	
+
 	if len(errorListener.Errors) > 0 {
 		fmt.Println("Syntax Errors:")
 		for _, msg := range errorListener.Errors {
@@ -135,7 +135,7 @@ func (s *Session) execute(input string) {
 	if astNode == nil {
 		return
 	}
-	
+
 	doc, ok := astNode.(*ast.Document)
 	if !ok {
 		return
@@ -152,29 +152,30 @@ func (s *Session) execute(input string) {
 		fmt.Println("=== Bytecode Chunk ===")
 		chunk := s.Compiler.Chunk()
 		fmt.Printf("Constants: %v\n", chunk.Constants)
-		
+
 		fmt.Println("Disassembly:")
 		for i := 0; i < len(chunk.Code); {
 			fmt.Printf("%04d ", i)
-			
+
 			op := mapval.OpCode(chunk.Code[i])
 			i++
-			
+
 			// Simple check for operands (assume most are 0 or constant index)
 			// This is a basic disassembler, might not cover all variable-length ops perfectly
 			// without full instruction set knowledge here, but helpful for debugging.
 			// Reusing logic similar to VM's read would be best but for now just print OpName.
-			
+
 			fmt.Printf("%s", op)
-			
+
 			// Heuristic: If it's a known opcode taking an operand, print it.
 			// Bank 0
-			if op == mapval.OP_JUMP || op == mapval.OP_CALL || op == mapval.OP_MAKE_FN {
+			switch op {
+			case mapval.OP_JUMP, mapval.OP_CALL, mapval.OP_MAKE_FN:
 				if i+1 < len(chunk.Code) {
 					// 2 byte operand usually for jump? Or 1 for const?
 					// OP_MAKE_FN takes 1 byte const index.
 					// OP_JUMP takes 2 bytes.
-					if op == mapval.OP_JUMP || op == mapval.OP_IF_TRUE || op == mapval.OP_IF_FALSE || op == mapval.OP_WHILE {
+					if op == mapval.OP_JUMP || op == mapval.OP_JUMP_IF_FALSE || op == mapval.OP_JUMP_IF_TRUE || op == mapval.OP_WHILE {
 						// 2 byte
 						val := uint16(chunk.Code[i])<<8 | uint16(chunk.Code[i+1])
 						fmt.Printf(" %d", val)
@@ -185,7 +186,7 @@ func (s *Session) execute(input string) {
 						i++
 					}
 				}
-			} else if op == mapval.OP_LOAD_CONST || op == mapval.OP_LOAD_LOC || op == mapval.OP_STORE_LOC || op == mapval.OP_SEND || op == mapval.OP_SET_FIELD {
+			case mapval.OP_LOAD_CONST, mapval.OP_LOAD_LOC, mapval.OP_STORE_LOC, mapval.OP_SEND, mapval.OP_SET_FIELD:
 				// 1 byte operand
 				if i < len(chunk.Code) {
 					fmt.Printf(" %d", chunk.Code[i])
@@ -206,7 +207,7 @@ func (s *Session) execute(input string) {
 					}
 				}
 			}
-			
+
 			fmt.Println()
 		}
 	}
@@ -214,23 +215,23 @@ func (s *Session) execute(input string) {
 	// 4. Execute
 	var res vm.Result
 	var runtimeErr error
-	
+
 	if startOffset == 0 {
 		res, runtimeErr = s.VM.Interpret(s.Compiler.Chunk())
 	} else {
 		res, runtimeErr = s.VM.Continue(startOffset)
 	}
-	
+
 	if runtimeErr != nil {
 		fmt.Printf("Runtime error: %v\n", runtimeErr)
 		return
 	}
-	
+
 	if res != vm.Ok && res != vm.Halt {
 		fmt.Printf("VM exited with status: %s\n", res)
 		return
 	}
-	
+
 	// 5. Print Result and Reset Stack (keep locals)
 	if s.IsRepl || *lastValue {
 		// If stack has values beyond locals, print top
@@ -239,7 +240,7 @@ func (s *Session) execute(input string) {
 			val := s.VM.Stack[s.VM.SP-1]
 			fmt.Printf("=> %s\n", formatValue(val))
 		}
-		
+
 		// Reset SP to just locals
 		// NOTE: If locals were added during this execution, they are on stack.
 		// Any operands above them are discarded.
@@ -258,7 +259,9 @@ func formatValue(val mapval.Value) string {
 	case mapval.ValText:
 		return fmt.Sprintf("'%s'", val.Str)
 	case mapval.ValBoolean:
-		if val.Integer == 1 { return "yes" }
+		if val.Integer == 1 {
+			return "yes"
+		}
 		return "no"
 	case mapval.ValEmpty:
 		return "___"
@@ -267,7 +270,9 @@ func formatValue(val mapval.Value) string {
 			var sb strings.Builder
 			sb.WriteString("[")
 			for i, field := range m.Fields {
-				if i > 0 { sb.WriteString("; ") }
+				if i > 0 {
+					sb.WriteString("; ")
+				}
 				sb.WriteString(formatValue(field))
 			}
 			sb.WriteString("]")
