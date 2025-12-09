@@ -169,7 +169,8 @@ func (s *Session) execute(input string) {
 
 			// Heuristic: If it's a known opcode taking an operand, print it.
 			// Bank 0
-			if op == mapval.OP_JUMP || op == mapval.OP_CALL || op == mapval.OP_MAKE_FN {
+			switch op {
+			case mapval.OP_JUMP, mapval.OP_CALL, mapval.OP_MAKE_FN:
 				if i+1 < len(chunk.Code) {
 					// 2 byte operand usually for jump? Or 1 for const?
 					// OP_MAKE_FN takes 1 byte const index.
@@ -185,7 +186,7 @@ func (s *Session) execute(input string) {
 						i++
 					}
 				}
-			} else if op == mapval.OP_LOAD_CONST || op == mapval.OP_LOAD_LOC || op == mapval.OP_STORE_LOC || op == mapval.OP_SEND || op == mapval.OP_SET_FIELD {
+			case mapval.OP_LOAD_CONST, mapval.OP_LOAD_LOC, mapval.OP_STORE_LOC, mapval.OP_SEND, mapval.OP_SET_FIELD:
 				// 1 byte operand
 				if i < len(chunk.Code) {
 					fmt.Printf(" %d", chunk.Code[i])

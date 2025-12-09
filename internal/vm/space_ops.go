@@ -2,19 +2,20 @@ package vm
 
 import (
 	"fmt"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+
+	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
 func (vm *VM) opMonitor() error {
 	// Stack: [Target, Selector]
 	selectorVal := vm.pop()
 	targetVal := vm.peek(0) // Peek target
-	
+
 	selector, ok := selectorVal.Obj.(*mapval.Closure)
 	if !ok {
 		return fmt.Errorf("monitor must be a selector closure")
 	}
-	
+
 	// If Target is a Closure, attach as Monitor
 	if targetVal.Type == mapval.ValObject {
 		if closure, ok := targetVal.Obj.(*mapval.Closure); ok {
@@ -26,12 +27,12 @@ func (vm *VM) opMonitor() error {
 				Base:    vm.SP, // Base points to first arg (or empty space if 0 args). Base-1 is Target.
 				Monitor: selector,
 			}
-			
+
 			vm.CurrentFrame = newFrame
 			return nil
 		}
 	}
-	
+
 	// Dispatch Mode: Selector(Target)
 	// Target is already on stack (peaked).
 	// We need to setup a call to Selector with Target as arg.
@@ -51,11 +52,11 @@ func (vm *VM) opMonitor() error {
 	// Current Stack: [Target].
 	// Need: [Selector, Target].
 	// So pop Target, push Selector, push Target.
-	
+
 	vm.pop() // Pop Target
 	vm.push(selectorVal)
 	vm.push(targetVal)
-	
+
 	// Setup Call Frame
 	newFrame := &CallFrame{
 		Parent:  vm.CurrentFrame,
@@ -63,7 +64,7 @@ func (vm *VM) opMonitor() error {
 		IP:      0,
 		Base:    vm.SP - 1, // 1 Arg (Target)
 	}
-	
+
 	vm.CurrentFrame = newFrame
 	return nil
 }
@@ -71,26 +72,26 @@ func (vm *VM) opMonitor() error {
 func (vm *VM) opPost() error {
 	idx := vm.readByte()
 	argc := int(vm.readByte())
-	
+
 	args := make([]mapval.Value, argc)
 	for i := argc - 1; i >= 0; i-- {
 		args[i] = vm.pop()
 	}
-	
+
 	receiver := vm.pop()
-	
+
 	// Get Signal Name
 	frame := vm.currentFrame()
 	name := frame.Closure.Fn.Chunk.Constants[idx].Str
-	
+
 	// Create Signal
 	sigVal := mapval.NewSignal(name, frame, args)
 	// sig := sigVal.Obj // Not needed if we push sigVal directly
-	
+
 	if vm.Config.TraceSpace {
 		fmt.Printf("TRACE: Signal Posted: %s from Frame %p\n", name, frame)
 	}
-	
+
 	// Synchronous Dispatch (Mocking the Scheduler)
 	// 1. Check Monitors in Parent Chain
 	curr := vm.CurrentFrame
@@ -99,15 +100,15 @@ func (vm *VM) opPost() error {
 			if vm.Config.TraceSpace {
 				fmt.Printf("TRACE: Found Monitor in Frame %p\n", curr)
 			}
-			
+
 			// Execute Monitor synchronously
 			// We MUST satisfy opReturn calling convention: [Function, Args...]
 			// Push Monitor Closure (Function)
 			vm.push(mapval.Value{Type: mapval.ValObject, Obj: curr.Monitor})
-			
+
 			// Push Signal (Argument to Selector)
 			vm.push(sigVal)
-			
+
 			// Setup Frame for Monitor
 			monitorFrame := &CallFrame{
 				Parent:  vm.CurrentFrame,
@@ -115,16 +116,16 @@ func (vm *VM) opPost() error {
 				IP:      0,
 				Base:    vm.SP - 1, // Points to SigVal. Base-1 is Monitor Closure.
 			}
-			
+
 			// Run Monitor
 			vm.CurrentFrame = monitorFrame
-			
+
 			res, err := vm.RunSynchronous()
-			
+
 			if err != nil {
 				return err
 			}
-			
+
 			if res == Ok {
 				// Monitor returned. Check result.
 				// If result is Empty, it means "Peek" or "Pass". Continue bubbling.
@@ -150,17 +151,19 @@ func (vm *VM) opPost() error {
 						// Satisfy calling convention
 						vm.push(listenerVal) // Push Listener Closure
 						vm.push(sigVal)      // Push Arg
-						
+
 						newFrame := &CallFrame{
 							Parent:  vm.CurrentFrame,
 							Closure: closure,
 							IP:      0,
-							Base:    vm.SP - 1, 
+							Base:    vm.SP - 1,
 						}
-						
+
 						vm.CurrentFrame = newFrame
 						res, err := vm.RunSynchronous()
-						if err != nil { return err }
+						if err != nil {
+							return err
+						}
 						if res == Ok {
 							result := vm.peek(0)
 							if result.Type != mapval.ValEmpty {
@@ -173,7 +176,7 @@ func (vm *VM) opPost() error {
 			}
 		}
 	}
-	
+
 	// No listener or no reply? Return Empty.
 	vm.push(mapval.NewEmpty())
 	return nil
@@ -183,30 +186,30 @@ func (vm *VM) opInject() error {
 	// opInject is called inside the listener.
 	// It should "resume" the sender.
 	// In our sync model, it just returns the value.
-	
+
 	idx := vm.readByte()
 	argc := int(vm.readByte())
-	
+
 	if vm.Config.TraceSpace {
 		fmt.Printf("DEBUG: opInject argc=%d SP=%d\n", argc, vm.SP)
 		for i := 0; i < vm.SP; i++ {
 			fmt.Printf("Stack[%d]: %s\n", i, vm.Stack[i])
 		}
 	}
-	
+
 	args := make([]mapval.Value, argc)
 	for i := argc - 1; i >= 0; i-- {
 		args[i] = vm.pop()
 	}
-	
+
 	receiver := vm.pop() // The Signal object
-	
+
 	if vm.Config.TraceSpace {
 		frame := vm.currentFrame()
 		name := frame.Closure.Fn.Chunk.Constants[idx].Str
 		fmt.Printf("TRACE: Reply %s Injected to %s (Type: %d)\n", name, receiver, receiver.Type)
 	}
-	
+
 	// Determine Payload
 	var payload mapval.Value
 	if argc == 0 {
@@ -218,14 +221,14 @@ func (vm *VM) opInject() error {
 		m := mapval.NewMap()
 		// Populate Fields and Legend
 		m.Fields = args
-		
+
 		// Map logic: Positional elements have numeric names ("1", "2", etc.)
 		// Always create a new Legend for this specific List structure
 		m.Legend = &mapval.Legend{
-			Kind: mapval.LegendMap,
+			Kind:   mapval.LegendMap,
 			Fields: make([]mapval.FieldDesc, len(args)),
 		}
-		
+
 		for i := 0; i < len(args); i++ {
 			// Name is "1"-based index string
 			name := fmt.Sprintf("%d", i+1)
@@ -234,10 +237,10 @@ func (vm *VM) opInject() error {
 				Kind: mapval.FieldMutable, // or Immutable? Args usually mutable in list?
 			}
 		}
-		
+
 		payload = mapval.Value{Type: mapval.ValObject, Obj: m}
 	}
-	
+
 	vm.push(payload)
 	return nil
 }
@@ -261,7 +264,7 @@ func (vm *VM) opSubscribe() error {
 	// Stack: [Map, Selector]
 	selector := vm.pop()
 	receiver := vm.pop()
-	
+
 	if receiver.Type == mapval.ValObject {
 		if m, ok := receiver.Obj.(*mapval.Map); ok {
 			m.Listeners = append(m.Listeners, selector)
@@ -274,13 +277,15 @@ func (vm *VM) opSubscribe() error {
 	} else {
 		return fmt.Errorf("can only subscribe to maps")
 	}
-	
+
 	vm.push(mapval.NewEmpty())
 	return nil
 }
 
 func (vm *VM) opNewRealm() {
-	// Stub
+	// Consume the flags byte emitted by the compiler!
+	_ = vm.readByte()
+
 	// vm.push(Realm)
 	if vm.Config.TraceSpace {
 		fmt.Println("TRACE: New Realm")
