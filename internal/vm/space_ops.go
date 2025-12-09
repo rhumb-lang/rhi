@@ -6,27 +6,62 @@ import (
 )
 
 func (vm *VM) opMonitor() error {
-	// Stack: [Closure (Target), Selector]
+	// Stack: [Target, Selector]
 	selectorVal := vm.pop()
-	targetVal := vm.peek(0) // Peek target, don't pop! It serves as the "Function" slot for opReturn.
+	targetVal := vm.peek(0) // Peek target
 	
 	selector, ok := selectorVal.Obj.(*mapval.Closure)
 	if !ok {
 		return fmt.Errorf("monitor must be a selector closure")
 	}
 	
-	closure, ok := targetVal.Obj.(*mapval.Closure)
-	if !ok {
-		return fmt.Errorf("monitor target must be a closure")
+	// If Target is a Closure, attach as Monitor
+	if targetVal.Type == mapval.ValObject {
+		if closure, ok := targetVal.Obj.(*mapval.Closure); ok {
+			// Create new frame for the target closure
+			newFrame := &CallFrame{
+				Parent:  vm.CurrentFrame,
+				Closure: closure,
+				IP:      0,
+				Base:    vm.SP, // Base points to first arg (or empty space if 0 args). Base-1 is Target.
+				Monitor: selector,
+			}
+			
+			vm.CurrentFrame = newFrame
+			return nil
+		}
 	}
 	
-	// Create new frame for the target closure
+	// Dispatch Mode: Selector(Target)
+	// Target is already on stack (peaked).
+	// We need to setup a call to Selector with Target as arg.
+	// But opMonitor expects [Target, Selector] on stack (before pops).
+	// We popped Selector. Target is at Top.
+	// Stack: [..., Target].
+	// We want to call Selector(Target).
+	// Calling convention: [Closure, Arg].
+	// So push Selector (Closure).
+	// Swap? [Target, Selector] -> [Selector, Target].
+	// Target is at Top.
+	// vm.push(selectorVal).
+	// Stack: [Target, Selector].
+	// Swap.
+	// But wait, `opCall` expects [Closure, Args].
+	// Stack: [Closure, Arg].
+	// Current Stack: [Target].
+	// Need: [Selector, Target].
+	// So pop Target, push Selector, push Target.
+	
+	vm.pop() // Pop Target
+	vm.push(selectorVal)
+	vm.push(targetVal)
+	
+	// Setup Call Frame
 	newFrame := &CallFrame{
 		Parent:  vm.CurrentFrame,
-		Closure: closure,
+		Closure: selector,
 		IP:      0,
-		Base:    vm.SP, // Base points to first arg (or empty space if 0 args). Base-1 is Target.
-		Monitor: selector,
+		Base:    vm.SP - 1, // 1 Arg (Target)
 	}
 	
 	vm.CurrentFrame = newFrame

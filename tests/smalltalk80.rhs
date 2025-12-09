@@ -3,5 +3,4 @@ sum-to .= [start; end] -> (
   start|end <> [i] -> %( wraps this expression in a subroutine: %) result := result ++ i
   result % return the result value
 )
-sum-to(1;5) %= 15
 sum-to(1;10000) %= 50005000
