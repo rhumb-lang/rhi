@@ -86,71 +86,21 @@ func (vm *VM) opPost() error {
 
 	// Create Signal
 	sigVal := mapval.NewSignal(name, frame, args)
-	// sig := sigVal.Obj // Not needed if we push sigVal directly
 
 	if vm.Config.TraceSpace {
-		fmt.Printf("TRACE: Signal Posted: %s from Frame %p\n", name, frame)
+		fmt.Printf("TRACE: Signal Posted: #%s to %s\n", name, receiver)
 	}
 
-	// Synchronous Dispatch (Mocking the Scheduler)
-	// 1. Check Monitors in Parent Chain
-	curr := vm.CurrentFrame
-	for curr != nil {
-		if curr.Monitor != nil {
-			if vm.Config.TraceSpace {
-				fmt.Printf("TRACE: Found Monitor in Frame %p\n", curr)
-			}
-
-			// Execute Monitor synchronously
-			// We MUST satisfy opReturn calling convention: [Function, Args...]
-			// Push Monitor Closure (Function)
-			vm.push(mapval.Value{Type: mapval.ValObject, Obj: curr.Monitor})
-
-			// Push Signal (Argument to Selector)
-			vm.push(sigVal)
-
-			// Setup Frame for Monitor
-			monitorFrame := &CallFrame{
-				Parent:  vm.CurrentFrame,
-				Closure: curr.Monitor,
-				IP:      0,
-				Base:    vm.SP - 1, // Points to SigVal. Base-1 is Monitor Closure.
-			}
-
-			// Run Monitor
-			vm.CurrentFrame = monitorFrame
-
-			res, err := vm.RunSynchronous()
-
-			if err != nil {
-				return err
-			}
-
-			if res == Ok {
-				// Monitor returned. Check result.
-				// If result is Empty, it means "Peek" or "Pass". Continue bubbling.
-				// If result is Not Empty, it means "Replied". Stop bubbling.
-				result := vm.peek(0)
-				if result.Type != mapval.ValEmpty {
-					return nil
-				}
-				// Pop the Empty result and continue
-				vm.pop()
-			}
-		}
-		curr = curr.Parent
-	}
-
-	// 2. Check Receiver for Listeners (e.g. Realm)
+	// PHASE 1: Check Receiver Listeners (The Realm itself)
 	if receiver.Type == mapval.ValObject {
 		if m, ok := receiver.Obj.(*mapval.Map); ok {
 			for _, listenerVal := range m.Listeners {
 				if listenerVal.Type == mapval.ValObject {
 					if closure, ok := listenerVal.Obj.(*mapval.Closure); ok {
-						// Execute Listener synchronously
-						// Satisfy calling convention
-						vm.push(listenerVal) // Push Listener Closure
-						vm.push(sigVal)      // Push Arg
+
+						// --- Execute Listener (Level 1) ---
+						vm.push(listenerVal)
+						vm.push(sigVal)
 
 						newFrame := &CallFrame{
 							Parent:  vm.CurrentFrame,
@@ -164,20 +114,102 @@ func (vm *VM) opPost() error {
 						if err != nil {
 							return err
 						}
-						if res == Ok {
-							result := vm.peek(0)
-							if result.Type != mapval.ValEmpty {
-								return nil
+						if res != Ok {
+							continue
+						} // Should not happen usually
+
+						// --- Check Result ---
+						result := vm.peek(0)
+
+						// CHAINING: If result is a Closure (Selector), execute it!
+						if result.Type == mapval.ValObject {
+							if nextClosure, ok := result.Obj.(*mapval.Closure); ok {
+								if vm.Config.TraceSpace {
+									fmt.Println("TRACE: Listener returned Closure -> Executing Chain")
+								}
+								vm.pop() // Pop the closure (result of L1)
+
+								// Setup Call for L2 (Selector)
+								vm.push(result) // Push Selector
+								vm.push(sigVal) // Push Signal
+
+								chainFrame := &CallFrame{
+									Parent:  vm.CurrentFrame,
+									Closure: nextClosure,
+									IP:      0,
+									Base:    vm.SP - 1,
+								}
+
+								vm.CurrentFrame = chainFrame
+								_, err = vm.RunSynchronous()
+								if err != nil {
+									return err
+								}
+
+								// Update result to the output of the chain
+								result = vm.peek(0)
 							}
-							vm.pop()
 						}
+
+						// Final Decision: Consume or Bubble?
+						if result.Type != mapval.ValEmpty {
+							if vm.Config.TraceSpace {
+								fmt.Printf("TRACE: Signal Consumed by Receiver: %s\n", result)
+							}
+							return nil // Consumed
+						}
+
+						// Empty result = Peek (::) or Fallthrough -> Continue Bubbling
+						vm.pop()
 					}
 				}
 			}
 		}
 	}
 
-	// No listener or no reply? Return Empty.
+	// PHASE 2: Bubble Up (Check Monitors in Parent Chain)
+	curr := vm.CurrentFrame
+	for curr != nil {
+		if curr.Monitor != nil {
+			if vm.Config.TraceSpace {
+				fmt.Printf("TRACE: Bubbled to Monitor in Frame %p\n", curr)
+			}
+
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: curr.Monitor})
+			vm.push(sigVal)
+
+			monitorFrame := &CallFrame{
+				Parent:  vm.CurrentFrame,
+				Closure: curr.Monitor,
+				IP:      0,
+				Base:    vm.SP - 1,
+			}
+
+			vm.CurrentFrame = monitorFrame
+			res, err := vm.RunSynchronous()
+
+			if err != nil {
+				return err
+			}
+
+			if res == Ok {
+				result := vm.peek(0)
+				if result.Type != mapval.ValEmpty {
+					if vm.Config.TraceSpace {
+						fmt.Printf("TRACE: Signal Consumed by Monitor: %s\n", result)
+					}
+					return nil
+				}
+				vm.pop()
+			}
+		}
+		curr = curr.Parent
+	}
+
+	// PHASE 3: Unhandled
+	if vm.Config.TraceSpace {
+		fmt.Println("TRACE: Signal Unhandled (Dropped)")
+	}
 	vm.push(mapval.NewEmpty())
 	return nil
 }
@@ -212,11 +244,12 @@ func (vm *VM) opInject() error {
 
 	// Determine Payload
 	var payload mapval.Value
-	if argc == 0 {
+	switch argc {
+	case 0:
 		payload = mapval.NewEmpty()
-	} else if argc == 1 {
+	case 1:
 		payload = args[0]
-	} else {
+	default:
 		// Bundle into Map (List)
 		m := mapval.NewMap()
 		// Populate Fields and Legend
@@ -249,7 +282,7 @@ func (vm *VM) opWrite() error {
 	// Stub
 	vm.readByte() // Consume index
 	argc := int(vm.readByte())
-	for i := 0; i < argc; i++ {
+	for range argc {
 		vm.pop() // Pop arg
 	}
 	vm.pop() // Pop receiver

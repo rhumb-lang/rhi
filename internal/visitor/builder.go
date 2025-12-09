@@ -1,7 +1,6 @@
 package visitor
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -73,12 +72,6 @@ func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
 	}
 	stopIndex := stop.GetTokenIndex()
 	hiddenTokens := b.TokenStream.GetHiddenTokensToRight(stopIndex, antlr.TokenHiddenChannel)
-
-	// DEBUG PRINT
-	fmt.Printf("DEBUG: getAssertion stopIndex=%d hiddenCount=%d Expr=%q\n", stopIndex, len(hiddenTokens), ctx.GetText())
-	for i, t := range hiddenTokens {
-		fmt.Printf("  Token[%d]: %q\n", i, t.GetText())
-	}
 
 	for _, t := range hiddenTokens {
 		text := t.GetText()
