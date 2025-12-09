@@ -1,0 +1,31 @@
+% pingpong.rh
+
+% NOT FUNCTIONAL UNTIL STANDARD LIBRARIES (TIME) ARE ADDED
+
+% Measure the overhead of OP_POST (Signal), OP_SUBSCRIBE, and Context Switching (Goroutines).
+
+limit .= 100000
+realm .= <$>;
+
+% Player 1: Listens for Ping, sends Pong
+realm <> [#ping(n)] -> (
+  n < limit {
+    yes .. realm#pong(n + 1)
+    no  .. realm$done(n) % Proclaim done to stop the test
+  }
+)
+
+% Player 2: Listens for Pong, sends Ping
+realm <> [#pong(n)] -> (
+  realm#ping(n + 1)
+)
+
+% Start Match
+start .= 🕰️\now
+realm#ping(0)
+
+% Wait for completion (Main thread blocks on $done)
+realm <> [$done(final)] -> (
+  end .= 🕰️\now
+  console\log("Finished $final bounces in $(end - start) ns")
+)

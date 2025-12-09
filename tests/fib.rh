@@ -1,0 +1,13 @@
+% Recursive Fibonacci to the 35th number.
+
+% Stress test stack frame allocation, recursion overhead, and basic arithmetic.
+
+% Note: We use the Selector { yes..; no.. } pattern because => does not return
+% the body's value (it returns the condition).
+
+fib .= [n] -> n << 2 {
+  yes .. n
+  no  .. fib(n -- 1) ++ fib(n -- 2)
+}
+
+fib(35) %= 9227465

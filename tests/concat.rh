@@ -1,0 +1,9 @@
+% concat.rh
+% Concatenate 100,000 strings
+
+% Stress test the Value struct, string allocation, and GC pressure.
+
+s := ""
+1|100000 <> [] -> s := s ++ "a"
+
+s[#] %= 100000
