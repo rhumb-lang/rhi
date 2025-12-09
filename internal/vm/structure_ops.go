@@ -59,23 +59,90 @@ func (vm *VM) opPipe() {
 	vm.push(mapval.NewEmpty())
 }
 
-func (vm *VM) opForeach() {
+func (vm *VM) opForeach() error {
 	// a <> b
-	// Check operands for Subscription pattern (Map <> Selector)
-	// rhs := vm.peek(0)
-	lhs := vm.peek(1)
+	rhs := vm.pop()
+	lhs := vm.pop()
 	
+	// Case 1: Subscription (Map <> Selector)
 	if lhs.Type == mapval.ValObject {
 		if _, ok := lhs.Obj.(*mapval.Map); ok {
-			// Subscription!
-			vm.opSubscribe()
-			return
+			// This is a subscription.
+			// Re-push in order: [Map, Selector]
+			vm.push(lhs)
+			vm.push(rhs)
+			return vm.opSubscribe()
+		}
+	}
+	
+	// Case 2: Range Iteration (Range <> Closure)
+	if lhs.Type == mapval.ValRange && rhs.Type == mapval.ValObject {
+		rng := lhs.Obj.(*mapval.Range)
+		if closure, ok := rhs.Obj.(*mapval.Closure); ok {
+			// Loop
+			start := rng.Start
+			end := rng.End
+			step := int64(1)
+			if start > end {
+				step = -1
+			}
+			
+			for i := start; ; i += step {
+				// Execute Closure(i)
+				
+				// Push Closure (Function)
+				vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
+				// Push Arg (i)
+				vm.push(mapval.NewInt(i))
+				
+				// Setup Frame
+				// We can reuse opCall logic?
+				// opCall expects args on stack.
+				// opCall sets up frame but DOES NOT RUN.
+				// So we call opCall, then RunSynchronous.
+				
+				// opCall checks peek(argCount).
+				// Arg count is 1.
+				// But opCall reads argCount from Bytecode stream!
+				// We are in Go code, we don't have an instruction stream for "CALL 1".
+				// So we must manually setup frame.
+				
+				newFrame := &CallFrame{
+					Parent:  vm.CurrentFrame,
+					Closure: closure,
+					IP:      0,
+					Base:    vm.SP - 1, // 1 Arg (i)
+				}
+				
+				vm.CurrentFrame = newFrame
+				
+				// Run
+				res, err := vm.RunSynchronous()
+				if err != nil {
+					return err
+				}
+				if res != Ok {
+					// Propagate Halt/Error?
+					// If Halt, stop everything.
+					return nil // Stop loop? Or return error?
+				}
+				
+				// Pop result of closure
+				vm.pop()
+				
+				if i == end {
+					break
+				}
+			}
+			
+			vm.push(mapval.NewEmpty())
+			return nil
 		}
 	}
 
-	vm.pop()
-	vm.pop()
+	// Fallback
 	vm.push(mapval.NewEmpty())
+	return nil
 }
 
 func (vm *VM) opAccessNested() {
