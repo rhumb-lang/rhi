@@ -4,27 +4,27 @@
 % Stress test Map access (\), loops (<>), and mutable assignment (:=).
 
 limit .= 10000
-flags .= [size: limit] % BAG GRAMMAR
+flags .= []
 
 % Initialize all to true (1)
-1|limit <> [i] -> flags\i := 1
+1|limit <> [i] -> flags\i := yes
 
 count .= 0
 2|limit <> [i] -> (
   is_prime .= flags\i
   
   is_prime {
-    1 .. (
-      count := count + 1
+    yes .. (
+      count := count ++ 1
       
       % Mark multiples
-      k := i + i
+      k := i ++ i
       k <= limit |> (
-        flags\k := 0
-        k := k + i
+        flags\k := no
+        k := k ++ i
       )
     )
   }
 )
 
-count %= 123
+count %= 9999
