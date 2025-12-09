@@ -83,7 +83,7 @@ NumberPart            : (Zero | Digit)+ ;
 fragment VersionPart
     : NumberPart | Dollar Label | Star
     ;
-NumberStart           : Digit+ ;
+NumberStart           : Digit (Zero | Digit)* ;
 fragment Digit        : [1-9] ;
 
 RawText        : '\'' (RawEscape | ~['\n])* '\'' ;
