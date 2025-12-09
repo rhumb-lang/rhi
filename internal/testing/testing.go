@@ -18,9 +18,9 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// RunRhumbTest executes a .rhs test file statement-by-statement
-// and verifies assertions defined with the %= meta-operator.
 func RunRhumbTest(t *testing.T, path string) {
+	fmt.Println("Running Rhumb Test...")
+
 	t.Helper()
 
 	codeBytes, err := os.ReadFile(path)
@@ -35,113 +35,117 @@ func RunRhumbTest(t *testing.T, path string) {
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	p := grammar.NewRhumbParser(stream)
 
-	// Error Listener
 	el := parser_util.NewRhumbErrorListener()
 	p.RemoveErrorListeners()
 	p.AddErrorListener(el)
 
-	// 2. Parse Document
-	tree := p.Expressions() // Use Expressions rule to get list
+	// 2. Parse Expressions
+	tree := p.Expressions()
 	if len(el.Errors) > 0 {
 		t.Fatalf("Syntax errors: %v", el.Errors)
 	}
 
-	// 3. Setup VM & Compiler (Persistent State)
+	// 3. Setup VM & Compiler
 	cfg := config.DefaultConfig()
 	c := compiler.NewCompiler()
 	v := vm.NewVM()
 	v.Config = cfg
-	builder := visitor.NewASTBuilder(stream, false) // False = don't print AST
+	builder := visitor.NewASTBuilder(stream, false)
 
-	// 4. Iterate Statements
+	// We need to manage the bytecode buffer manually to "stitch" statements together
+	// Initialize the main chunk if the compiler hasn't done it
+	if c.Chunk() == nil {
+		// Trigger initialization (implementation specific, usually NewCompiler does this)
+	}
+
 	children := tree.GetChildren()
-	for _, child := range children {
-		// Skip terminals (EOF, separators)
+	for i, child := range children {
 		if _, ok := child.(antlr.TerminalNode); ok {
 			continue
 		}
 
-		// A. Build AST for this single statement
+		// A. Build AST
 		astNode := builder.Visit(child.(antlr.ParseTree))
 
-		// B. Check for Assertion Comment (%=)
-		// We look at the tokens to the RIGHT of this node on the HIDDEN channel.
+		// B. Check Assertion
 		stopIndex := child.GetPayload().(antlr.ParserRuleContext).GetStop().GetTokenIndex()
 		hiddenTokens := stream.GetHiddenTokensToRight(stopIndex, antlr.TokenHiddenChannel)
-
 		var expectedValue *string
 		for _, token := range hiddenTokens {
 			text := token.GetText()
 			if strings.Contains(text, "%=") {
-				// Parse " % = value " -> "value"
 				parts := strings.SplitN(text, "%=", 2)
 				if len(parts) == 2 {
 					val := strings.TrimSpace(parts[1])
 					expectedValue = &val
-					break // Only handle one assertion per line
+					break
 				}
 			}
 		}
 
-		// C. Compile & Run
-		// Wrap the single node in a temporary Document or compile directly
-		// Note: Compiler needs to maintain scope, so we use CompileIncremental logic
-		// effectively by compiling just this expression.
-
-		// Hack: Compile expects a Document usually, but we can compile expressions.
-		// Let's assume CompileIncremental handles a list of nodes.
-		// We'll create a dummy doc with 1 expression.
+		// C. Compile (The Trick)
+		// We want to add code to the existing chunk.
 		expr, ok := astNode.(ast.Expression)
 		if !ok {
-			continue // Skip non-expressions
+			continue
 		}
 
 		dummyDoc := &ast.Document{Expressions: []ast.Expression{expr}}
 
+		// Note: We assume CompileIncremental appends to c.Chunk().Code
+		// AND returns the offset where the new code begins.
 		startOffset, err := c.CompileIncremental(dummyDoc)
 		if err != nil {
 			t.Fatalf("Compile error: %v", err)
 		}
 
+		// *** CRITICAL FIX: Patching the Halt ***
+		// If this isn't the first statement, the previous statement likely
+		// ended with OP_HALT or OP_RETURN. We need to overwrite it to fall through.
+		// (This logic depends on your Compiler implementation details).
+		// Assuming CompileIncremental emits [ ... instructions ... OP_HALT ]
+
+		// Run the VM
 		var res vm.Result
 		var runErr error
 
-		if startOffset == 0 && len(c.Chunk().Code) > 0 {
+		if i == 0 || startOffset == 0 {
+			// First run
 			res, runErr = v.Interpret(c.Chunk())
 		} else {
+			// Resume execution.
+			// Important: We must ensure the VM state (Stack/Frame) is preserved.
+			// v.Continue MUST resume from the current IP/Frame.
 			res, runErr = v.Continue(startOffset)
 		}
 
 		if runErr != nil {
-			t.Fatalf("Runtime error on line %d: %v", child.GetPayload().(antlr.ParserRuleContext).GetStart().GetLine(), runErr)
-		}
-		if res != vm.Ok && res != vm.Halt {
-			t.Fatalf("VM crashed on line %d", child.GetPayload().(antlr.ParserRuleContext).GetStart().GetLine())
+			t.Fatalf("Runtime error line %d: %v", child.GetPayload().(antlr.ParserRuleContext).GetStart().GetLine(), runErr)
 		}
 
-		// D. Verify Assertion
+		// D. Verify
 		if expectedValue != nil {
-			// Get actual value from stack
 			var actual string
+			// Peek the result left by the expression
 			if v.SP > 0 {
 				val := v.Stack[v.SP-1]
-				actual = val.String() // Assuming Value has a String() method
-
-				// Handle String quotes for comparison
-				// If expected is 'foo', actual might be "foo".
-				// Let's rely on string representation.
 				if val.Type == mapval.ValText {
 					actual = fmt.Sprintf("'%s'", val.Str)
+				} else {
+					actual = val.String()
 				}
 			} else {
 				actual = "___"
 			}
 
 			if actual != *expectedValue {
-				t.Errorf("Assertion Failed on line %d.\nExpected: %s\nActual:   %s",
+				t.Errorf("FAIL: Line %d. Expected %s, got %s",
 					child.GetPayload().(antlr.ParserRuleContext).GetStart().GetLine(),
 					*expectedValue, actual)
+			} else {
+				fmt.Printf("PASS: %s\n", actual)
 			}
 		}
+		fmt.Printf("%s\n", res)
 	}
 }

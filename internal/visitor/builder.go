@@ -17,6 +17,55 @@ type ASTBuilder struct {
 	IsTestMode  bool
 }
 
+func (b *ASTBuilder) VisitDocument(ctx *grammar.DocumentContext) interface{} {
+	// The root of the AST is a Document containing a list of expressions
+	exprs := b.Visit(ctx.Expressions())
+
+	// Safety check in case VisitExpressions returns nil
+	if exprs == nil {
+		return &ast.Document{Expressions: []ast.Expression{}}
+	}
+
+	return &ast.Document{
+		Expressions: exprs.([]ast.Expression),
+	}
+}
+
+func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface{} {
+	var exprs []ast.Expression
+
+	// Iterate over all children to preserve order and handle interleaved terminators
+	// However, using ctx.AllExpression() is cleaner if we just want the expressions.
+	// We need the Context for each expression to check for assertions.
+
+	for _, exprCtx := range ctx.AllExpression() {
+		res := b.Visit(exprCtx)
+		if expr, ok := res.(ast.Expression); ok {
+
+			// 1. Check for Assertion (Test Mode)
+			// If -test flag is active, we look for the %= comment
+			if b.IsTestMode {
+				// We pass the rule context to find hidden tokens to its right
+				if assertCode, found := b.getAssertion(exprCtx); found {
+					// Parse the expected value (e.g. "10")
+					expected := b.parseFragment(assertCode)
+
+					// Wrap the expression in an AssertionWrapper
+					// The Compiler will generate OP_ASSERT_EQ for this
+					expr = &ast.AssertionWrapper{
+						Actual:   expr,
+						Expected: expected,
+					}
+				}
+			}
+
+			exprs = append(exprs, expr)
+		}
+	}
+
+	return exprs
+}
+
 func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
 	stop := ctx.GetStop()
 	if stop == nil {
@@ -33,8 +82,8 @@ func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
 
 	for _, t := range hiddenTokens {
 		text := t.GetText()
-		if strings.HasPrefix(text, "%=") {
-			return strings.TrimSpace(strings.TrimPrefix(text, "%=")), true
+		if after, ok := strings.CutPrefix(text, "%="); ok {
+			return strings.TrimSpace(after), true
 		}
 	}
 	return "", false
