@@ -1159,7 +1159,7 @@ Different artifacts render differently when expanded into Windows.
 | **Shelf**   | Folder    | **Sub-Desktop**     | Displays contained Books/Shelves as Icons in a grid. Acts as a spatial file manager.       |
 | **Library** | Package   | **Sub-Desktop**     | Read-only view of external dependency contents.                                            |
 | **Book**    | File      | **Code Projector**  | The Projection Editor (Source Code).                                                       |
-| **Tool**    | (none)    | **Form Projector** | Certain actions in the Projection Editor can trigger sidebar tools (e.g., Docs, Debugging) |
+| **Tool**    | (none)    | **Form Projector** | Certain actions in the Projection Editor can trigger sidebar tools (e.g., Docs, Debugging, Stack Visualizations, Tuplespace visualizations, frame info, etc.) |
 | **Catalog** | Tag       | **Form Projector** | Form-based editor for `.rhy` YAML files.                                                   |
 | **Shell**   | (none)    | **Terminal Projector** | Openable from context menu. Like a line-based code projection editor but with some batteries included. |
 | **Voyage**  | Gear      | **Viewport**        | Renders the output of a running process (Game/App).                                        |
@@ -1185,6 +1185,12 @@ Different artifacts render differently when expanded into Windows.
   "Run Tests" which will execute the file using the `-test` flag and print the
   test results in a sidebar window (errors can be clicked to navigate to the
   offending code),
+* **Hot Reload:** If you have executed a book and it generated a viewport, you
+  can right click on the viewport tab to be offered an option "Reload On Code
+  Change" which will automatically re-execute the same command that generated
+  that viewport whenever a piece of code that was used by that viewport has been
+  modified and the changes committed to the route, replacing the viewport with
+  the newly executed version.
 
 ### 11.5 Persistence Strategy
 * **Code:** Saved to `.__.rh` / `.rhy` (The "Babel" Layer).
