@@ -1164,7 +1164,7 @@ Different artifacts render differently when expanded into Windows.
 | **Shell**   | (none)    | **Terminal Projector** | Openable from context menu. Like a line-based code projection editor but with some batteries included. |
 | **Voyage**  | Gear      | **Viewport**        | Renders the output of a running process (Game/App).                                        |
 
-### 11.4 Navigation & Refactoring
+### 11.4 Quality Of Life
 * **Context Menu:** The primary mechanism for instantiating new objects
   (Libraries, Shelves, Books).
 * **Hyper-Navigation:** Right-clicking a label in the Code Projector offers
@@ -1181,6 +1181,10 @@ Different artifacts render differently when expanded into Windows.
 * **Refactoring:** Drag-and-drop operations on the Desktop map to AST transformations:
     * Dragging code text from Book A to Book B moves the function.
     * Dragging Book A into Shelf B moves the file on disk and updates references.
+* **Testing:** Right clicking on a book or shelf offers a context menu option
+  "Run Tests" which will execute the file using the `-test` flag and print the
+  test results in a sidebar window (errors can be clicked to navigate to the
+  offending code),
 
 ### 11.5 Persistence Strategy
 * **Code:** Saved to `.__.rh` / `.rhy` (The "Babel" Layer).
