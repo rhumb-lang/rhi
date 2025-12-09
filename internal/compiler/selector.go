@@ -142,33 +142,29 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 		return c.compileExpression(t)
 
 	case *ast.LabelLiteral:
-		// Bind variable
+		// 1. Check for Boolean Literals (yes/no)
+		// TODO: Add international support
+		if t.Value == "yes" {
+			c.emitConstant(mapval.NewBoolean(true))
+			c.emit(mapval.OP_EQ)
+			return nil
+		}
+		if t.Value == "no" {
+			c.emitConstant(mapval.NewBoolean(false))
+			c.emit(mapval.OP_EQ)
+			return nil
+		}
+
+		// 2. Bind variable
 		idx := c.Scope.resolveLocal(t.Value)
 		if idx != -1 {
-			// Pinning: Subject == existing local?
-			// Logic: Load Local. EQ.
-			// But if we are binding to "_" (Slot 0), and Subject IS "_", then "_ == _" is True.
-			// However, "_" is usually the Subject argument.
-			// If target is `x`, and `x` is not defined, it's binding.
-			// If `x` is defined (e.g. outer scope? or previous match?), pinning.
-
-			// Since we hoist, `x` is defined in current scope (initialized to Empty).
-			// But is it "bound"?
-			// Hoister adds all labels. So `idx` will always be found for `x` in pattern.
-			// We need to know if `x` was meant to be a NEW binding or EXISTING.
-			// Pattern matching semantics: LHS of `..` usually binds if it's a bare label.
-			// Pinning happens if it matches an *existing* value.
-			// Since `x` is local to this selector (hoisted), it is "new".
-			// So we should bind.
-
 			// Store Subject to Local
 			c.emit(mapval.OP_STORE_LOC)
 			c.Chunk().WriteByte(byte(idx), 0)
 
-			// Push True
-			c.emitConstant(mapval.NewBoolean(true)) // STORE peeks, so Subject still there?
-			// My STORE_LOC peeks. So Stack: [Subject].
-			// We need [True].
+			// Push True (Match Successful)
+			// STORE_LOC leaves the value on stack (peek), but we need 'True' for the match result.
+			// Stack: [Subject] -> OP_POP -> [] -> Push True
 			c.emit(mapval.OP_POP)
 			c.emitConstant(mapval.NewBoolean(true))
 			return nil
