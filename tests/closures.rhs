@@ -1,0 +1,35 @@
+foo .= [___; ___]
+bar .= [f] -> (foo\1 := f; foo\last-func := 'bar')
+baz .= [q] -> (foo\2 := q; foo\last-func := 'baz')
+bar('wow')
+foo\1 %= 'wow'
+foo\last-func %= 'bar'
+baz('cool')
+foo\2 %= 'cool'
+foo\last-func %= 'baz'
+bar('overwrite')
+foo\1 %= 'overwrite'
+foo\last-func %= 'bar'
+baz(100)
+foo\2 %= 100
+foo\last-func %= 'baz'
+
+double-result := ___
+double-bar := [z] -> (
+    new-foo := [___; ___]
+    new-bar := [f] -> (
+        bar(f)
+        new-foo\1 := f
+        bar-text := 'new-bar'
+        foo\last-func := bar-text
+        new-foo\last-func := bar-text
+    )
+    new-bar(z)
+    double-result := new-foo
+)
+double-bar('double-wow')
+double-result\1 %= 'double-wow'
+double-result\2 %= ___
+foo\1 %= 'double-wow'
+double-result\last-func %= 'new-bar'
+foo\last-func %= 'new-bar'
