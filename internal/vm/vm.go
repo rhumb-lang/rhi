@@ -223,13 +223,19 @@ func (vm *VM) Step() (Result, error) {
 
 	case mapval.OP_LOAD_CONST: vm.opLoadConst()
 
-	case mapval.OP_LOAD_LOC:   vm.opLoadLoc()
+		case mapval.OP_LOAD_LOC:   vm.opLoadLoc()
 
-	case mapval.OP_STORE_LOC:  vm.opStoreLoc()
+		case mapval.OP_STORE_LOC:  vm.opStoreLoc()
 
-	case mapval.OP_DUP:        vm.opDup()
+		case mapval.OP_LOAD_UPVALUE: vm.opLoadUpvalue()
 
-	case mapval.OP_POP:        vm.opPop()
+		case mapval.OP_STORE_UPVALUE: vm.opStoreUpvalue()
+
+		case mapval.OP_DUP:        vm.opDup()
+
+		case mapval.OP_POP:        vm.opPop()
+
+	
 
 	
 

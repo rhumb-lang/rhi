@@ -60,6 +60,25 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		hoister := NewHoister()
 		locals := hoister.Hoist(bin.Right)
 		for _, name := range locals {
+			// Check if already declared in enclosing scopes (for Upvalue support)
+			// But wait, parameters (added above) shadow outer variables.
+			// And we just added parameters to child.Scope.
+			// child.isDeclared(name) will return true if it's a parameter.
+			// If it's a parameter, it's a local.
+			// If it's NOT a parameter, check enclosing.
+			// `child.Scope.resolveLocal(name)` handles parameters.
+			
+			if child.Scope.resolveLocal(name) != -1 {
+				// Already a parameter, ignore (it's local)
+				continue
+			}
+			
+			// Check Enclosing
+			if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
+				// Exists in outer scope -> Don't make it local (Upvalue)
+				continue
+			}
+			
 			child.Scope.addLocal(name)
 			child.emitConstant(mapval.NewEmpty())
 		}
@@ -79,6 +98,16 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		c.emit(mapval.OP_MAKE_FN)
 		c.Chunk().WriteByte(byte(idx), 0)
 		
+		// Write Upvalue Descriptors
+		for _, up := range child.Upvalues {
+			isLocal := byte(0)
+			if up.IsLocal {
+				isLocal = 1
+			}
+			c.Chunk().WriteByte(isLocal, 0)
+			c.Chunk().WriteByte(byte(up.Index), 0)
+		}
+		
 		return nil
 	}
 
@@ -93,16 +122,24 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 				return err
 			}
 			
-			// 2. Resolve Variable (Must exist due to hoisting)
+			// 2. Resolve Variable
 			idx := c.Scope.resolveLocal(label.Value)
-			if idx == -1 {
-				return fmt.Errorf("undeclared variable (hoisting failed): %s", label.Value)
+			if idx != -1 {
+				// Local
+				c.emit(mapval.OP_STORE_LOC)
+				c.Chunk().WriteByte(byte(idx), 0)
+				return nil
 			}
 			
-			// Update existing
-			c.emit(mapval.OP_STORE_LOC)
-			c.Chunk().WriteByte(byte(idx), 0)
-			return nil
+			up := c.resolveUpvalue(label.Value)
+			if up != -1 {
+				// Upvalue
+				c.emit(mapval.OP_STORE_UPVALUE)
+				c.Chunk().WriteByte(byte(up), 0)
+				return nil
+			}
+			
+			return fmt.Errorf("undeclared variable (hoisting failed): %s", label.Value)
 		}
 		
 		// Check LHS: Chain (Map Field) e.g. obj\x .= 1

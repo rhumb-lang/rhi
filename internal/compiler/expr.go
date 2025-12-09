@@ -24,7 +24,13 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 			c.emit(mapval.OP_LOAD_LOC)
 			c.Chunk().WriteByte(byte(idx), 0)
 		} else {
-			return fmt.Errorf("undefined variable: %s", e.Value)
+			up := c.resolveUpvalue(e.Value)
+			if up != -1 {
+				c.emit(mapval.OP_LOAD_UPVALUE)
+				c.Chunk().WriteByte(byte(up), 0)
+			} else {
+				return fmt.Errorf("undefined variable: %s", e.Value)
+			}
 		}
 	case *ast.TextLiteral:
 		// Simple text support for now (no interp)

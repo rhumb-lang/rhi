@@ -85,10 +85,36 @@ func (vm *VM) opSetField() error {
 
 	
 
-	mutable := (flags & 1) == 1
+		mutable := (flags & 1) == 1
 
-	m.Set(key, val, mutable)
+	
 
-	return nil
+	
 
-}
+	
+
+		m.Set(key, val, mutable)
+
+	
+
+		
+
+	
+
+		vm.push(val)
+
+	
+
+	
+
+	
+
+		return nil
+
+	
+
+	}
+
+	
+
+	

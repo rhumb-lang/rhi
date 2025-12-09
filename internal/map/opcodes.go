@@ -21,6 +21,8 @@ const (
 	OP_LOAD_CONST       // LOAD_CONST <index>
 	OP_LOAD_LOC         // LOAD_LOC <slot>
 	OP_STORE_LOC        // STORE_LOC <slot>
+	OP_LOAD_UPVALUE     // LOAD_UPVALUE <index>
+	OP_STORE_UPVALUE    // STORE_UPVALUE <index>
 	OP_LOAD_STATIC      // LOAD_STATIC <index> (Module level)
 	OP_MATCH_BIND       // Bind match to var
 
@@ -134,6 +136,8 @@ func (op OpCode) String() string {
 	case OP_LOAD_CONST: return "OP_LOAD_CONST"
 	case OP_LOAD_LOC: return "OP_LOAD_LOC"
 	case OP_STORE_LOC: return "OP_STORE_LOC"
+	case OP_LOAD_UPVALUE: return "OP_LOAD_UPVALUE"
+	case OP_STORE_UPVALUE: return "OP_STORE_UPVALUE"
 	case OP_LOAD_STATIC: return "OP_LOAD_STATIC"
 	case OP_MATCH_BIND: return "OP_MATCH_BIND"
 	case OP_SEND: return "OP_SEND"

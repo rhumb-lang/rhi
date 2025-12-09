@@ -5,11 +5,18 @@ import (
 	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
+// UpvalueDesc describes a captured variable.
+type UpvalueDesc struct {
+	IsLocal bool
+	Index   int
+}
+
 // Compiler transforms AST into Bytecode.
 type Compiler struct {
 	Enclosing *Compiler
 	Function  *mapval.Function
 	Scope     *CompilerScope
+	Upvalues  []UpvalueDesc
 }
 
 func NewCompiler() *Compiler {
@@ -20,7 +27,49 @@ func NewCompiler() *Compiler {
 	return &Compiler{
 		Function: fn,
 		Scope:    NewCompilerScope(),
+		Upvalues: make([]UpvalueDesc, 0),
 	}
+}
+
+func (c *Compiler) resolveUpvalue(name string) int {
+	if c.Enclosing == nil {
+		return -1
+	}
+
+	local := c.Enclosing.Scope.resolveLocal(name)
+	if local != -1 {
+		c.Enclosing.Scope.Locals[local].IsUpvalue = true
+		return c.addUpvalue(true, local)
+	}
+
+	upvalue := c.Enclosing.resolveUpvalue(name)
+	if upvalue != -1 {
+		return c.addUpvalue(false, upvalue)
+	}
+
+	return -1
+}
+
+func (c *Compiler) addUpvalue(isLocal bool, index int) int {
+	for i, up := range c.Upvalues {
+		if up.IsLocal == isLocal && up.Index == index {
+			return i
+		}
+	}
+	
+	c.Upvalues = append(c.Upvalues, UpvalueDesc{IsLocal: isLocal, Index: index})
+	c.Function.UpvalueCount = len(c.Upvalues)
+	return len(c.Upvalues) - 1
+}
+
+func (c *Compiler) isDeclared(name string) bool {
+	if c.Scope.resolveLocal(name) != -1 {
+		return true
+	}
+	if c.Enclosing != nil {
+		return c.Enclosing.isDeclared(name)
+	}
+	return false
 }
 
 func (c *Compiler) Chunk() *mapval.Chunk {

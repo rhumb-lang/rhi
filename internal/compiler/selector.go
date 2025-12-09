@@ -45,8 +45,17 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 	locals := hoister.Locals
 	for _, name := range locals {
 		if name == "_" { continue } // Already added
+		
+		if child.Scope.resolveLocal(name) != -1 {
+			continue
+		}
+		
+		if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
+			continue
+		}
+		
 		child.Scope.addLocal(name)
-		child.emitConstant(mapval.NewEmpty()) // Reserve slot for locals
+		child.emitConstant(mapval.NewEmpty()) // Reserve slot
 	}
 	
 	for _, pat := range s.Patterns {
@@ -100,6 +109,16 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 	idx := c.makeConstant(fnVal)
 	c.emit(mapval.OP_MAKE_FN)
 	c.Chunk().WriteByte(byte(idx), 0)
+	
+	// Write Upvalue Descriptors
+	for _, up := range child.Upvalues {
+		isLocal := byte(0)
+		if up.IsLocal {
+			isLocal = 1
+		}
+		c.Chunk().WriteByte(isLocal, 0)
+		c.Chunk().WriteByte(byte(up.Index), 0)
+	}
 	
 	return nil
 }

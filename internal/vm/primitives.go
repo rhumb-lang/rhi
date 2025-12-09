@@ -38,6 +38,42 @@ func (vm *VM) opPop() {
 	vm.pop()
 }
 
+func (vm *VM) opLoadUpvalue() {
+	idx := vm.readByte()
+	frame := vm.currentFrame()
+	closure := frame.Closure
+	
+	if int(idx) >= len(closure.Upvalues) {
+		panic(fmt.Sprintf("upvalue index %d out of bounds (len %d)", idx, len(closure.Upvalues)))
+	}
+	
+	upvalue := closure.Upvalues[idx]
+	if upvalue.Location != nil {
+		vm.push(*upvalue.Location)
+	} else {
+		vm.push(upvalue.Closed)
+	}
+}
+
+func (vm *VM) opStoreUpvalue() {
+	idx := vm.readByte()
+	frame := vm.currentFrame()
+	closure := frame.Closure
+	
+	if int(idx) >= len(closure.Upvalues) {
+		panic(fmt.Sprintf("upvalue index %d out of bounds (len %d)", idx, len(closure.Upvalues)))
+	}
+	
+	val := vm.peek(0)
+	upvalue := closure.Upvalues[idx]
+	
+	if upvalue.Location != nil {
+		*upvalue.Location = val
+	} else {
+		upvalue.Closed = val
+	}
+}
+
 // --- Math Ops ---
 
 func (vm *VM) opAdd() error {
@@ -266,7 +302,29 @@ func (vm *VM) opMakeFn() {
 	fnVal := frame.Closure.Fn.Chunk.Constants[idx]
 	fn := fnVal.Obj.(*mapval.Function)
 	closure := &mapval.Closure{Fn: fn}
+	
+	closure.Upvalues = make([]*mapval.Upvalue, fn.UpvalueCount)
+	for i := 0; i < fn.UpvalueCount; i++ {
+		isLocal := vm.readByte()
+		index := vm.readByte()
+		
+		if isLocal == 1 {
+			closure.Upvalues[i] = vm.captureUpvalue(frame.Base + int(index))
+		} else {
+			closure.Upvalues[i] = frame.Closure.Upvalues[index]
+		}
+	}
+	
 	vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
+}
+
+func (vm *VM) captureUpvalue(location int) *mapval.Upvalue {
+	// TODO: Reuse open upvalues (list in VM/Frame?) to support aliasing.
+	// For now, always create new (no aliasing support between closures yet).
+	// Proper implementation requires keeping a linked list of open upvalues.
+	
+	val := &vm.Stack[location]
+	return &mapval.Upvalue{Location: val}
 }
 
 func (vm *VM) opCall() error {
