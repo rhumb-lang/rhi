@@ -91,8 +91,8 @@ func (b *ASTBuilder) VisitPrefix(ctx *grammar.PrefixContext) interface{} {
 	case *grammar.NegateTruthPrefixContext: op = ast.OpNegBool
 	case *grammar.VariadicPrefixContext: op = ast.OpSpread
 	case *grammar.ArgumentPrefixContext: op = ast.OpGetParams
-	case *grammar.SignalOutwardPrefixContext: op = ast.OpEq // TODO: Signal Op?
-	case *grammar.SignalInwardPrefixContext: op = ast.OpEq // TODO: Reply Op?
+	case *grammar.SignalOutwardPrefixContext: op = ast.OpSignal
+	case *grammar.SignalInwardPrefixContext: op = ast.OpReply
 	default: op = ast.OpEq
 	}
 	
@@ -101,7 +101,6 @@ func (b *ASTBuilder) VisitPrefix(ctx *grammar.PrefixContext) interface{} {
 
 func (b *ASTBuilder) VisitEffect(ctx *grammar.EffectContext) interface{} {
 	// expression OpenCurly ... patterns ... CloseCurly
-	// Acts as applying the selector to the expression: (Selector)(Expr)
 	target := toExpr(b.Visit(ctx.Expression()))
 	
 	sel := &ast.SelectorExpression{Patterns: []ast.Pattern{}}
@@ -112,9 +111,8 @@ func (b *ASTBuilder) VisitEffect(ctx *grammar.EffectContext) interface{} {
 		}
 	}
 	
-	// Transform into CallExpression: Selector(Target)
-	return &ast.CallExpression{
-		Callee: sel,
-		Args:   []ast.Expression{target},
+	return &ast.EffectExpression{
+		Target:   target,
+		Selector: sel,
 	}
 }

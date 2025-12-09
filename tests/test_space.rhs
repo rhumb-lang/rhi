@@ -1,0 +1,25 @@
+% Space Operations Test 1 (Reply Value)
+
+dummy := [] -> (
+    res := #ping % sends out a signal directly into the subroutine's space
+    % dummy will be a zombie frame until a reply is received
+    res % return the value, once received
+)
+
+result1 := dummy { % we are now subscribing to events from inside of dummy's subspace
+  #ping .. ^pong('hello') % if we receive a ping, reply with pong directly back into the zombie frame
+} % dummy was a zombie frame but pong revived from the attached selector but the selector doesn't have any pattern
+% for matching regular return values so it just passes through into the resul1 label
+
+result1 %= 'hello'
+
+% Space Operations Test 2 (Multiple Reply Values)
+
+result2 := dummy { % we are now subscribing to events from inside of dummy's subspace
+  #ping .. ^pong('hello'; 'world') % if we receive a ping, reply with pong directly back into the zombie frame
+}
+
+result2 %= ['hello'; 'world']
+result2\1 %= 'hello'
+result2\2 %= 'world'
+

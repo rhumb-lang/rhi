@@ -39,8 +39,13 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		c.emitConstant(mapval.NewEmpty())
 	case *ast.MapExpression:
 		return c.compileMap(e)
+	case *ast.UnaryExpression:
+		return c.compileUnary(e)
 	case *ast.RoutineExpression:
 		return c.compileRoutine(e)
+	case *ast.ChildRealmLiteral:
+		c.emit(mapval.OP_NEW_REALM)
+		c.Chunk().WriteByte(0, 0) // Flag 0 for Child
 	case *ast.ChainExpression:
 		return c.compileChain(e)
 	case *ast.SelectorExpression:
@@ -58,6 +63,17 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		}
 		// Assert (Pops Expected, Actual)
 		c.emit(mapval.OP_ASSERT_EQ)
+	case *ast.EffectExpression:
+		// Compile Target (Closure)
+		if err := c.compileExpression(e.Target); err != nil {
+			return err
+		}
+		// Compile Selector
+		if err := c.compileExpression(e.Selector); err != nil {
+			return err
+		}
+		// Emit MONITOR
+		c.emit(mapval.OP_MONITOR)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}

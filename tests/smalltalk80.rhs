@@ -1,0 +1,8 @@
+sum-to .= [start; end] -> (
+  result := 0
+  start|end <> [i] -> result := result ++ i
+  result
+)
+
+sum-to-test .= sum-to(1;10000)
+sum-to-test %= 10000

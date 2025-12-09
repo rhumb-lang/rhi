@@ -343,6 +343,28 @@ func isEqual(a, b mapval.Value) bool {
 		return true
 	case mapval.ValText:
 		return a.Str == b.Str
+	case mapval.ValObject:
+		// Handle Map equality
+		mapA, okA := a.Obj.(*mapval.Map)
+		mapB, okB := b.Obj.(*mapval.Map)
+		if okA && okB {
+			if len(mapA.Fields) != len(mapB.Fields) {
+				return false
+			}
+			for i := range mapA.Fields {
+				if !isEqual(mapA.Fields[i], mapB.Fields[i]) {
+					return false
+				}
+			}
+			return true
+		}
+		// Handle Tuple/Signal equality?
+		tupA, okTA := a.Obj.(*mapval.Tuple)
+		tupB, okTB := b.Obj.(*mapval.Tuple)
+		if okTA && okTB {
+			return tupA.Kind == tupB.Kind && tupA.Topic == tupB.Topic // And payload?
+		}
+		return a.Obj == b.Obj // Reference equality for others
 	default:
 		return false
 	}

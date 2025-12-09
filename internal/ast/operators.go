@@ -78,6 +78,10 @@ const (
 	OpBindFn // !> (Bind Function)
 	OpLetFn  // +> (Let Function / IIFE)
 	OpRebind // !! (Rebind)
+	
+	// Concurrency
+	OpSignal // #
+	OpReply  // ^
 )
 
 // BinaryExpression represents "Left Op Right".
@@ -235,6 +239,10 @@ func opToString(op OpType) string {
 		return "+>"
 	case OpRebind:
 		return "!!"
+	case OpSignal:
+		return "#"
+	case OpReply:
+		return "^"
 	default:
 		return "?"
 	}

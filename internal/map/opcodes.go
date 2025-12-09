@@ -37,6 +37,8 @@ const (
 	OP_WRITE            // WRITE $proclamation
 	OP_SUBSCRIBE        // SUBSCRIBE <>
 	OP_NEW_REALM        // NEW_REALM <flags>
+	OP_MONITOR          // MONITOR (Attach selector to call)
+	OP_MATCH_TUPLE      // MATCH_TUPLE <kind> <topic_idx>
 
 	// --- NATIVE INTRINSICS (Operators) ---
 	
@@ -144,6 +146,8 @@ func (op OpCode) String() string {
 	case OP_WRITE: return "OP_WRITE"
 	case OP_SUBSCRIBE: return "OP_SUBSCRIBE"
 	case OP_NEW_REALM: return "OP_NEW_REALM"
+	case OP_MONITOR: return "OP_MONITOR"
+	case OP_MATCH_TUPLE: return "OP_MATCH_TUPLE"
 	case OP_ADD: return "OP_ADD"
 	case OP_SUB: return "OP_SUB"
 	case OP_MULT: return "OP_MULT"

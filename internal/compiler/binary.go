@@ -34,13 +34,24 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 				case *ast.FieldElement:
 					if label, ok := f.Value.(*ast.LabelLiteral); ok {
 						name = label.Value
+					} else if unary, ok := f.Value.(*ast.UnaryExpression); ok {
+						// Handle #pong(msg) pattern in params
+						if unary.Op == ast.OpSignal {
+							if call, ok := unary.Expr.(*ast.CallExpression); ok {
+								if len(call.Args) > 0 {
+									if argLabel, ok := call.Args[0].(*ast.LabelLiteral); ok {
+										name = argLabel.Value
+									}
+								}
+							}
+						}
 					}
 				}
 				
 				if name != "" {
 					child.Scope.addLocal(name)
 				} else {
-					return fmt.Errorf("unsupported parameter type")
+					return fmt.Errorf("unsupported parameter type: %T", field)
 				}
 			}
 		}

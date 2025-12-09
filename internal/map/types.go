@@ -50,11 +50,20 @@ func (v Value) String() string {
 		return "no"
 	case ValEmpty:
 		return "___"
-	case ValObject:
-		if v.Obj == nil { return "nil" }
-		return fmt.Sprintf("<Object %T>", v.Obj)
 	case ValRange:
 		return "<Range>"
+	case ValObject:
+		if v.Obj == nil { return "nil" }
+		if t, ok := v.Obj.(*Tuple); ok {
+			kind := ""
+			switch t.Kind {
+			case TupleSignal: kind = "#"
+			case TupleReply: kind = "^"
+			case TupleProclamation: kind = "$"
+			}
+			return fmt.Sprintf("<%s%s>", kind, t.Topic)
+		}
+		return fmt.Sprintf("<Object %T>", v.Obj)
 	case ValVersion:
 		maj, min, pat := v.VersionUnpack()
 		return fmt.Sprintf("v%d.%d.%d", maj, min, pat)
@@ -77,9 +86,27 @@ const (
 	ObjTypeClosure
 	ObjTypeNative
 	ObjTypeRange
+	ObjTypeTuple
 )
 
-// ...
+// TupleKind
+type TupleKind uint8
+
+const (
+	TupleSignal       TupleKind = iota // #
+	TupleReply                         // ^
+	TupleProclamation                  // $
+)
+
+// Tuple represents a message/event (Signal, Reply, Proclamation).
+type Tuple struct {
+	Kind    TupleKind
+	Topic   string
+	Payload []Value
+	Source  interface{} // Opaque Source Frame (for Signals/Replies)
+}
+
+func (t *Tuple) Type() ObjectType { return ObjTypeTuple }
 
 // Range represents a lazy sequence.
 type Range struct {
@@ -104,6 +131,7 @@ type Object interface {
 type Map struct {
 	Legend *Legend
 	Fields []Value // Linear storage matching the Legend offsets
+	Listeners []Value // List of Selectors (Listeners)
 }
 
 func (m *Map) Type() ObjectType { return ObjTypeMap }
@@ -237,6 +265,15 @@ func NewBoolean(b bool) Value {
 
 func NewFunction(f *Function) Value {
 	return Value{Type: ValObject, Obj: f}
+}
+
+func NewSignal(topic string, source interface{}, args []Value) Value {
+	return Value{Type: ValObject, Obj: &Tuple{
+		Kind:    TupleSignal,
+		Topic:   topic,
+		Source:  source,
+		Payload: args,
+	}}
 }
 
 func NewVersion(major, minor uint16, patch uint32) Value {

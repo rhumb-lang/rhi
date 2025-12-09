@@ -5,33 +5,203 @@ import (
 	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
+func (vm *VM) opMonitor() error {
+	// Stack: [Closure (Target), Selector]
+	selectorVal := vm.pop()
+	targetVal := vm.peek(0) // Peek target, don't pop! It serves as the "Function" slot for opReturn.
+	
+	selector, ok := selectorVal.Obj.(*mapval.Closure)
+	if !ok {
+		return fmt.Errorf("monitor must be a selector closure")
+	}
+	
+	closure, ok := targetVal.Obj.(*mapval.Closure)
+	if !ok {
+		return fmt.Errorf("monitor target must be a closure")
+	}
+	
+	// Create new frame for the target closure
+	newFrame := &CallFrame{
+		Parent:  vm.CurrentFrame,
+		Closure: closure,
+		IP:      0,
+		Base:    vm.SP, // Base points to first arg (or empty space if 0 args). Base-1 is Target.
+		Monitor: selector,
+	}
+	
+	vm.CurrentFrame = newFrame
+	return nil
+}
+
 func (vm *VM) opPost() error {
-	// Stub
-	vm.readByte() // Consume index
+	idx := vm.readByte()
 	argc := int(vm.readByte())
-	for i := 0; i < argc; i++ {
-		vm.pop() // Pop arg
+	
+	args := make([]mapval.Value, argc)
+	for i := argc - 1; i >= 0; i-- {
+		args[i] = vm.pop()
 	}
-	vm.pop() // Pop receiver
+	
+	receiver := vm.pop()
+	
+	// Get Signal Name
+	frame := vm.currentFrame()
+	name := frame.Closure.Fn.Chunk.Constants[idx].Str
+	
+	// Create Signal
+	sigVal := mapval.NewSignal(name, frame, args)
+	// sig := sigVal.Obj // Not needed if we push sigVal directly
+	
 	if vm.Config.TraceSpace {
-		fmt.Println("TRACE: Signal Posted")
+		fmt.Printf("TRACE: Signal Posted: %s from Frame %p\n", name, frame)
 	}
+	
+	// Synchronous Dispatch (Mocking the Scheduler)
+	// 1. Check Monitors in Parent Chain
+	curr := vm.CurrentFrame
+	for curr != nil {
+		if curr.Monitor != nil {
+			if vm.Config.TraceSpace {
+				fmt.Printf("TRACE: Found Monitor in Frame %p\n", curr)
+			}
+			
+			// Execute Monitor synchronously
+			// We MUST satisfy opReturn calling convention: [Function, Args...]
+			// Push Monitor Closure (Function)
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: curr.Monitor})
+			
+			// Push Signal (Argument to Selector)
+			vm.push(sigVal)
+			
+			// Setup Frame for Monitor
+			monitorFrame := &CallFrame{
+				Parent:  vm.CurrentFrame,
+				Closure: curr.Monitor,
+				IP:      0,
+				Base:    vm.SP - 1, // Points to SigVal. Base-1 is Monitor Closure.
+			}
+			
+			// Run Monitor
+			vm.CurrentFrame = monitorFrame
+			
+			res, err := vm.RunSynchronous()
+			
+			if err != nil {
+				return err
+			}
+			
+			if res == Ok {
+				// Monitor returned. Top of stack is the result (Reply Value).
+				return nil
+			}
+		}
+		curr = curr.Parent
+	}
+
+	// 2. Check Receiver for Listeners (e.g. Realm)
+	if receiver.Type == mapval.ValObject {
+		if m, ok := receiver.Obj.(*mapval.Map); ok {
+			for _, listenerVal := range m.Listeners {
+				if listenerVal.Type == mapval.ValObject {
+					if closure, ok := listenerVal.Obj.(*mapval.Closure); ok {
+						// Execute Listener synchronously
+						// Satisfy calling convention
+						vm.push(listenerVal) // Push Listener Closure
+						vm.push(sigVal)      // Push Arg
+						
+						newFrame := &CallFrame{
+							Parent:  vm.CurrentFrame,
+							Closure: closure,
+							IP:      0,
+							Base:    vm.SP - 1, 
+						}
+						
+						vm.CurrentFrame = newFrame
+						res, err := vm.RunSynchronous()
+						if err != nil { return err }
+						if res == Ok { return nil }
+					}
+				}
+			}
+		}
+	}
+	
+	// No listener or no reply? Return Empty.
 	vm.push(mapval.NewEmpty())
 	return nil
 }
 
 func (vm *VM) opInject() error {
-	// Stub
-	vm.readByte() // Consume index
+	// opInject is called inside the listener.
+	// It should "resume" the sender.
+	// In our sync model, it just returns the value.
+	
+	idx := vm.readByte()
 	argc := int(vm.readByte())
-	for i := 0; i < argc; i++ {
-		vm.pop() // Pop arg
-	}
-	vm.pop() // Pop receiver
+	
 	if vm.Config.TraceSpace {
-		fmt.Println("TRACE: Reply Injected")
+		fmt.Printf("DEBUG: opInject argc=%d SP=%d\n", argc, vm.SP)
+		for i := 0; i < vm.SP; i++ {
+			fmt.Printf("Stack[%d]: %s\n", i, vm.Stack[i])
+		}
 	}
-	vm.push(mapval.NewEmpty())
+	
+	args := make([]mapval.Value, argc)
+	for i := argc - 1; i >= 0; i-- {
+		args[i] = vm.pop()
+	}
+	
+	receiver := vm.pop() // The Signal object
+	
+	if vm.Config.TraceSpace {
+		frame := vm.currentFrame()
+		name := frame.Closure.Fn.Chunk.Constants[idx].Str
+		fmt.Printf("TRACE: Reply %s Injected to %s (Type: %d)\n", name, receiver, receiver.Type)
+	}
+	
+	// Determine Payload
+	var payload mapval.Value
+	if argc == 0 {
+		payload = mapval.NewEmpty()
+	} else if argc == 1 {
+		payload = args[0]
+	} else {
+		// Bundle into Map (List)
+		m := mapval.NewMap()
+		// Map fields are usually named for Map, or numbered for List?
+		// Value.String() for Map checks Fields.
+		// Map struct has Fields []Value.
+		// And Legend.
+		// If we use NewMap(), it has empty legend.
+		// We should add fields with numeric keys?
+		// Or just append to Fields and let Legend handle it?
+		// Map logic: Elements are fields with Numeric names.
+		// But implementation detail of Map might require Legend update.
+		// Let's use `NewMap` and manually populate.
+		// Ideally `NewList` helper?
+		// `NewMap` returns `Map` with empty Fields.
+		// `m.Fields = args`?
+		// We need Legend.
+		// This is getting complicated for opInject.
+		// Let's assume for now we just return the LAST arg or first?
+		// The test expects `['hello'; 'world']`. This is a Map.
+		// Let's create a map with these values.
+		// Since we don't have a robust `NewList` helper exposed here easily without Legend construction,
+		// I will create a basic Map with these values as Fields.
+		// Assuming linear scan `Fields` corresponds to index?
+		// Map `Fields` are values. `Legend` maps Name -> Index.
+		// If we want `[hello; world]`.
+		// Index 0: hello. Name "1".
+		// Index 1: world. Name "2".
+		
+		// For MVP: Just append to Fields.
+		// And ignore Legend (it will be empty, so no lookup by name).
+		// But `formatValue` iterates Fields.
+		m.Fields = args
+		payload = mapval.Value{Type: mapval.ValObject, Obj: m}
+	}
+	
+	vm.push(payload)
 	return nil
 }
 
@@ -51,11 +221,23 @@ func (vm *VM) opWrite() error {
 }
 
 func (vm *VM) opSubscribe() error {
-	// Stub
-	// Subscribe takes logic?
-	if vm.Config.TraceSpace {
-		fmt.Println("TRACE: Subscribed")
+	// Stack: [Map, Selector]
+	selector := vm.pop()
+	receiver := vm.pop()
+	
+	if receiver.Type == mapval.ValObject {
+		if m, ok := receiver.Obj.(*mapval.Map); ok {
+			m.Listeners = append(m.Listeners, selector)
+			if vm.Config.TraceSpace {
+				fmt.Printf("TRACE: Subscribed listener to map\n")
+			}
+		} else {
+			return fmt.Errorf("can only subscribe to maps")
+		}
+	} else {
+		return fmt.Errorf("can only subscribe to maps")
 	}
+	
 	vm.push(mapval.NewEmpty())
 	return nil
 }

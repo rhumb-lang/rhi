@@ -1,0 +1,42 @@
+% Space Operations Test (Realms)
+
+realm := <$>
+result := [___]
+
+realm <> [] -> { % we're just looking for signals, so we leave the submap blank
+    #pong(msg) .. result\1 := msg % if a pong signal is sent into this realm, assign the provided msg value to the result map
+}
+realm#pong('foo')
+result\1 %= 'foo'
+
+% Space Operations Test (Realm Bubbling)
+
+foo .= [] -> (
+    foo-realm .= <$>
+    
+    foo-realm#pong('bar') % because we don't capture the signal, it bubbles up to the subroutine space
+
+)
+foo { % invoke foo which causes the #pong message to be sent in the foo-realm sub-space
+    #pong(msg) .. result\1 := msg
+}
+result\1 %= 'bar'
+
+
+% Space Operations Test (Realm Forced Bubbling)
+
+double-result .= [___; ___]
+bar .= [] -> (
+    bar-realm .= <$>
+
+    bar-realm <> [] -> {
+        #pong(msg) :: double-result\1 := msg % the :: operator causes the message to keep bubbling up instead of being captured
+    }
+    
+    bar-realm#pong('bar') % because we use but don't consume the signal, it bubbles up to the subroutine space
+
+)
+bar {
+    #pong(msg) .. double-result\2 := msg
+}
+double-result %= ['bar'; 'bar']

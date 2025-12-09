@@ -9,6 +9,7 @@ type CallFrame struct {
 	Closure *mapval.Closure
 	IP      int
 	Base    int // Stack index where this frame's locals start
+	Monitor *mapval.Closure // Attached Selector for Space ops
 }
 
 // ... VM struct update ...

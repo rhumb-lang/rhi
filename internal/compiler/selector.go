@@ -156,7 +156,25 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 		c.compileExpression(t) // Push Literal
 		c.emit(mapval.OP_EQ)   // Subject == Literal
 		return nil
-		
+
+	case *ast.UnaryExpression:
+		if t.Op == ast.OpSignal {
+			if label, ok := t.Expr.(*ast.LabelLiteral); ok {
+				// Match Tuple: Kind Signal, Topic label.Value
+				
+				topicIdx := c.makeConstant(mapval.NewText(label.Value))
+				
+				c.emit(mapval.OP_MATCH_TUPLE)
+				c.Chunk().WriteByte(byte(mapval.TupleSignal), 0)
+				// Topic Index (2 bytes)
+				c.Chunk().WriteByte(byte(topicIdx>>8), 0) // High byte
+				c.Chunk().WriteByte(byte(topicIdx&0xFF), 0) // Low byte
+				
+				return nil
+			}
+		}
+		return fmt.Errorf("unsupported unary pattern: %v", t.Op)
+
 	default:
 		return fmt.Errorf("unsupported pattern match target: %T", target)
 	}

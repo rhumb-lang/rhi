@@ -1,0 +1,91 @@
+% ==========================================
+% Mocks & Infrastructure
+% ==========================================
+
+
+% Mock Console for output
+console .= [
+  log .. [msg] -> (
+    % In a real env, this would call a native print.
+    % For now, we will use %? to trigger a debug print
+    "STDOUT: $msg" %?
+  )
+]
+
+% ==========================================
+% The Chat Client Logic
+% ==========================================
+
+chat-client .= [nick; realm; input] -> (
+  !\nick := nick
+
+  % 1. LISTEN TO REALM (Read Path)
+  % We watch the realm for 'Presence' ($)
+  realm <> [$present(who)] -> {
+
+    % A. Entry (Constructor)
+    % When we first find a user (or they join), we log it.
+    who .. console\log("$who arrived")
+
+    % B. Signal Listener (Event)
+    % We listen for ephemeral 'says' signals from this specific user.
+    % Implicit Pinning: 'who' filters the topic. We don't hear others here.
+    realm <> [#says(who; msg)] -> {
+       msg .. console\log("[$who]: $msg")
+    }
+
+    % C. Exit (Destructor)
+    % When $present is retracted, the VM sends $empty.
+    ___ .. console\log("$who left")
+  }
+
+  % 2. HANDLE LOCAL INPUT (Write Path)
+  % We watch our local input device for lines of text.
+  input <> [#line(text)] -> {
+    % Pulse the message to the shared realm
+    realm#says(!\nick; text)
+  }
+
+  % 3. PROCLAIM PRESENCE (State)
+  % We pin our nickname to the realm. This triggers the 'Entry' block
+  % for everyone else (and ourselves).
+  realm$present(!\nick)
+)
+
+% ==========================================
+% The Test Scenario
+% ==========================================
+
+run-test .= [] -> (
+  console\log("--- Starting Chat Test ---")
+
+  % 1. Create the Shared Realm (The Room)
+  room .= <$>;
+
+  % 2. Create Input Channels (Simulated Devices)
+  input-a .= <$>;
+  input-b .= <$>;
+
+  % 3. Connect Alice
+  % She joins the room. Her presence is pinned.
+  alice-proc .= chat-client("Alice"; room; input-a)
+
+  % 4. Connect Bob
+  % He joins. He should see Alice is already there.
+  % Alice should see Bob arrive.
+  bob-proc .= chat-client("Bob"; room; input-b)
+
+  % 5. Simulate Conversation
+  % Alice speaks
+  input-a#line("Hello everyone!")
+
+  % Bob replies
+  input-b#line("Hi Alice, welcome!")
+
+  % 6. Simulate Departure
+  % (In a real app, we'd retract the proclamation, but here we just end)
+  console\log("--- End of Test ---")
+)
+
+% Execute
+run-test()

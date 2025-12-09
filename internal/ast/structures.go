@@ -80,6 +80,17 @@ func (s *SelectorExpression) String() string {
 	return sb.String()
 }
 
+// EffectExpression represents `expression { selector }`.
+type EffectExpression struct {
+	Target   Expression
+	Selector *SelectorExpression
+}
+
+func (e *EffectExpression) expressionNode() {}
+func (e *EffectExpression) String() string {
+	return e.Target.String() + " " + e.Selector.String()
+}
+
 // ChildRealmLiteral represents <$>.
 type ChildRealmLiteral struct{}
 
