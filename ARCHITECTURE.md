@@ -328,7 +328,8 @@ The concept of `nil` or `null` is represented by **`___` (Triple Underscore)**.
   * **Behavior:** Represents the absence of a value.
   * **Semantics:** Any label not yet defined is considered `empty` (`___`) by default.
   * **Logic:** `___` is falsy in boolean expressions.
-  * **Retraction:** Assigning `___` to a Proclamation (`realm$state(___)`) removes the state from the Tuplespace.
+  * **Retraction:** Assigning `___` to a Proclamation (`realm$state(___)`)
+    removes the state from the Tuplespace.
 
 #### Summary of the Retraction Mechanism
 * **User Action:** `realm$topic(___)`
@@ -338,24 +339,71 @@ The concept of `nil` or `null` is represented by **`___` (Triple Underscore)**.
     3.  Sends `$empty` signal to those threads.
 * **Thread Action:** Executes `empty .. log("Deleted")` block and terminates.
 
-### 5.5 Privacy & Encapsulation
+### 5.5 The Panic Value (`***`)
+
+The concept of a Fatal Error or Crash is represented by **`***` (Triple Asterisk)**.
+
+  * **Behavior (Standalone):** If the interpreter executes `***` as a standalone
+    expression, it triggers a **VM Panic** (Crash/Exit).
+  * **Behavior (Signal):** It is the standard label for Error Signals.
+      * Syntax: `#***(code; message; data)`
+      * Use Case: `{!|sys}` routines emit this signal on failure.
+  * **Handling:** Users can trap errors by adding a selector pattern for it.
+    ```rhumb
+    risky-op {
+        #***(c; m; d) .. log("Error $c: $m")
+    }
+    ```
+
+### 5.6 Privacy & Encapsulation
 
 Rhumb uses **Capability-based Privacy** via **Keys** (`` ` ``).
 
   * **Public Fields:** Defined with Text/Label names. Accessible by anyone.
-  * **Private Fields:** Defined with Key names. Accessible only by scopes holding the Key object.
-  * **Reflection Safety:** The All Fields operator `[*]` **ignores** Key fields. It only returns Text/Label names.
+  * **Private Fields:** Defined with Key names. Accessible only by scopes
+    holding the Key object.
+  * **Reflection Safety:** The All Fields operator `[*]` **ignores** Key fields.
+    It only returns Text/Label names.
 
-### 5.6 Hybrid Storage (Fields vs. Elements)
+### 5.7 Hybrid Storage (Fields vs. Elements)
 
 Maps serve as both "Objects" (named fields) and "Lists" (positional elements).
 
-  * **Unified Mechanism:** Internally, positional elements are treated as Fields where the **Name** is a **Number**.
-  * **Indexing:** Positional elements use **1-based** indexing. The index `0` is reserved to represent the aggregate of all positional elements.
+  * **Unified Mechanism:** Internally, positional elements are treated as Fields
+    where the **Name** is a **Number**.
+  * **Indexing:** Positional elements use **1-based** indexing. The index `0` is
+    reserved to represent the aggregate of all positional elements.
   * **Separation of Concern (Operators):**
-      * **`[*]` (All Fields):** Returns a list of **Text** labels only (keys). It ignores Keys (`` ` ``) and Numbers.
-      * **`[0]` (All Positional):** Returns a new Map containing only the fields with **Number** names (elements).
-  * **Iteration (`<>`):** By default, the Foreach operator iterates over **Positional Elements** (1..N). To iterate over fields, you must explicitly apply `[*]` first (e.g., `map[*] <> key -> ...`).
+      * **`[*]` (All Fields):** Returns a list of **Text** labels only (keys).
+        It ignores Keys (`` ` ``) and Numbers.
+      * **`[0]` (All Positional):** Returns a new Map containing only the fields
+        with **Number** names (elements).
+  * **Iteration (`<>`):** By default, the Foreach operator iterates over
+    **Positional Elements** (1..N). To iterate over fields, you must explicitly
+    apply `[*]` first (e.g., `map[*] <> key -> ...`).
+
+### 5.8 Slurp & Spread Semantics (`&`)
+
+The Ampersand operator (`&`) performs dual roles contextually, allowing flexible
+list manipulation.
+
+#### 1\. Spread (Construction)
+
+When used inside a Map Literal `[...]`, it "spreads" the contents of a list into
+the outer structure.
+
+  * `list .= [2; 3]`
+  * `full .= [1; &list; 4]` $\rightarrow$ `[1; 2; 3; 4]`
+
+#### 2\. Slurp (Destructuring)
+
+When used inside a Destructuring assignment `^=` or a Parameter Submap
+`<[...]>`, it "slurps" remaining positional elements into a new List. Rhumb
+supports **Maximum Slurping Power**, meaning the `&` can be placed anywhere.
+
+  * **Tail Slurp:** `[.first; .&rest] ^= [1; 2; 3]` $\rightarrow$ `first=1`, `rest=[2; 3]`
+  * **Head Slurp:** `[.&initial; .last] ^= [1; 2; 3]` $\rightarrow$ `initial=[1; 2]`, `last=3`
+  * **Middle Slurp:** `[.top; .&mid; .bot] ^= [1; 2; 3; 4]` $\rightarrow$ `top=1`, `mid=[2; 3]`, `bot=4`
 
 -----
 
@@ -926,6 +974,7 @@ run the assertions.
 | **`@`**    | Parent     | Inheritance   | `!@console\log` | "My Parent named Console"                   |
 | **`\`**    | Access     | Member        | `user\name`     | "Field 'name' of user"                      |
 | **`___`**  | Empty      | Literal       | `x .= ___`      | Empty/Nil value                             |
+| **`***`**  | Panic      | Literal       | `x .= ***`      | Panic value (Crash/Error)                   |
 | **`_`**    | Ignore     | Literal       | `x .. _`        | Ignore/Placeholder Label                    |
 | **`^=`**   | Caret-Eq   | Destruct      | `[x; y] ^= pt`  | "Unpack Point into x, y"                    |
 | **`..`**   | Dot-Dot    | Select (Stop) | `yes .. log()`  | "If match, consume & execute"               |
@@ -1019,6 +1068,9 @@ area .= c ** 🧮\π
 ```
 
 ### 10.1 Standard Library Examples
+
+Standard libraries all use the signal `#***(code; msg; &data)` for bubbling up
+non-panic errors.
 
 #### 🐚 Shell (UI & TTY)
 **Emoji:** Spiral Shell (`U+1F41A`)
