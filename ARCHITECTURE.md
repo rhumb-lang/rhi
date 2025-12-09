@@ -271,11 +271,14 @@ Rhumb uses a high-performance **Prototype** system inspired by the [Self program
 
 ### 5.2 The Universal Legend
 
-We separate **State** (Map) from **Schema** (Legend).
+We separate **State** (Map) from **Schema** (Legend). This allows thousands of
+objects with the same structure to share a single description, saving memory and
+enabling fast property lookups.
 
-**Immutability:** The Legend stores whether a field was defined with:
-  * `.` (Immutable), or
-  * `:` (Mutable).
+  * **Immutability:** The Legend stores whether a field was defined with `.`
+    (Immutable) or `:` (Mutable).
+  * **Transitions:** The Legend acts as a node in a state machine. Adding a
+    field triggers a transition to a new or existing Legend.
 
 <!-- end list -->
 
@@ -286,6 +289,11 @@ const (
     FieldMutable                    // Defined via ':'
 )
 
+type TransitionDesc struct {
+    FieldName string
+    Next      *Legend
+}
+
 type Legend struct {
     Kind        LegendType // Map, String, Dictionary
     Fields      []FieldDesc // Linear scan (Map Mode)
@@ -294,10 +302,29 @@ type Legend struct {
 }
 ```
 
-The `Lookup` map is `nil` by default. The VM performs a linear scan on `Fields`. If
-the number of fields exceeds a defined threshold (e.g., 32), the VM hydrates the
-`Lookup` map ('Dictionary Mode') for O(1) access. Transitions ensure that 'Fast
-Mode' legends remain small.
+#### The Transition Algorithm
+
+When a field `new_field` is added to a Map currently using `Legend A`:
+
+1.  **Check:** The VM inspects `Legend A.Transitions` to see if a transition for
+    `new_field` already exists.
+2.  **Hit (Reuse):** If found, it points to `Legend B`. The Map swaps its Legend
+    pointer to `Legend B` and extends its storage array. No new allocation
+    occurs for the schema.
+3.  **Miss (Branch):** If not found:
+      * The VM allocates a new `Legend B` (Clone of A + `new_field`).
+      * It records a new transition in `Legend A`: `new_field` $\rightarrow$ `Legend B`.
+      * The Map swaps to `Legend B`.
+4.  **Convergence:** If 1,000 empty maps all execute `m\x := 1; m\y := 2`, they
+    will all end up sharing the **exact same** `Legend C` (via the path `Empty`
+    $\rightarrow$ `Legend A (has x)` $\rightarrow$ `Legend C (has x, y)`).
+
+#### Dictionary Mode (Bailout)
+
+If the number of fields exceeds a defined threshold (e.g., 32), or if fields are
+added/removed in a non-deterministic order that causes excessive branching, the
+VM hydrates the `Lookup` map and detaches from the transition tree ('Dictionary
+Mode') for O(1) access at the cost of memory.
 
 ### 5.3 The Value Struct (Primitives)
 
@@ -739,6 +766,16 @@ Replies (`^`) allow a helper process to inject data back into a paused requestor
 5.  **Resume:** If found, the VM transfers execution control **back** to that Zombie Frame's Instruction Pointer (IP), passing the data arguments.
 
 ### 7.6 Reactive Realms & Subscriptions
+
+Realms are reified Spaces that can be assigned to variables.
+
+* **Realms as Maps:** A Realm is fundamentally a **Map**.
+    * It has a **Legend** and supports the standard **Prototype Model**.
+    * You can access fields (`realm\config`), delegate to subfields (`realm@parent`), and attach methods directly to the Realm object.
+    * *Distinction:* While it acts as a Map for storage/lookup, it *also* possesses the `Space` interface for Concurrency (`#`, `$`, `<>`).
+* **Child Realm `<$>`**: Creates a standard Space. Signals uncaught in this realm bubble up to the creator's current space.
+* **Detached Realm `<|>`**: Creates a Sandboxed Space. `Parent` is set to `World` (Root). Signals hitting the ceiling are discarded/logged.
+* **Opcode:** `NEW_REALM <flags>` (Flag 0: Child, Flag 1: Detached)
 
 The syntax `realm <> [ pattern ] -> { body }` acts as a generic lifecycle manager.
 
