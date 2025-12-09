@@ -29,6 +29,16 @@ const (
 	Halt // Add Halt
 )
 
+func (r Result) String() string {
+	switch r {
+	case Ok: return "Ok"
+	case CompileError: return "CompileError"
+	case RuntimeError: return "RuntimeError"
+	case Halt: return "Halt"
+	default: return fmt.Sprintf("Unknown(%d)", r)
+	}
+}
+
 func NewVM() *VM {
 	return &VM{
 		SP: 0,

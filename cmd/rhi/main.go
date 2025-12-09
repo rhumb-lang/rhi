@@ -226,8 +226,8 @@ func (s *Session) execute(input string) {
 		return
 	}
 	
-	if res != vm.Ok {
-		fmt.Printf("VM exited with status: %v\n", res)
+	if res != vm.Ok && res != vm.Halt {
+		fmt.Printf("VM exited with status: %s\n", res)
 		return
 	}
 	
