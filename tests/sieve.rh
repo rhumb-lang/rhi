@@ -13,18 +13,16 @@ count .= 0
 2|limit <> [i] -> (
   is_prime .= flags\i
   
-  is_prime {
-    yes .. (
-      count := count ++ 1
+  is_prime => (
+    count := count ++ 1
       
-      % Mark multiples
-      k := i ++ i
-      k <= limit |> (
-        flags\k := no
-        k := k ++ i
-      )
+    % Mark multiples
+    k := i ++ i
+    k <= limit |> (
+      flags\k := no
+      k := k ++ i
     )
-  }
+  )
 )
 
 count %= 9999

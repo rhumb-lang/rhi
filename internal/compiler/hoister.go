@@ -44,6 +44,7 @@ func (h *Hoister) visit(node ast.Node) {
 			h.visit(expr)
 		}
 	case *ast.BinaryExpression:
+		// 1. Handle Assignments (Hoist the LHS)
 		if n.Op == ast.OpAssignImm || n.Op == ast.OpAssignMut || n.Op == ast.OpDestruct {
 			if label, ok := n.Left.(*ast.LabelLiteral); ok {
 				h.add(label.Value)
@@ -59,16 +60,29 @@ func (h *Hoister) visit(node ast.Node) {
 				}
 			}
 		}
-		// Recurse
+
+		// 2. Recurse (BUT STOP at Function Boundaries)
 		h.visit(n.Left)
+
+		// CRITICAL FIX: Do not hoist from the body of a function definition.
+		// The compiler handles function bodies with a NEW Hoister.
+		if n.Op == ast.OpMakeFn || n.Op == ast.OpBindFn || n.Op == ast.OpLetFn {
+			return
+		}
+
 		h.visit(n.Right)
+
 	case *ast.CallExpression:
 		h.visit(n.Callee)
 		for _, arg := range n.Args {
 			h.visit(arg)
 		}
 	case *ast.RoutineExpression:
-		// Don't hoist inside routines (new scope)
+		// CRITICAL FIX: Recurse into routines!
+		// Previously this returned immediately, blocking visibility into blocks like ( a := 1 ).
+		for _, expr := range n.Expressions {
+			h.visit(expr)
+		}
 	case *ast.MapExpression:
 		for _, f := range n.Fields {
 			switch field := f.(type) {
