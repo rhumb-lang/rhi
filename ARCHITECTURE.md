@@ -1122,3 +1122,67 @@ area .= c ** 🧮\π
     *   `format(date; "Format")`: Date to String.
 *   **`🕰️\⏱️` Stopwatch:**
     *   `start()`, `stop()`: High-precision timing for benchmarks.
+
+## 11\. `rhide` GUI Design
+
+The IDE is a **Spatial Integrated Development Environment (SIDE)** that behaves like a Window Manager / Operating System rather than a text editor.
+
+### 11.1 Metaphor: The Route & The Desktop
+* **The Route:** The persistent state of the IDE session (Window positions, icon position, open tools, active debuggers). It acts as the "Image" of the project.
+* **The Desktop:** An infinite 2D plane where artifacts live.
+* **The Deskbar:** A persistent HUD (Head-Up Display) in the corner containing:
+    * **Mini-Map:** Overview of the desktop with Click-to-Teleport.
+    * **Open List:** Tracks all active windows and icons.
+    * **System Menu:** Settings and Global Commands.
+
+### 11.2 Window Management (BeOS Style)
+The Window Manager (`/ui/wm`) implements a **Hybrid Stacking/Tiling** model.
+
+* **Primitives:**
+    * **Icon:** A minimized artifact resting on the "floor" (Z-index 0).
+    * **Window:** An active artifact floating above icons (Z-index 1+).
+    * **Tab:** The handle of a window.
+* **Interactions:**
+    * **Stacking:** Dragging Window A's tab onto Window B's tab merges them into a **Tab Group**. Tabs can slide horizontally to rearrange titles and clicked to make one tab active over the others.
+    * **Tiling:** Dragging Window A's border to Window B's border "glues" them together. Resizing the edge resizes both.
+    * **Edge Snapping:** Dragging a window to the screen edge tiles it to that quadrant.
+* **Lifecycle:**
+    * **Minimize:** Double-click tab $\rightarrow$ Converts to Icon at original location.
+    * **Close:** Remove from Desktop (available via Context Menu).
+    * **Open:** Context Menu $\rightarrow$ Spawns Icon at nearest empty space. Double-clicking icons will expand into the appropriate window at nearest available space
+
+### 11.3 Artifact Visualization
+Different artifacts render differently when expanded into Windows.
+
+| Artifact    | Icon View | Window View         | Behavior                                                                                   |
+|:------------|:----------|:--------------------|:-------------------------------------------------------------------------------------------|
+| **Shelf**   | Folder    | **Sub-Desktop**     | Displays contained Books/Shelves as Icons in a grid. Acts as a spatial file manager.       |
+| **Library** | Package   | **Sub-Desktop**     | Read-only view of external dependency contents.                                            |
+| **Book**    | File      | **Code Projector**  | The Projection Editor (Source Code).                                                       |
+| **Catalog** | Tag       | **Metadata Editor** | Form-based editor for `.rhy` YAML files.                                                   |
+| **Voyage**  | Gear      | **Viewport**        | Renders the output of a running process (Game/App).                                        |
+| **Tool**    | (none)    | **Viewport**        | Certain actions in the Projection Editor can trigger sidebar tools (e.g., Docs, Debugging) |
+
+### 11.4 Navigation & Refactoring
+* **Context Menu:** The primary mechanism for instantiating new objects
+  (Libraries, Shelves, Books).
+* **Hyper-Navigation:** Right-clicking a label in the Code Projector offers
+  "Jump to Definition" which spawns/focuses the target Book's window, drawing a
+  visual "cable" between the usage and the definition if both are visible.
+* **Documentation:** Right-clicking a label in the Code Projector offers
+  "Documentation" which spawns a small sidebar window that renders the
+  documentation for a given subroutine or function.
+* **Translations:** Right-clicking a label in the Code Projector offers
+  "Translations" which spanws a small sidebar window that shows all translations
+  currently saved for that label. Right clicking on the tab will show a context
+  menu that allows switching the presented target language for the whole file.
+  Any untranslated content is shown in the default language for that library.
+* **Refactoring:** Drag-and-drop operations on the Desktop map to AST transformations:
+    * Dragging code text from Book A to Book B moves the function.
+    * Dragging Book A into Shelf B moves the file on disk and updates references.
+
+### 11.5 Persistence Strategy
+* **Code:** Saved to `.__.rh` / `.rhy` (The "Babel" Layer).
+* **Layout:** Saved to `.rhr` (YAML).
+    * Stores: Window Coordinates, Stacking Groups, Active Tabs.
+    * Strategy: `.rhr` is usually `.gitignored` to allow personalized workflows.
