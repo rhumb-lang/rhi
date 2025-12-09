@@ -88,8 +88,8 @@ const (
 	OP_ASSIGN_IMM
 	OP_ASSIGN_MUT
 	OP_DESTRUCT
-	OP_IF_TRUE
-	OP_IF_FALSE
+	OP_JUMP_IF_FALSE
+	OP_JUMP_IF_TRUE
 	OP_WHILE
 	OP_FOREACH
 	OP_PIPE
@@ -182,8 +182,8 @@ func (op OpCode) String() string {
 	case OP_ASSIGN_IMM: return "OP_ASSIGN_IMM"
 	case OP_ASSIGN_MUT: return "OP_ASSIGN_MUT"
 	case OP_DESTRUCT: return "OP_DESTRUCT"
-	case OP_IF_TRUE: return "OP_IF_TRUE"
-	case OP_IF_FALSE: return "OP_IF_FALSE"
+	case OP_JUMP_IF_FALSE: return "OP_JUMP_IF_FALSE"
+	case OP_JUMP_IF_TRUE: return "OP_JUMP_IF_TRUE"
 	case OP_WHILE: return "OP_WHILE"
 	case OP_FOREACH: return "OP_FOREACH"
 	case OP_PIPE: return "OP_PIPE"

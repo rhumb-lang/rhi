@@ -25,16 +25,29 @@ func (vm *VM) opSend() error {
 	}
 	
 	m, ok := receiver.Obj.(*mapval.Map)
-	if !ok {
-		return fmt.Errorf("receiver is not a map")
+	if ok {
+		val, found := m.Get(key)
+		if !found {
+			vm.push(mapval.NewEmpty())
+			return nil
+		}
+		vm.push(val)
+		return nil
 	}
 	
-	val, found := m.Get(key)
-	if !found {
-		return fmt.Errorf("field not found: %s", key)
+	// Handle Tuple (as List)
+	t, ok := receiver.Obj.(*mapval.Tuple)
+	if ok {
+		var idx int
+		n, _ := fmt.Sscanf(key, "%d", &idx)
+		if n == 1 && idx > 0 && idx <= len(t.Payload) {
+			vm.push(t.Payload[idx-1])
+			return nil
+		}
+		return fmt.Errorf("tuple index out of bounds or invalid: %s", key)
 	}
-	vm.push(val)
-	return nil
+
+	return fmt.Errorf("receiver is not a map or tuple")
 }
 
 func (vm *VM) opSetField() error {

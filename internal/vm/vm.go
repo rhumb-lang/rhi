@@ -2,9 +2,9 @@ package vm
 
 import (
 	"fmt"
-	
+
 	"git.sr.ht/~madcapjake/rhi/internal/config"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
 const StackMax = 2048
@@ -12,10 +12,10 @@ const MaxFrames = 64 // Kept for legacy limits if needed, but not used for stora
 
 type VM struct {
 	CurrentFrame *CallFrame
-	
+
 	Stack [StackMax]mapval.Value
 	SP    int // Stack Pointer (points to empty slot)
-	
+
 	Config *config.Config
 }
 
@@ -31,19 +31,24 @@ const (
 
 func (r Result) String() string {
 	switch r {
-	case Ok: return "Ok"
-	case CompileError: return "CompileError"
-	case RuntimeError: return "RuntimeError"
-	case Halt: return "Halt"
-	default: return fmt.Sprintf("Unknown(%d)", r)
+	case Ok:
+		return "Ok"
+	case CompileError:
+		return "CompileError"
+	case RuntimeError:
+		return "RuntimeError"
+	case Halt:
+		return "Halt"
+	default:
+		return fmt.Sprintf("Unknown(%d)", r)
 	}
 }
 
 func NewVM() *VM {
 	return &VM{
-		SP: 0,
+		SP:           0,
 		CurrentFrame: nil,
-		Config: config.DefaultConfig(),
+		Config:       config.DefaultConfig(),
 	}
 }
 
@@ -54,18 +59,18 @@ func (vm *VM) currentFrame() *CallFrame {
 // Interpret executes the chunk.
 func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
 	fn := &mapval.Function{
-		Name: "<script>",
+		Name:  "<script>",
 		Chunk: chunk,
 	}
 	closure := &mapval.Closure{Fn: fn}
-	
+
 	vm.CurrentFrame = &CallFrame{
 		Closure: closure,
 		IP:      0,
 		Base:    0,
 		Parent:  nil,
 	}
-	
+
 	return vm.run()
 }
 
@@ -122,7 +127,7 @@ func (vm *VM) RunSynchronous() (Result, error) {
 	for f := vm.CurrentFrame; f != nil; f = f.Parent {
 		startDepth++
 	}
-	
+
 	for {
 		res, err := vm.Step()
 		if err != nil {
@@ -131,13 +136,13 @@ func (vm *VM) RunSynchronous() (Result, error) {
 		if res != Ok {
 			return res, nil
 		}
-		
+
 		// Check if we popped the frame we started with
 		currentDepth := 0
 		for f := vm.CurrentFrame; f != nil; f = f.Parent {
 			currentDepth++
 		}
-		
+
 		if currentDepth < startDepth {
 			// Returned from the frame
 			return Ok, nil
@@ -167,23 +172,17 @@ func (vm *VM) run() (Result, error) {
 
 }
 
-
-
 func (vm *VM) Step() (Result, error) {
 
 	frame := vm.currentFrame()
 
 	chunk := frame.Closure.Fn.Chunk
 
-	
-
 	if frame.IP >= len(chunk.Code) {
 
 		return RuntimeError, fmt.Errorf("IP out of bounds")
 
 	}
-
-	
 
 	if vm.Config.TraceStack {
 
@@ -201,183 +200,199 @@ func (vm *VM) Step() (Result, error) {
 
 	}
 
-
-
 	instruction := mapval.OpCode(chunk.Code[frame.IP])
 
 	frame.IP++
 
-	
-
 	var err error
 
-	
+	switch instruction {
 
-		switch instruction {
-
-	
-
-		case mapval.OP_HALT: return Halt, nil
-
-	
-
-		
-
-	
+	case mapval.OP_HALT:
+		return Halt, nil
 
 		// Stack
 
-	
+	case mapval.OP_LOAD_CONST:
+		vm.opLoadConst()
 
-	
+	case mapval.OP_LOAD_LOC:
+		vm.opLoadLoc()
 
-	case mapval.OP_LOAD_CONST: vm.opLoadConst()
+	case mapval.OP_STORE_LOC:
+		vm.opStoreLoc()
 
-		case mapval.OP_LOAD_LOC:   vm.opLoadLoc()
+	case mapval.OP_LOAD_UPVALUE:
+		vm.opLoadUpvalue()
 
-		case mapval.OP_STORE_LOC:  vm.opStoreLoc()
+	case mapval.OP_STORE_UPVALUE:
+		vm.opStoreUpvalue()
 
-		case mapval.OP_LOAD_UPVALUE: vm.opLoadUpvalue()
+	case mapval.OP_DUP:
+		vm.opDup()
 
-		case mapval.OP_STORE_UPVALUE: vm.opStoreUpvalue()
-
-		case mapval.OP_DUP:        vm.opDup()
-
-		case mapval.OP_POP:        vm.opPop()
-
-	
-
-	
+	case mapval.OP_POP:
+		vm.opPop()
 
 	// Flow
 
-	case mapval.OP_JUMP:       vm.opJump()
+	case mapval.OP_JUMP:
+		vm.opJump()
 
-	case mapval.OP_IF_TRUE:    vm.opIfTrue()
+	case mapval.OP_JUMP_IF_FALSE:
+		vm.opIfTrue() // Jump if False (rename func later)
 
-	case mapval.OP_IF_FALSE:   vm.opIfFalse()
+	case mapval.OP_JUMP_IF_TRUE:
+		vm.opIfFalse() // Jump if True
 
-	case mapval.OP_CALL:       err = vm.opCall()
+	case mapval.OP_CALL:
+		err = vm.opCall()
 
-	case mapval.OP_RETURN:     
+	case mapval.OP_RETURN:
 
 		res, e := vm.opReturn()
 
-		if res != 0 { return Ok, nil } // Halt
+		if res == 1 {
+			return Halt, nil
+		}
 
-		if e != nil { err = e }
+		if e != nil {
+			err = e
+		}
 
-	case mapval.OP_MAKE_FN:    vm.opMakeFn()
-
-	
+	case mapval.OP_MAKE_FN:
+		vm.opMakeFn()
 
 	// Map
 
-	case mapval.OP_MAKE_MAP:   vm.opMakeMap()
+	case mapval.OP_MAKE_MAP:
+		vm.opMakeMap()
 
-	case mapval.OP_SEND:       err = vm.opSend()
+	case mapval.OP_SEND:
+		err = vm.opSend()
 
-	case mapval.OP_SET_FIELD:  err = vm.opSetField()
-
-	
+	case mapval.OP_SET_FIELD:
+		err = vm.opSetField()
 
 	// Space
 
-	case mapval.OP_POST:       err = vm.opPost()
+	case mapval.OP_POST:
+		err = vm.opPost()
 
-	case mapval.OP_INJECT:     err = vm.opInject()
+	case mapval.OP_INJECT:
+		err = vm.opInject()
 
-	case mapval.OP_WRITE:      err = vm.opWrite()
+	case mapval.OP_WRITE:
+		err = vm.opWrite()
 
-	case mapval.OP_SUBSCRIBE:  err = vm.opSubscribe()
+	case mapval.OP_SUBSCRIBE:
+		err = vm.opSubscribe()
 
-	case mapval.OP_NEW_REALM:  vm.opNewRealm()
+	case mapval.OP_NEW_REALM:
+		vm.opNewRealm()
 
-	case mapval.OP_MONITOR:    err = vm.opMonitor()
-
-	
+	case mapval.OP_MONITOR:
+		err = vm.opMonitor()
 
 	// Math
 
-	case mapval.OP_ADD:        err = vm.opAdd()
+	case mapval.OP_ADD:
+		err = vm.opAdd()
 
-	case mapval.OP_SUB:        err = vm.opSub()
+	case mapval.OP_SUB:
+		err = vm.opSub()
 
-	case mapval.OP_MULT:       err = vm.opMult()
+	case mapval.OP_MULT:
+		err = vm.opMult()
 
-	case mapval.OP_DIV_FLOAT:  err = vm.opDivFloat()
+	case mapval.OP_DIV_FLOAT:
+		err = vm.opDivFloat()
 
-	case mapval.OP_DIV_INT:    err = vm.opDivInt()
+	case mapval.OP_DIV_INT:
+		err = vm.opDivInt()
 
-	case mapval.OP_MOD:        err = vm.opMod()
+	case mapval.OP_MOD:
+		err = vm.opMod()
 
-	case mapval.OP_POW:        err = vm.opPow()
+	case mapval.OP_POW:
+		err = vm.opPow()
 
-	case mapval.OP_ROOT:       err = vm.opRoot()
+	case mapval.OP_ROOT:
+		err = vm.opRoot()
 
-	case mapval.OP_SCI_NOT:    err = vm.opSciNot()
+	case mapval.OP_SCI_NOT:
+		err = vm.opSciNot()
 
-	case mapval.OP_DEV:        err = vm.opDev()
-
-	
+	case mapval.OP_DEV:
+		err = vm.opDev()
 
 	// Structure
 
-	case mapval.OP_COALESCE:   vm.opCoalesce()
+	case mapval.OP_COALESCE:
+		vm.opCoalesce()
 
-	case mapval.OP_CONCAT:     vm.opConcat()
+	case mapval.OP_CONCAT:
+		vm.opConcat()
 
-	case mapval.OP_RANGE:      vm.opRange()
+	case mapval.OP_RANGE:
+		vm.opRange()
 
-	case mapval.OP_HAS_SUBFIELD: vm.opHasSub()
+	case mapval.OP_HAS_SUBFIELD:
+		vm.opHasSub()
 
-	case mapval.OP_ACCESS_NESTED: vm.opAccessNested()
+	case mapval.OP_ACCESS_NESTED:
+		vm.opAccessNested()
 
-	case mapval.OP_PIPE:       vm.opPipe()
+	case mapval.OP_PIPE:
+		vm.opPipe()
 
-	case mapval.OP_FOREACH:    vm.opForeach()
-
-	
+	case mapval.OP_FOREACH:
+		vm.opForeach()
 
 	// Logic
 
-	case mapval.OP_AND:        vm.opAnd()
+	case mapval.OP_AND:
+		vm.opAnd()
 
-	case mapval.OP_OR:         vm.opOr()
+	case mapval.OP_OR:
+		vm.opOr()
 
-	case mapval.OP_NOT:        vm.opNot()
+	case mapval.OP_NOT:
+		vm.opNot()
 
-	
+	case mapval.OP_EQ:
+		vm.opEq()
 
-	case mapval.OP_EQ:         vm.opEq()
+	case mapval.OP_NEQ:
+		vm.opNeq()
 
-	case mapval.OP_NEQ:        vm.opNeq()
+	case mapval.OP_GT:
+		err = vm.opGt()
 
-	case mapval.OP_GT:         err = vm.opGt()
+	case mapval.OP_LT:
+		err = vm.opLt()
 
-	case mapval.OP_LT:         err = vm.opLt()
+	case mapval.OP_GTE:
+		err = vm.opGte()
 
-	case mapval.OP_GTE:        err = vm.opGte()
-
-	case mapval.OP_LTE:        err = vm.opLte()
-
-
+	case mapval.OP_LTE:
+		err = vm.opLte()
 
 	// Testing
 
-	case mapval.OP_ASSERT_EQ:  vm.opAssertEq()
-
-
+	case mapval.OP_ASSERT_EQ:
+		vm.opAssertEq()
 
 	// Selectors
 
-	case mapval.OP_SELECT:      vm.opSelect() // Not implemented?
+	case mapval.OP_SELECT:
+		vm.opSelect() // Not implemented?
 
-	case mapval.OP_MATCH_STRUCT: vm.opMatchStruct()
+	case mapval.OP_MATCH_STRUCT:
+		vm.opMatchStruct()
 
-	case mapval.OP_MATCH_TUPLE:  vm.opMatchTuple()
-
-	
+	case mapval.OP_MATCH_TUPLE:
+		vm.opMatchTuple()
 
 	default:
 
@@ -385,15 +400,11 @@ func (vm *VM) Step() (Result, error) {
 
 	}
 
-	
-
 	if err != nil {
 
 		return RuntimeError, err
 
 	}
-
-	
 
 	return Ok, nil
 

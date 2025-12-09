@@ -126,8 +126,15 @@ func (vm *VM) opPost() error {
 			}
 			
 			if res == Ok {
-				// Monitor returned. Top of stack is the result (Reply Value).
-				return nil
+				// Monitor returned. Check result.
+				// If result is Empty, it means "Peek" or "Pass". Continue bubbling.
+				// If result is Not Empty, it means "Replied". Stop bubbling.
+				result := vm.peek(0)
+				if result.Type != mapval.ValEmpty {
+					return nil
+				}
+				// Pop the Empty result and continue
+				vm.pop()
 			}
 		}
 		curr = curr.Parent
@@ -154,7 +161,13 @@ func (vm *VM) opPost() error {
 						vm.CurrentFrame = newFrame
 						res, err := vm.RunSynchronous()
 						if err != nil { return err }
-						if res == Ok { return nil }
+						if res == Ok {
+							result := vm.peek(0)
+							if result.Type != mapval.ValEmpty {
+								return nil
+							}
+							vm.pop()
+						}
 					}
 				}
 			}
@@ -272,5 +285,6 @@ func (vm *VM) opNewRealm() {
 	if vm.Config.TraceSpace {
 		fmt.Println("TRACE: New Realm")
 	}
-	vm.push(mapval.NewEmpty())
+	// Realm is just a Map for now (with space semantics handled by operators)
+	vm.push(mapval.Value{Type: mapval.ValObject, Obj: mapval.NewMap()})
 }

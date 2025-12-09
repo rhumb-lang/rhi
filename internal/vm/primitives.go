@@ -456,22 +456,21 @@ func numericCompare(a, b mapval.Value) (int, error) {
 	if fa < fb {
 		return -1, nil
 	}
-		if fa > fb {
-			return 1, nil
-		}
-		return 0, nil
+	if fa > fb {
+		return 1, nil
 	}
+	return 0, nil
+}
+
+// --- Testing Ops ---
+
+func (vm *VM) opAssertEq() {
+	expected := vm.pop()
+	actual := vm.pop()
 	
-	// --- Testing Ops ---
-	
-	func (vm *VM) opAssertEq() {
-		expected := vm.pop()
-		actual := vm.pop()
-		
-		if isEqual(actual, expected) {
-			fmt.Printf("PASS: %s\n", actual)
-		} else {
-			fmt.Printf("FAIL: Expected %s, got %s\n", expected, actual)
-		}
+	if !isEqual(actual, expected) {
+		panic(fmt.Sprintf("Assertion Failed: Expected %s, got %s", expected, actual))
 	}
+	fmt.Printf("PASS: %s\n", actual)
+}
 	
