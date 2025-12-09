@@ -31,6 +31,7 @@ The codebase follows a "Small File" philosophy with strict separation between Ru
 ├── Makefile              # Build scripts (ANTLR, Tests)
 ├── /cmd
 │   └── /rhi              # Rhumb Interpreter - CLI Runner / REPL
+│   └── /rhide            # Rhumb IDE - Graphical Environment (Wayland)
 ├── /internal             # Core Logic (Private)
 │   ├── /ast              # Abstract Syntax Tree definitions
 │   ├── /cli              # CLI Entrypoint Helpers
@@ -227,12 +228,16 @@ For Books managed by the IDE, the source code is decomposed into three file type
 
 ### 4.5 Dependency Resolution
 
-External dependencies use a **Resolver Protocol** in the file header.
+Dependencies are imported using the **Resolver Protocol**.
 
-  * **Syntax:** `{ RESOLVER | PATH | VERSION }`
-  * **Standard Lib:** `{!|math|1.2.0}`
-  * **Local Lib:** `{-|path\to\local\lib|0.3.2}`
-  * **git:** `{git|https://path.to/repo|0.1.0}`
+  * **Explicit Version:** `{ ! | math | 1.0.0 }`
+  * **Latest/Default Version:** `{ ! | math | - }` (Use `-` to indicate no specific version).
+
+| Resolver | Syntax | Use Case | Example |
+| :--- | :--- | :--- | :--- |
+| **Standard** | `!` | Built-in Libs | `{!\|math\|-}` |
+| **Local** | `-` | Internal Code | `{-;path\to\testing;-}` |
+| **Remote** | `git` | External Libs | `{git\|https://github...\|v1}` |
 
 -----
 
@@ -253,6 +258,11 @@ Rhumb uses a high-performance **Prototype** system inspired by the [Self program
           * Map Field Operations (`map\x`)
           * Selector Rules (`x .. f`)
           * Space Operations (`space#signal`)
+  * **Routine:** A sequence of expressions enclosed in `()`. Evaluated immediately.
+  * **Subroutine:** A **Reference** to a routine `<()>`. Stored executable logic (Code).
+  * **Submap:** A **Reference** to a Map literal `<[]>`. Represents a **Schema** or **Prototype Shape**.
+      * **As Constructor:** When invoked, it creates a new Map with fields populated by arguments.
+      * **As Parameters:** When used with `->`, it defines the local variable bindings for a function.
 
 ### 5.2 The Universal Legend
 
@@ -783,17 +793,22 @@ A Realm can be bound to a Transport Layer (TCP/WebSockets).
       * **Proclamation (`node$state`):** Syncs state to the remote node (CRDT-like consistency).
       * **Subscription (`node <> ...`):** deserializes incoming packets into local Tuples.
 
-#### B. Process Migration (The Freezer)
+#### B. The Freezer (Serialization Engine)
 
-When a function is passed to a Networked Realm (e.g., `node -> task()`), the VM
-performs **Transparent Migration**.
+The VM employs a unified serialization engine called **The Freezer** to flatten
+the object graph into a binary format. It operates in two modes:
 
-1.  **Freeze:** The `task` closure is paused.
-2.  **Sanitize:** The VM verifies that the closure does *not* capture non-transferable resources (e.g., File Handles, Local Mutexes).
-3.  **Serialize:** The Closure's **Bytecode** (Logic Node IDs) and **Upvalues** (Captured Data) are packed into a binary payload.
-4.  **Transmit:** The payload is sent to the remote node.
-5.  **Hydrate:** The remote node unpacks the payload, links the IDs to its local Libraries (via the Resolver Protocol), and resumes execution.
-
+1.  **Migration Mode (Network):**
+    * **Scope:** Serializes a specific Closure or Process.
+    * **Sanitization:** **Strict.** If the graph contains non-transferable local
+      resources (File Handles, Window Pointers), the freeze **fails** with an
+      error. This prevents "It works on my machine" bugs in distributed code.
+2.  **Snapshot Mode (Disk):**
+    * **Scope:** Serializes the entire VM Heap and Tuplespace.
+    * **Sanitization:** **Permissive.** Local resources are serialized as
+      **Rehydration Instructions** (e.g., "Open file X at offset Y"). On reload,
+      the VM attempts to restore them; if impossible (file missing), the handle
+      becomes `___` or an error.
 #### C. The Dependency Check
 
 Before accepting a migrated process, the Remote Node validates the **Resolver
@@ -1193,7 +1208,27 @@ Different artifacts render differently when expanded into Windows.
   the newly executed version.
 
 ### 11.5 Persistence Strategy
-* **Code:** Saved to `.__.rh` / `.rhy` (The "Babel" Layer).
-* **Layout:** Saved to `.rhr` (YAML).
-    * Stores: Window Coordinates, Stacking Groups, Active Tabs.
-    * Strategy: `.rhr` is usually `.gitignored` to allow personalized workflows.
+
+Rhumb employs a **Dual-Persistence Model** to decouple the requirements of the machine (speed/stability) from the requirements of the human (readability/git).
+
+#### A. Hot State (`.ri`)
+* **Format:** **Fast Binary Snapshot**.
+* **Content:** A serialized graph of the `VM` heap (objects, stack frames, tuplespace) and the `WM` state.
+* **Role:** Crash recovery and Fast Resume.
+* **Mechanism:**
+    * **Serialization:** Uses **The Freezer (Snapshot Mode)**. This reuses the distributed computing logic to efficiently flatten pointers into IDs, but allows for the persistence of local resource metadata.
+    * **On Launch:** The IDE loads this file to resume execution quickly (< 100ms).
+    * **On Run:** The IDE snapshots to this file frequently (e.g., on focus loss).
+
+#### B. Cold Storage (The Artifacts)
+* **Format:** Text-based files (`.__.rh`, `.rhy`).
+* **Role:** Source of Truth for Git.
+* **Mechanism:** The **Babel Daemon** watches the `.ri` and decompiles it to text in the background.
+
+#### C. The Babel Daemon (`rhi babel`)
+To ensure the UI remains fluid, the IDE **never writes text files directly**.
+1.  **The Loop:** The IDE writes the `.ri` (Hot State) to disk.
+2.  **The Signal:** The IDE notifies the background **Babel Daemon**.
+3.  **The Sync:** The Daemon reads the `.ri` (Read-Only) and "decompiles" the binary state into the canonical Cold Storage files (`.__.rh`, `.rhy`) in the background.
+    * **Safety:** If the text generation crashes or lags, the user's running session is unaffected.
+    * **Performance:** The "Save" operation is instant from the user's perspective.
