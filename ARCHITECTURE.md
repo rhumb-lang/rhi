@@ -1159,9 +1159,10 @@ Different artifacts render differently when expanded into Windows.
 | **Shelf**   | Folder    | **Sub-Desktop**     | Displays contained Books/Shelves as Icons in a grid. Acts as a spatial file manager.       |
 | **Library** | Package   | **Sub-Desktop**     | Read-only view of external dependency contents.                                            |
 | **Book**    | File      | **Code Projector**  | The Projection Editor (Source Code).                                                       |
-| **Catalog** | Tag       | **Form Projector** | Form-based editor for `.rhy` YAML files.                                                   |
-| **Voyage**  | Gear      | **Viewport**        | Renders the output of a running process (Game/App).                                        |
 | **Tool**    | (none)    | **Form Projector** | Certain actions in the Projection Editor can trigger sidebar tools (e.g., Docs, Debugging) |
+| **Catalog** | Tag       | **Form Projector** | Form-based editor for `.rhy` YAML files.                                                   |
+| **Shell**   | (none)    | **Terminal Projector** | Openable from context menu. Like a line-based code projection editor but with some batteries included. |
+| **Voyage**  | Gear      | **Viewport**        | Renders the output of a running process (Game/App).                                        |
 
 ### 11.4 Navigation & Refactoring
 * **Context Menu:** The primary mechanism for instantiating new objects
