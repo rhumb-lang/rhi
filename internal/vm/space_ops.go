@@ -168,36 +168,25 @@ func (vm *VM) opInject() error {
 	} else {
 		// Bundle into Map (List)
 		m := mapval.NewMap()
-		// Map fields are usually named for Map, or numbered for List?
-		// Value.String() for Map checks Fields.
-		// Map struct has Fields []Value.
-		// And Legend.
-		// If we use NewMap(), it has empty legend.
-		// We should add fields with numeric keys?
-		// Or just append to Fields and let Legend handle it?
-		// Map logic: Elements are fields with Numeric names.
-		// But implementation detail of Map might require Legend update.
-		// Let's use `NewMap` and manually populate.
-		// Ideally `NewList` helper?
-		// `NewMap` returns `Map` with empty Fields.
-		// `m.Fields = args`?
-		// We need Legend.
-		// This is getting complicated for opInject.
-		// Let's assume for now we just return the LAST arg or first?
-		// The test expects `['hello'; 'world']`. This is a Map.
-		// Let's create a map with these values.
-		// Since we don't have a robust `NewList` helper exposed here easily without Legend construction,
-		// I will create a basic Map with these values as Fields.
-		// Assuming linear scan `Fields` corresponds to index?
-		// Map `Fields` are values. `Legend` maps Name -> Index.
-		// If we want `[hello; world]`.
-		// Index 0: hello. Name "1".
-		// Index 1: world. Name "2".
-		
-		// For MVP: Just append to Fields.
-		// And ignore Legend (it will be empty, so no lookup by name).
-		// But `formatValue` iterates Fields.
+		// Populate Fields and Legend
 		m.Fields = args
+		
+		// Map logic: Positional elements have numeric names ("1", "2", etc.)
+		// Always create a new Legend for this specific List structure
+		m.Legend = &mapval.Legend{
+			Kind: mapval.LegendMap,
+			Fields: make([]mapval.FieldDesc, len(args)),
+		}
+		
+		for i := 0; i < len(args); i++ {
+			// Name is "1"-based index string
+			name := fmt.Sprintf("%d", i+1)
+			m.Legend.Fields[i] = mapval.FieldDesc{
+				Name: name,
+				Kind: mapval.FieldMutable, // or Immutable? Args usually mutable in list?
+			}
+		}
+		
 		payload = mapval.Value{Type: mapval.ValObject, Obj: m}
 	}
 	
