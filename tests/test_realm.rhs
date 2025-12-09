@@ -33,10 +33,11 @@ bar .= [] -> (
         #pong(msg) :: double-result\1 := msg % the :: operator causes the message to keep bubbling up instead of being captured
     }
     
-    bar-realm#pong('bar') % because we use but don't consume the signal, it bubbles up to the subroutine space
+    bar-realm#pong('bar-bar') % because we use but don't consume the signal, it bubbles up to the subroutine space
 
 )
 bar {
     #pong(msg) .. double-result\2 := msg
 }
-double-result %= ['bar'; 'bar']
+double-result\1 %= 'bar-bar'
+double-result\2 %= 'bar-bar'
