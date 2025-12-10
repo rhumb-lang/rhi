@@ -1,6 +1,11 @@
 package mapval
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+)
 
 // ---------------------------------------------------------
 // 1. The Value Struct (Stack Allocated / Passed by Value)
@@ -58,6 +63,9 @@ func (v Value) String() string {
 		if v.Obj == nil {
 			return "nil"
 		}
+		if m, ok := v.Obj.(*Map); ok {
+			return m.String()
+		}
 		if t, ok := v.Obj.(*Tuple); ok {
 			kind := ""
 			switch t.Kind {
@@ -68,7 +76,14 @@ func (v Value) String() string {
 			case TupleProclamation:
 				kind = "$"
 			}
+			// Should we include payload? For now, just topic to match existing style or minimal requirements.
 			return fmt.Sprintf("<%s%s>", kind, t.Topic)
+		}
+		if f, ok := v.Obj.(*Function); ok {
+			return fmt.Sprintf("<%s>", f.Name)
+		}
+		if c, ok := v.Obj.(*Closure); ok {
+			return fmt.Sprintf("<%s>", c.Fn.Name)
 		}
 		return fmt.Sprintf("<Object %T>", v.Obj)
 	case ValVersion:
@@ -142,6 +157,52 @@ type Map struct {
 }
 
 func (m *Map) Type() ObjectType { return ObjTypeMap }
+
+func (m *Map) String() string {
+	var positionals []int
+	posMap := make(map[int]Value)
+	var named []FieldDesc
+
+	if m.Legend == nil {
+		return "[]"
+	}
+
+	for i, fieldDesc := range m.Legend.Fields {
+		// Check if positional
+		if idx, err := strconv.Atoi(fieldDesc.Name); err == nil && idx > 0 {
+			positionals = append(positionals, idx)
+			posMap[idx] = m.Fields[i]
+		} else {
+			named = append(named, fieldDesc)
+		}
+	}
+	
+	sort.Ints(positionals)
+	
+	var parts []string
+	
+	// 1. Positional Values
+	for _, idx := range positionals {
+		parts = append(parts, posMap[idx].String())
+	}
+	
+	// 2. Named Fields (Names Only)
+	for _, field := range named {
+		// Filter Keys (starts with backtick)
+		if strings.HasPrefix(field.Name, "`") {
+			continue
+		}
+		
+		prefix := "."
+		if field.Kind == FieldMutable {
+			prefix = ":"
+		}
+		
+		parts = append(parts, prefix + field.Name)
+	}
+	
+	return "[" + strings.Join(parts, "; ") + "]"
+}
 
 // FieldKind distinguishes between immutable (.) and mutable (:) fields.
 type FieldKind uint8

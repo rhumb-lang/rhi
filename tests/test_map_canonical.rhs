@@ -1,0 +1,9 @@
+m .= [
+  10; 20
+  x :: 100
+  config .. [a :: 1]
+  @logger .. []
+  func :: [] -> ()
+  `secret :: "hidden"
+]
+m %= [10; 20; :x; .config; :func; .@logger]

@@ -32,43 +32,37 @@ func (b *ASTBuilder) VisitDocument(ctx *grammar.DocumentContext) interface{} {
 
 func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface{} {
 	var exprs []ast.Expression
-
-	// Iterate over all children to preserve order and handle interleaved terminators
-	// However, using ctx.AllExpression() is cleaner if we just want the expressions.
-	// We need the Context for each expression to check for assertions.
-
-	for _, exprCtx := range ctx.AllExpression() {
-		res := b.Visit(exprCtx)
+	for _, e := range ctx.AllExpression() {
+		res := b.Visit(e)
 		if expr, ok := res.(ast.Expression); ok {
-
-			// 1. Check for Assertion (Test Mode)
-			// If -test flag is active, we look for the %= comment
 			if b.IsTestMode {
-				// We pass the rule context to find hidden tokens to its right
-				if assertCode, found := b.getAssertion(exprCtx); found {
-					// Parse the expected value (e.g. "10")
-					expected := b.parseFragment(assertCode)
-
-					// Wrap the expression in an AssertionWrapper
-					// The Compiler will generate OP_ASSERT_EQ for this
-					expr = &ast.AssertionWrapper{
-						Actual:   expr,
-						Expected: expected,
+				if prc, ok := e.(antlr.ParserRuleContext); ok {
+					op, content, found := b.getMetaOp(prc)
+					if found {
+						if op == "%=" {
+							expectedExpr := b.parseFragment(content)
+							expr = &ast.AssertionWrapper{
+								Actual:   expr,
+								Expected: expectedExpr,
+							}
+						} else if op == "%?" {
+							expr = &ast.InspectionWrapper{
+								Expr: expr,
+							}
+						}
 					}
 				}
 			}
-
 			exprs = append(exprs, expr)
 		}
 	}
-
 	return exprs
 }
 
-func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
+func (b *ASTBuilder) getMetaOp(ctx antlr.ParserRuleContext) (string, string, bool) {
 	stop := ctx.GetStop()
 	if stop == nil {
-		return "", false
+		return "", "", false
 	}
 	stopIndex := stop.GetTokenIndex()
 	hiddenTokens := b.TokenStream.GetHiddenTokensToRight(stopIndex, antlr.TokenHiddenChannel)
@@ -76,10 +70,13 @@ func (b *ASTBuilder) getAssertion(ctx antlr.ParserRuleContext) (string, bool) {
 	for _, t := range hiddenTokens {
 		text := t.GetText()
 		if after, ok := strings.CutPrefix(text, "%="); ok {
-			return strings.TrimSpace(after), true
+			return "%=", strings.TrimSpace(after), true
+		}
+		if after, ok := strings.CutPrefix(text, "%?"); ok {
+			return "%?", strings.TrimSpace(after), true
 		}
 	}
-	return "", false
+	return "", "", false
 }
 
 func NewASTBuilder(stream *antlr.CommonTokenStream, isTestMode bool) *ASTBuilder {

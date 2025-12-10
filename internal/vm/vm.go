@@ -378,12 +378,17 @@ func (vm *VM) Step() (Result, error) {
 	case mapval.OP_LTE:
 		err = vm.opLte()
 
-	// Testing
+		// Testing
 
-	case mapval.OP_ASSERT_EQ:
-		vm.opAssertEq()
+	
 
-	// Selectors
+		case mapval.OP_ASSERT_EQ:  vm.opAssertEq()
+
+		case mapval.OP_INSPECT:    vm.opInspect()
+
+	
+
+		// Selectors
 
 	case mapval.OP_SELECT:
 		vm.opSelect() // Not implemented?

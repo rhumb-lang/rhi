@@ -49,3 +49,13 @@ func (a *AssertionWrapper) expressionNode() {}
 func (a *AssertionWrapper) String() string {
 	return a.Actual.String() + " \"%=\" " + a.Expected.String()
 }
+
+// InspectionWrapper wraps an expression that has an attached inspection request (%?).
+type InspectionWrapper struct {
+	Expr Expression
+}
+
+func (i *InspectionWrapper) expressionNode() {}
+func (i *InspectionWrapper) String() string {
+	return i.Expr.String() + " \"%?\""
+}

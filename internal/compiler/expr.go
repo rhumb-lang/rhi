@@ -95,6 +95,15 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		}
 		// Emit MONITOR
 		c.emit(mapval.OP_MONITOR)
+	case *ast.InspectionWrapper:
+		// Compile Expression
+		if err := c.compileExpression(e.Expr); err != nil {
+			return err
+		}
+		// Dup so value remains for program
+		c.emit(mapval.OP_DUP)
+		// Inspect (Pops Value)
+		c.emit(mapval.OP_INSPECT)
 	default:
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}

@@ -469,12 +469,29 @@ func numericCompare(a, b mapval.Value) (int, error) {
 
 // --- Testing Ops ---
 
+func (vm *VM) opInspect() {
+	val := vm.pop()
+	fmt.Printf("INSPECT: %s\n", val.String())
+}
+
 func (vm *VM) opAssertEq() {
 	expected := vm.pop()
 	actual := vm.pop()
 
-	if !isEqual(actual, expected) {
-		fmt.Printf("FAIL: Expected %s, got %s\n", expected, actual)
+	pass := false
+
+	// 1. Blessed Output Check (if expected is Text)
+	if expected.Type == mapval.ValText && actual.String() == expected.Str {
+		pass = true
+	} else if isEqual(actual, expected) {
+		// 2. Structural/Value Equality
+		pass = true
 	}
-	fmt.Printf("PASS: %s\n", actual)
+
+	if !pass {
+		fmt.Printf("FAIL: Expected %s (Value) or '%s' (String Rep), got %s\n", expected, expected.Str, actual.String())
+	} else {
+		fmt.Printf("PASS: %s\n", actual)
+	}
+
 }
