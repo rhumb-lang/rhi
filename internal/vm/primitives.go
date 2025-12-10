@@ -80,13 +80,40 @@ func (vm *VM) opStoreUpvalue() {
 func (vm *VM) opAdd() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	// 1. Date/Duration Arithmetic
+	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDuration {
+		// Date + Duration = Date
+		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: a.Integer + b.Integer})
+		return nil
+	}
+	if a.Type == mapval.ValDuration && b.Type == mapval.ValDuration {
+		// Duration + Duration = Duration
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: a.Integer + b.Integer})
+		return nil
+	}
+	if a.Type == mapval.ValDuration && b.Type == mapval.ValDateTime {
+		// Duration + Date = Date (Commutative)
+		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: b.Integer + a.Integer})
+		return nil
+	}
+
+	// 2. Integers
 	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
 		vm.push(mapval.NewInt(a.Integer + b.Integer))
-	} else if a.Type == mapval.ValFloat || b.Type == mapval.ValFloat {
+		return nil
+	}
+	
+	// 3. Floats (mixed)
+	if a.Type == mapval.ValFloat || b.Type == mapval.ValFloat {
 		fa := asFloat(a)
 		fb := asFloat(b)
 		vm.push(mapval.NewFloat(fa + fb))
-	} else if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
+		return nil
+	}
+
+	// 4. Map Concatenation
+	if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
 		mapA, okA := a.Obj.(*mapval.Map)
 		mapB, okB := b.Obj.(*mapval.Map)
 		if okA && okB {
@@ -94,24 +121,79 @@ func (vm *VM) opAdd() error {
 			newMap.Fields = append(newMap.Fields, mapA.Fields...)
 			newMap.Fields = append(newMap.Fields, mapB.Fields...)
 			vm.push(mapval.Value{Type: mapval.ValObject, Obj: newMap})
-		} else {
-			return fmt.Errorf("operands must be numbers or maps for ADD")
+			return nil
 		}
-	} else {
-		return fmt.Errorf("operands must be numbers or maps for ADD")
 	}
-	return nil
+
+	return fmt.Errorf("operands must be numbers, maps, or dates for ADD")
 }
 
 func (vm *VM) opSub() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	// 1. Date/Duration Arithmetic
+	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDuration {
+		// Date - Duration = Date
+		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: a.Integer - b.Integer})
+		return nil
+	}
+	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDateTime {
+		// Date - Date = Duration
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: a.Integer - b.Integer})
+		return nil
+	}
+	if a.Type == mapval.ValDuration && b.Type == mapval.ValDuration {
+		// Duration - Duration = Duration
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: a.Integer - b.Integer})
+		return nil
+	}
+
+	// 2. Integers
 	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
 		vm.push(mapval.NewInt(a.Integer - b.Integer))
-	} else {
-		vm.push(mapval.NewFloat(asFloat(a) - asFloat(b)))
+		return nil
 	}
+
+	// 3. Floats
+	vm.push(mapval.NewFloat(asFloat(a) - asFloat(b)))
 	return nil
+}
+
+func (vm *VM) opCoerceNum() error {
+	val := vm.pop()
+	if val.Type == mapval.ValDateTime {
+		// +Date -> Duration
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: val.Integer})
+		return nil
+	}
+	if val.Type == mapval.ValDuration || val.Type == mapval.ValInteger || val.Type == mapval.ValFloat || val.Type == mapval.ValDecimal {
+		vm.push(val)
+		return nil
+	}
+	return fmt.Errorf("cannot coerce type %d to number", val.Type)
+}
+
+func (vm *VM) opNumNeg() error {
+	val := vm.pop()
+	if val.Type == mapval.ValDateTime {
+		// -Date -> Negative Duration
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: -val.Integer})
+		return nil
+	}
+	if val.Type == mapval.ValDuration {
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: -val.Integer})
+		return nil
+	}
+	if val.Type == mapval.ValInteger {
+		vm.push(mapval.NewInt(-val.Integer))
+		return nil
+	}
+	if val.Type == mapval.ValFloat {
+		vm.push(mapval.NewFloat(-val.Float))
+		return nil
+	}
+	return fmt.Errorf("cannot negate type %d", val.Type)
 }
 
 func (vm *VM) opMult() error {

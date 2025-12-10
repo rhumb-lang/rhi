@@ -17,6 +17,20 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		c.emitConstant(mapval.NewInt(e.Value))
 	case *ast.RationalLiteral:
 		c.emitConstant(mapval.NewFloat(e.Value))
+	case *ast.DateTimeLiteral:
+		c.emitConstant(mapval.Value{
+			Type:    mapval.ValDateTime,
+			Integer: e.Value,
+		})
+	case *ast.VersionLiteral:
+		val := mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard)
+		val.Str = e.Suffix
+		c.emitConstant(val)
+	case *ast.DecimalLiteral:
+		c.emitConstant(mapval.Value{
+			Type: mapval.ValDecimal,
+			Obj:  &mapval.Decimal{D: e.Value, Original: e.Original},
+		})
 	case *ast.LabelLiteral:
 		// 1. Variable Access (Local)
 		idx := c.Scope.resolveLocal(e.Value)

@@ -3,6 +3,8 @@ package ast
 import (
 	"fmt"
 	"strings"
+
+	"github.com/cockroachdb/apd/v3"
 )
 
 // EmptyLiteral represents '___' (empty).
@@ -43,16 +45,48 @@ type KeyLiteral struct {
 func (l *KeyLiteral) expressionNode() {}
 func (l *KeyLiteral) String() string  { return "`" + l.Value }
 
-// DateLiteral represents a date like 2025/12/05.
-type DateLiteral struct {
-	Year  string // Keeping as string to support dynamic values if AST allows, though grammar suggests parts
-	Month string
-	Day   string
+// DateTimeLiteral represents a date/time as Unix Milliseconds.
+type DateTimeLiteral struct {
+	Value int64
 }
 
-func (l *DateLiteral) expressionNode() {}
-func (l *DateLiteral) String() string {
-	return fmt.Sprintf("%s/%s/%s", l.Year, l.Month, l.Day)
+func (l *DateTimeLiteral) expressionNode() {}
+func (l *DateTimeLiteral) String() string {
+	return fmt.Sprintf("DateTime<%d>", l.Value)
+}
+
+// VersionLiteral represents a semantic version.
+type VersionLiteral struct {
+	Major, Minor uint16
+	Patch        uint32
+	Suffix       string
+	IsWildcard   bool
+}
+
+func (l *VersionLiteral) expressionNode() {}
+func (l *VersionLiteral) String() string {
+	s := fmt.Sprintf("%d.%d.%d", l.Major, l.Minor, l.Patch)
+	if l.Suffix != "" {
+		s += l.Suffix
+	}
+	if l.IsWildcard {
+		s += ".-"
+	}
+	return s
+}
+
+// DecimalLiteral represents an arbitrary precision decimal.
+type DecimalLiteral struct {
+	Value    *apd.Decimal
+	Original string // e.g. "01.5"
+}
+
+func (l *DecimalLiteral) expressionNode() {}
+func (l *DecimalLiteral) String() string {
+	if l.Value == nil {
+		return "0.0"
+	}
+	return l.Value.String()
 }
 
 // TextSegment is a part of an interpolated string.

@@ -1,0 +1,64 @@
+% --- 1. Decimals ---
+d1 .= 01.5
+d1 %= 01.5 % parsing of leading-zero floats as arbitrary precision decimals
+
+d2 .= 05.-
+d2 %= 05 % precision capture [trailing dash]
+
+d3 .= 00.123
+d3 %= 00.123 % precision capture [no trailing dash]
+
+% --- 2. Versions ---
+v1 .= 1.0.0
+v1 %= 1.0.0 % Standard SemVer
+
+v2 .= 1.2.-
+v2 %= 1.2.- % wildcards [preserves the wildcard bit in string]
+
+
+v3 .= 1.0.0-alpha+001
+v3 %= 1.0.0-alpha+001 % suffixes
+
+% --- 3. DateTime (Absolute Points) ---
+t1 .= 2025/01/01
+t1 %= 2025/01/01 % Date Only
+
+t2 .= 2025/01/01@12:30:00
+t2 %= 2025/01/01@12:30:00 % Full Timestamp
+
+t3 .= 2025/01/01@12:30:00.500
+t3 %= 2025/01/01@12:30:00.500 % With Milliseconds
+
+% --- 4. Duration (Relative Vectors) ---
+dur1 .= +00:01:00
+dur1 %= +00:01:00 % Creation via Unary Plus [+] on Time Literal
+
+dur2 .= -00:01:00
+dur2 %= -00:01:00 % Creation via Unary Minus [-]
+
+dur3 .= +0001/00/00
+dur3 %= +0001/00/00 % Calendar Durations [1 Year]
+
+dur4 .= +0000/00/01@12:00:00
+dur4 %= +0000/00/01@12:00:00 % Mixed Duration [1 Day + 12 Hours]
+
+% --- 5. Type Algebra (Arithmetic) ---
+
+future .= t2 ++ dur1
+future %= 2025/01/01@12:31:00 % Date + Duration = Date [Time Travel]
+
+past .= t2 -- dur1
+past %= 2025/01/01@12:29:00 % Date - Duration = Date [Rewind]
+
+diff .= future -- t2
+diff %= +00:01:00 % Date - Date = Duration [Difference]
+
+long_dur .= dur1 ++ dur1
+long_dur %= +00:02:00 % Duration + Duration = Duration [Vector Addition]
+
+zero_dur .= dur1 -- dur1
+zero_dur %= +00:00:00 % Duration - Duration = Duration
+
+% --- 6. Edge Cases ---
+next_year .= t1 ++ dur3
+next_year %= 2026/01/01 % Adding a calendar duration to a date

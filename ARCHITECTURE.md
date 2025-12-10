@@ -504,6 +504,30 @@ objects can be asserted against a stable text format.
   * **Subroutine References:** Printed with angle brackets surrounding the label
     (e.g., `<foo>`, `<print>`).
 
+#### DateTime & Durations
+
+  * **DateTime:** Printed using **Zero-Suppression** to match literal syntax.
+      * **Midnight Suppression:** If the time is `00:00:00.000`, the time part is hidden.
+          * `2025/01/01@00:00:00` $\equiv$ `2025/01/01`
+      * **Epoch Suppression:** If the date is `1970/01/01`, the date part is hidden.
+          * `1970/01/01@12:30:00` $\equiv$ `12:30:00`
+      * **Milliseconds:** If 0, they are hidden.
+      * **Zero Value:** If the value is exactly `0` (Epoch at Midnight), it prints as the Date: `1970/01/01`.
+  * **Duration:** Printed using **Waterfall Normalization**.
+      * **Algorithm:** The total milliseconds are distributed into units starting from the largest (Year) down to the smallest.
+          * **1 Year** = 365 Days
+          * **1 Month** = 30 Days
+          * **1 Day** = 24 Hours
+      * **Zero-Suppression:**
+          * **Date Part:** If Years, Months, and Days are all 0, the date component (`YYYY/MM/DD`) is hidden.
+          * **Time Part:** If Hours, Minutes, and Seconds are all 0, the time component (`HH:MM:SS`) is hidden.
+          * **Milliseconds:** If 0, they are hidden (`.000` is removed).
+      * **Examples:**
+          * `366 Days` $\equiv$ `+0001/00/01` (Date only)
+          * `1 Day, 1 Hour` $\equiv$ `+0000/00/01 @ 01:00:00` (Mixed)
+          * `500ms` $\equiv$ `+00:00:00.500` (Time only)
+
+
 #### Maps & Objects
 
 Maps are printed as a bracketed list `[...]`. The order and format of fields are
@@ -818,6 +842,64 @@ When a function is called (`foo(...)`):
   * **Partial Application (Currying):** Syntax sugar for creating a new closure.
       * `<foo>(1)` $\rightarrow$ References `foo`, applies `1`, and returns a **New Function** (Closure) waiting for the remaining arguments. It does *not* execute.
 
+### 6\.6 Dynamic Type Interactions
+
+Rhumb enforces a strict, bi-directional type promotion strategy. The order of
+operands does not change the **Result Type** (e.g., `Int ++ Float` and `Float ++
+Int` both yield `Float`).
+
+#### The Numeric Hierarchy
+When mixing standard numeric types, the result is promoted to the type with the greatest expressivity to prevent data loss.
+
+1.  **Decimal** (Highest Precision)
+2.  **Float** (Highest Range)
+3.  **Integer** (Lowest)
+
+*Rule:* `Lower + Higher` $\rightarrow$ `Higher`.
+
+#### The Interaction Matrix
+The following table defines the result type for binary arithmetic (`++`, `--`).
+* **Rows/Cols:** The input types.
+* **Cells:** The output type.
+* **Text:** Not included. Text operations use `&&` (Concatenate) and do not respond to math operators.
+
+| `++` / `--` | **Integer** | **Float** | **Decimal** | **Duration** | **DateTime** |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Integer** | `Integer` | `Float` | `Decimal` | `Duration` | `DateTime`† |
+| **Float** | `Float` | `Float` | `Decimal` | `Duration` | `DateTime`† |
+| **Decimal** | `Decimal` | `Decimal` | `Decimal` | `Duration` | `DateTime`† |
+| **Duration** | `Duration` | `Duration` | `Duration` | `Duration` | `DateTime` |
+| **DateTime** | `DateTime`† | `DateTime`† | `DateTime`† | `DateTime` | `Duration`‡|
+
+#### Scalar Interpretation Rules
+When mixing Time types with Scalars (Integer/Float/Decimal), the Scalar is implicitly converted to a **Duration** before the operation proceeds.
+
+* **Integer:** Treated as **Milliseconds**.
+    * `Time + 500` $\rightarrow$ `Time + 500ms`
+* **Float / Decimal:** Treated as **Seconds**.
+    * The integer part becomes Seconds.
+    * The fractional part is converted to Milliseconds (Truncated precision).
+    * `Time + 1.5` $\rightarrow$ `Time + 1500ms`
+
+#### Special Logic (†/‡)
+
+**†: Date/Scalar Interaction**
+  * **Addition (`++`):** Commutative. Shifts the Date by the scalar amount.
+  * **Subtraction (`--`):**
+      * `Date -- Scalar` $\rightarrow$ **DateTime** (Rewind).
+      * `Scalar -- Date` $\rightarrow$ **Error** (Cannot subtract a Point from a Scalar).
+
+**‡: Date/Date Interaction**
+  * **Subtraction (`--`):** `Date - Date` $\rightarrow$ **Duration** (The magnitude between two points).
+  * **Addition (`++`):** `Date + Date` $\rightarrow$ **Error** (Geometrically meaningless).
+
+#### Multiplication & Division (`**`, `//`, `+/`, `-/`)
+
+These operators strictly follow the **Numeric Hierarchy**.
+* `DateTime` cannot be multiplied or divided.
+* **Duration Scaling:** `Duration` can be multiplied or divided by a **Numeric** (scalar) to scale the time vector.
+    * `Duration ** Int` $\rightarrow$ `Duration`
+    * `Duration // Float` $\rightarrow$ `Duration` (with ms truncation)
 
 -----
 

@@ -142,6 +142,7 @@ func (c *Compiler) compileUnary(unary *ast.UnaryExpression) error {
 	}
 	
 	switch unary.Op {
+	case ast.OpToNum: c.emit(mapval.OP_COERCE_NUM)
 	case ast.OpNegNum: c.emit(mapval.OP_NUM_NEG)
 	case ast.OpNegBool: c.emit(mapval.OP_NOT)
 	// ... add others

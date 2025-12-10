@@ -326,6 +326,12 @@ func (vm *VM) Step() (Result, error) {
 	case mapval.OP_DEV:
 		err = vm.opDev()
 
+	case mapval.OP_COERCE_NUM:
+		err = vm.opCoerceNum()
+
+	case mapval.OP_NUM_NEG:
+		err = vm.opNumNeg()
+
 	// Structure
 
 	case mapval.OP_COALESCE:
