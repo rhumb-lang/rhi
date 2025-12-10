@@ -18,7 +18,7 @@ This repository contains the core runtime (rhi), comprising the lexer, bytecode 
 
 ```bash
 # Clone the repository
-git clone [https://github.com/Hisyeo/rhi.git](https://github.com/Hisyeo/rhi.git)
+git clone https://github.com/Hisyeo/rhi.git
 cd rhi
 
 # Build the binary
