@@ -39,21 +39,31 @@ func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface
 				if prc, ok := e.(antlr.ParserRuleContext); ok {
 					op, content, found := b.getMetaOp(prc)
 					if found {
-						if op == "%=" {
+						switch op {
+						case "%=":
+							// 1. Handle "Test Name" separator (%)
 							parts := strings.SplitN(content, "%", 2)
-							expectedCode := strings.TrimSpace(parts[0])
+
+							// 2. Treat the value strictly as a trimmed string (No Parsing!)
+							rawString := strings.TrimSpace(parts[0])
 							testName := ""
 							if len(parts) > 1 {
 								testName = strings.TrimSpace(parts[1])
 							}
-							
-							expectedExpr := b.parseFragment(expectedCode)
+
+							expected := &ast.TextLiteral{
+								IsRaw: true,
+								Segments: []ast.TextSegment{
+									&ast.StringSegment{Value: rawString},
+								},
+							}
+
 							expr = &ast.AssertionWrapper{
 								Actual:   expr,
-								Expected: expectedExpr,
+								Expected: expected,
 								Name:     testName,
 							}
-						} else if op == "%?" {
+						case "%?":
 							expr = &ast.InspectionWrapper{
 								Expr: expr,
 							}
