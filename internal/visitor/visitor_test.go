@@ -22,7 +22,7 @@ func TestParser_BasicExpression(t *testing.T) {
 	p := grammar.NewRhumbParser(stream)
 
 	tree := p.Document()
-	builder := visitor.NewASTBuilder()
+	builder := visitor.NewASTBuilder(stream, false)
 	astDoc := builder.Visit(tree)
 
 	if astDoc == nil {
@@ -48,7 +48,7 @@ func TestParser_ComplexMap(t *testing.T) {
 	p := grammar.NewRhumbParser(stream)
 
 	tree := p.Document()
-	builder := visitor.NewASTBuilder()
+	builder := visitor.NewASTBuilder(stream, false)
 	astDoc := builder.Visit(tree)
 
 	if astDoc == nil {
