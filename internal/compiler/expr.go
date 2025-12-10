@@ -82,7 +82,9 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		if err := c.compileExpression(e.Expected); err != nil {
 			return err
 		}
-		// Assert (Pops Expected, Actual)
+		// Push Test Name
+		c.emitConstant(mapval.NewText(e.Name))
+		// Assert (Pops Name, Expected, Actual)
 		c.emit(mapval.OP_ASSERT_EQ)
 	case *ast.EffectExpression:
 		// Compile Target (Closure)

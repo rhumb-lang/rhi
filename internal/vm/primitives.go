@@ -475,23 +475,38 @@ func (vm *VM) opInspect() {
 }
 
 func (vm *VM) opAssertEq() {
+	nameVal := vm.pop()
 	expected := vm.pop()
 	actual := vm.pop()
-
+	
 	pass := false
-
-	// 1. Blessed Output Check (if expected is Text)
-	if expected.Type == mapval.ValText && actual.String() == expected.Str {
+	
+	// 1. Blessed Output Check (String Representation Match)
+	// We compare the canonical string representation of both values.
+	// This ensures that `x %= 1` passes (1 == 1) but `x %= "1"` fails (1 != '1').
+	if actual.String() == expected.String() {
 		pass = true
 	} else if isEqual(actual, expected) {
 		// 2. Structural/Value Equality
 		pass = true
 	}
-
-	if !pass {
-		fmt.Printf("FAIL: Expected %s (Value) or '%s' (String Rep), got %s\n", expected, expected.Str, actual.String())
-	} else {
-		fmt.Printf("PASS: %s\n", actual)
+	
+	name := ""
+	if nameVal.Type == mapval.ValText {
+		name = nameVal.Str
 	}
-
+	
+	if !pass {
+		msg := fmt.Sprintf("Assertion Failed: Expected %s (Value) or '%s' (String Rep), got %s", expected, expected.String(), actual.String())
+		if name != "" {
+			msg = fmt.Sprintf("%s (%s)", msg, name)
+		}
+		panic(msg)
+	}
+	
+	if name != "" {
+		fmt.Printf("PASS: %s (%s)\n", actual.String(), name)
+	} else {
+		fmt.Printf("PASS: %s\n", actual.String())
+	}
 }

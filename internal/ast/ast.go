@@ -43,6 +43,7 @@ func (d *Document) String() string {
 type AssertionWrapper struct {
 	Actual   Expression
 	Expected Expression
+	Name     string
 }
 
 func (a *AssertionWrapper) expressionNode() {}

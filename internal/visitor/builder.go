@@ -40,10 +40,18 @@ func (b *ASTBuilder) VisitExpressions(ctx *grammar.ExpressionsContext) interface
 					op, content, found := b.getMetaOp(prc)
 					if found {
 						if op == "%=" {
-							expectedExpr := b.parseFragment(content)
+							parts := strings.SplitN(content, "%", 2)
+							expectedCode := strings.TrimSpace(parts[0])
+							testName := ""
+							if len(parts) > 1 {
+								testName = strings.TrimSpace(parts[1])
+							}
+							
+							expectedExpr := b.parseFragment(expectedCode)
 							expr = &ast.AssertionWrapper{
 								Actual:   expr,
 								Expected: expectedExpr,
+								Name:     testName,
 							}
 						} else if op == "%?" {
 							expr = &ast.InspectionWrapper{

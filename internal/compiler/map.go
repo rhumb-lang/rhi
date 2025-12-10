@@ -69,13 +69,23 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 		                keyName = "@" + keyName
 		            }
 		            
-		            // Load Local Variable
+		            // Load Local Variable (if defined), else Empty
 		            localIdx := c.Scope.resolveLocal(keyName)
-		            if localIdx == -1 {
-		                return fmt.Errorf("undefined variable in pun: %s", keyName)
+		            if localIdx != -1 {
+		                c.emit(mapval.OP_LOAD_LOC)
+		                c.Chunk().WriteByte(byte(localIdx), 0)
+		            } else {
+		                // Pun of undefined variable -> Empty?
+		                // Or maybe the user INTENDED `x :: 100` but got Pun.
+		                // If I change this to Empty, then `x :: 100` becomes `x: ___`.
+		                // That explains why "undefined variable".
+		                // But `x :: 100` should NOT be a Pun!
+		                // So fixing this here hides the parser/visitor bug.
+		                // But if I want to support puns of undefined vars as Empty, I can do it.
+		                // Rhumb principles: "Any label not yet defined is considered empty (___) by default." (Architecture 5.4).
+		                // So `[.x]` where x is undefined should probably be `{x: ___}`.
+		                c.emitConstant(mapval.NewEmpty())
 		            }
-		            c.emit(mapval.OP_LOAD_LOC)
-		            c.Chunk().WriteByte(byte(localIdx), 0)
 		            
 		            // Emit Set
 		            flags := byte(0)
