@@ -104,7 +104,7 @@ The core language semantics are stable. The focus is now shifting from internal 
 
 ## 🧪 Testing
 
-The interpreter includes a self-hosting test suite. Tests are written in Rhumb itself using the `%=` assertion operator.
+The interpreter includes a suite of tests. Tests are written in Rhumb itself using the `%=` assertion operator.
 
 ```rhumb
 % Example Test
