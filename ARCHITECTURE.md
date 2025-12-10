@@ -432,6 +432,58 @@ supports **Maximum Slurping Power**, meaning the `&` can be placed anywhere.
   * **Head Slurp:** `[.&initial; .last] ^= [1; 2; 3]` $\rightarrow$ `initial=[1; 2]`, `last=3`
   * **Middle Slurp:** `[.top; .&mid; .bot] ^= [1; 2; 3; 4]` $\rightarrow$ `top=1`, `mid=[2; 3]`, `bot=4`
 
+### 5.9 Canonical String Representation
+
+To support the "Blessed Output" testing strategy (`%=`), Rhumb defines a strict
+canonical string representation for all values. This ensures that complex
+objects can be asserted against a stable text format.
+
+#### Primitives & References
+
+  * **Numbers:** Printed in their simplest decimal form (e.g., `10`, `3.14`).
+  * **Text:** Printed wrapped in single quotes (e.g., `'hello'`).
+  * **Empty:** Printed as `___`.
+  * **Subroutine References:** Printed with angle brackets surrounding the label
+    (e.g., `<foo>`, `<print>`).
+
+#### Maps & Objects
+
+Maps are printed as a bracketed list `[...]`. The order and format of fields are
+governed by the following rules:
+
+1.  **Positional First:** All positional elements (indices `1..N`) are printed
+    first, displaying their **Values**.
+2.  **Named Fields Append:** Non-positional fields are appended after the last
+    positional element in **Insertion Order**.
+3.  **Name-Only Display:** For non-positional fields, **only the Field Name** is
+    shown (not the value).
+4.  **Mutability Prefix:** Named fields are prefixed to indicate their
+    mutability:
+      * **Immutable (`.`):** e.g., `.x`
+      * **Mutable (`:`):** e.g., `:count`
+      * **Immutable Subfield (`.@`):** e.g., `.@base`
+      * **Mutable Subfield (`:@`):** e.g., `:@traits`
+5.  **Visibility Filter:**
+      * **Text/Labels:** Shown.
+      * **Dates/Versions:** Shown.
+      * **Keys (`` ` ``):** **Hidden.** Private capability keys are never
+        included in the string representation.
+
+**Example:**
+
+```rhumb
+data .= [
+  10; 20                % Positional 1, 2
+  x :: 100              % Named 'x' (Mutable)
+  config .. [a: 1]      % Named 'config' (Immutable)
+  @logger .. <Log>      % Subfield 'logger' (Immutable)
+  `secret :: "hidden"   % Key (Private)
+]
+
+% String Representation:
+data %= "[10; 20; :x; .config; .@logger]"
+```
+
 -----
 
 ## 6\. The Virtual Machine (RhumbVM)
@@ -1022,11 +1074,12 @@ for JavaScript.
 
 Rhumb uses the percent sign (`%`) for comments and meta-annotations.
 
-| Symbol      | Name          | Syntax        | Semantics                                                                                                                                                                |
-|:------------|:--------------|:--------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`%`**     | Line Comment  | `% text`      | Ignored by Parser. Continues to end of line.                                                                                                                             |
-| **`%( %)`** | Block Comment | `%( text %)`  | Ignored by Parser. Can be nested.                                                                                                                                        |
-| **`%=`**    | Assertion     | `expr %= val` | **Meta-Operator.** Ignored by the Runtime (treated as a comment). Used by IDEs & Test Runners to assert that the expression on the left evals to the value on the right. |
+| Symbol      | Name          | Syntax        | Semantics                                                                                                                                                                                                                                                              |
+|:------------|:--------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`%`**     | Line Comment  | `% text`      | Ignored by Parser. Continues to end of line.                                                                                                                                                                                                                           |
+| **`%( %)`** | Block Comment | `%( text %)`  | Ignored by Parser. Can be nested.                                                                                                                                                                                                                                      |
+| **`%=`**    | Assertion     | `expr %= val` | **Meta-Operator.** Ignored by Runtime. In Test Mode, it acts as an **Assertion**, checking that the *String Representation* of the left-side expression matches the literal string on the right.                                                                       |
+| **`%?`**    | Inspection    | `expr %?`     | **Meta-Operator.** Ignored by Runtime. In Test Mode, it acts as the **"Bless" / "What is this?"** operator. It triggers an inspection log (`INSPECT: <value>`) to stdout, allowing the user to copy the output and "bless" a test by pasting it into a `%=` assertion. |
 
 #### Implementation Note for `RhumbLexer.g4`
 
