@@ -1,6 +1,6 @@
 # rhi: The Rhumb Interpreter
 
-**Version:** v0.1.0 (Alpha)
+**Version:** v0.2.0 (Alpha)
 
 ![Vibe Coded](https://img.shields.io/badge/Code_Style-Vibe_Coded-ff69b4?style=flat-square&logo=openai)
 

@@ -1,17 +1,21 @@
-# 1. Ignore generated executables
+# Ignore generated executables
 /bin/*
 !/bin/.gitkeep
 
-# 2. Ignore standard Go build artifacts
+# Release artifacts
+/dist/*
+!/dist/.gitkeep
+
+# Ignore standard Go build artifacts
 *.exe
 *.test
 *.out
 *.prof
 
-# 3. Drawio temp files
+# Drawio temp files
 .$diagrams.drawio.svg.dtmp
 
-# 4. Generated ANTLR files
+# Generated ANTLR files
 *.java
 internal/grammar/rhumb_lexer.go
 internal/grammar/rhumb_parser.go
