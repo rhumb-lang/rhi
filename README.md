@@ -54,7 +54,7 @@ $ ./bin/rhi
 Pass a file path to execute a Rhumb script.
 
 ```bash
-./bin/rhi ./test/chat.rh
+./bin/rhi ./examples/chat.rh
 ```
 
 ### Command Line Flags
