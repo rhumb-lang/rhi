@@ -35,10 +35,12 @@ terminator
 
 
 literal
-    : FloatingPoint  # rationalNumber
-    | date           # dateNumber
+    : Version        # versionNumber
+    | FloatingPoint  # rationalNumber
+    | dateTime       # dateNumber
+    | time           # durationNumber
     | Zero           # zeroNumber
-    | NumberPart     # wholeNumber
+    | number         # wholeNumber
     | Key            # keySymbol
     | text           # textSymbol
     | reference      # referenceLiteral
@@ -47,6 +49,9 @@ literal
     | TripleUnderscore # emptyValue
     ;
 
+number
+    : NumberPart DotDash?
+    ;
 
 fieldLiteral
     : Zero
@@ -62,7 +67,7 @@ fieldLiteral
 
 expression
     : OpenBracket fields? CloseBracket # map
-    | OpenCurly libraryResolver Pipe libraryPath+ Pipe (Version | Dash) CloseCurly # library
+    | OpenCurly libraryResolver Pipe libraryPath+ Pipe (Version | number | FloatingPoint | Dash | Label) CloseCurly # library
     | OpenAnglet Dollar CloseAnglet # childRealm      // <$>
     | OpenAnglet Pipe CloseAnglet   # detachedRealm   // <|>
     | OpenCurly patterns? CloseCurly # selector
@@ -251,13 +256,21 @@ chainOp
     | Dollar         # proclamationField // realm$state
     ;
 
-datePart
+dateTimePart
     : NumberPart
     | Dollar Label
     ;
 
+dateTime
+    : date (At time)?
+    ;
+
 date
-    : datePart FSlash datePart FSlash datePart
+    : dateTimePart FSlash dateTimePart FSlash dateTimePart
+    ;
+
+time
+    : dateTimePart Colon dateTimePart Colon (dateTimePart | FloatingPoint)
     ;
 
 text

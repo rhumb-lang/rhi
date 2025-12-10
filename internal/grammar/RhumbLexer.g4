@@ -67,22 +67,19 @@ TildeGreater : '~>' ; // or else
 PlusGreater  : '+>' ; // IIFE
 
 Version
-    : ( VersionPart Dot   VersionPart Dot   VersionPart
-      | VersionPart Comma VersionPart Comma VersionPart )
+    : ( NumberPart Dot   NumberPart (DotDash   | Dot NumberPart )
+      | NumberPart Comma NumberPart (CommaDash | Comma NumberPart ))
     ( Dash (Letter+|NumberPart)+)?
     ( Plus (Letter+|NumberPart)+)?
     ;
 FloatingPoint
-    : NumberStart (Comma NumberPart)+ (DotDash | Dot NumberPart)
-    | NumberStart (Dot NumberPart)+ (CommaDash | Comma NumberPart)
+    : NumberStart (Comma NumberPart)+ (DotDash | Dot NumberPart )
+    | NumberStart (Dot NumberPart)+ (CommaDash | Comma NumberPart )
     | NumberPart  Dot NumberPart
     | NumberPart  Comma NumberPart
     ;
 Zero                  : '0' ;
 NumberPart            : (Zero | Digit)+ ;
-fragment VersionPart
-    : NumberPart | Dollar Label | Star
-    ;
 NumberStart           : Digit (Zero | Digit)* ;
 fragment Digit        : [1-9] ;
 
