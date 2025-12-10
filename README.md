@@ -74,7 +74,7 @@ The CLI includes tracing tools for debugging the compiler and VM.
 $ ./bin/rhi -trace-stack -trace-space ./tests/sieve.rh
 ```
 
-## ✅ Development Status: v0.1.0 (Realm Realization)
+## ✅ Development Status: v0.2.0 (Realm Realization)
 
 The core language semantics are stable. The focus is now shifting from internal VM mechanics to the Standard Library and tooling.
 
@@ -94,7 +94,7 @@ The core language semantics are stable. The focus is now shifting from internal 
     - [x] Pattern Matching (`..`, `::`)
 - [x] **Testing Infrastructure**: Built-in assertion runner via the `-test` flag.
 
-### Todo List (Roadmap to v0.2)
+### Todo List (Roadmap to v0.3)
 
 #### 🚧 In Progress
 - [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries.
