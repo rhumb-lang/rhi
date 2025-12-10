@@ -233,16 +233,49 @@ Dependencies are imported using the **Resolver Protocol**.
   * **Explicit Version:** `{ ! | math | 1.0.0 }`
   * **Latest/Default Version:** `{ ! | math | - }` (Use `-` to indicate no specific version).
 
-| Resolver | Syntax | Use Case | Example |
-| :--- | :--- | :--- | :--- |
-| **Standard** | `!` | Built-in Libs | `{!\|math\|-}` |
-| **Local** | `-` | Internal Code | `{-;path\to\testing;-}` |
-| **Remote** | `git` | External Libs | `{git\|https://github...\|v1}` |
+| Resolver     | Syntax | Use Case      | Example                            |
+|:-------------|:-------|:--------------|:-----------------------------------|
+| **Standard** | `!`    | Built-in Libs | `{!\|🧮\|-}`                     |
+| **Local**    | `-`    | Internal Code | `{- \| src\utils\math \| -}`       |
+| **Remote**   | `git`  | External Libs | `{git \| https://github... \| dev}` |
 
-**Circular Dependencies:** Rhumb supports circular references between Shelves for
-*declarations* (functions/classes) because of the multi-pass Hoister. However,
-circular *initialization logic* (top-level code that depends on another file's
-top-level code executing first) will trigger a **Runtime Cycle Error**.
+**Path Resolution Rules:**
+1.  **Implicit (Sibling):** Books within the same Shelf (Folder) can access each
+    other directly by label. No import block is required.
+2.  **Local Resolver (`-`):** When using the Local Resolver `{-}`, the path is
+    **always relative to the Project Root** (The Route / Library Desktop). It is
+    *not* relative to the current file. This ensures that moving a file does not
+    break its internal imports.
+
+**Version Syntax & Resolution:** The Resolver interprets the **Type** and
+**Format** of the literal provided in the version slot. Rhumb uses the `.-`
+(DotDash) syntax to explicitly signify wildcards.
+
+**Note on Suffixes:** Version literals may include prerelease (`-alpha`) and
+build (`+001`) suffixes. These are treated as **Strict Text Matches** by the
+resolver; wildcards cannot be used in conjunction with suffixes.
+
+| Literal        | Syntax      | Type    | Semantics                                                            | Target Match Example |
+|:---------------|:------------|:--------|:---------------------------------------------------------------------|:---------------------|
+| **`1.2.3`**    | `X.Y.Z`     | Version | **Exact Pin**. Must match exactly.                                   | `/lib@1.2.3`         |
+| **`1.2.3-rc`** | `X.Y.Z-Pre` | Version | **Exact Pin with Pre-release**.                                      | `/lib@1.2.3-rc`      |
+| **`1.2.-`**    | `X.Y.-`     | Version | **Patch Wildcard**. Highest patch for 1.2.                           | `/lib@1.2.9`         |
+| **`1.-`**      | `X.-`       | Number  | **Minor Wildcard**. Highest minor/patch for 1.                       | `/lib@1.9.4`         |
+| **`-`**        | `Dash`      | Dash    | **Major Wildcard / Working Copy**. Prefers unversioned Shelves.      | `/lib`               |
+| **`1`**        | `X`         | Number  | **Implicit Major**. Same as `1.-` (SemVer `^1.0`).                   | `/lib@1.9.4`         |
+| **`stable`**   | `Label`     | Label   | **Variable**. Looks for a matching variable that contains a Version. |                      |
+
+
+**Float Confusion:** While the ANTLR grammar permits standard Floats (`1.2`) in
+version slots, the compiler will issue a warning *"Did you mean to write a
+version literal?"* to prevent accidentally typing `1,2.0` which would be
+interpreted as version "12". This is because the thousand separators are not
+stored so there's no way to differentiate between `12.0` and `1,2.0`. 
+
+**Circular Dependencies:** Rhumb supports circular references between Shelves
+for *declarations* (functions/classes) because of the multi-pass Hoister.
+However, circular *initialization logic* (top-level code that depends on another
+file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 
 -----
 
@@ -331,21 +364,37 @@ Mode') for O(1) access at the cost of memory.
 Primitives are stack-allocated via a discriminated union. All bit-packed types utilize the `Integer` (int64) slot to avoid heap allocation.
 
   * **Integers:** Stored as standard `int64`.
-  * **Floats:** Stored as `float64` (separate slot).
+  * **Floats:** Stored as `float64` (standard IEEE 754).
   * **Text:** Uses Go's native `string` (pointer + length).
   * **Range:** A Lazy Iterator struct `start|end` (stored as Object reference or packed if small).
 
+#### Arbitrary Precision (Heap Allocated)
+
+  * **Decimal:** High-precision fixed-point numbers backed by **`apd.Decimal`**.
+      * **Syntax:** Distinguished from standard floats by a **Leading Zero**.
+          * `01.5` $\rightarrow$ Decimal 1.5
+          * `00.5` $\rightarrow$ Decimal 0.5 (Two leading zeros required if integer part is 0).
+      * **Precision Control:** The `.-` suffix captures explicit ones-place precision.
+          * `01.-` $\rightarrow$ Decimal 1 (Precision: Ones place).
+          * `00.-` $\rightarrow$ Decimal 0 (Precision: Ones place).
+
 #### Bit-Packed Primitives (Using `int64` slot)
 
-  * **Date:** Stored as **Unix Nanoseconds**.
-      * `int64` range allows for \~292 years from 1970.
+  * **Date:** Stored as **Unix Milliseconds**.
+      * **Range:** `int64` range allows for \~292 million years from 1970 (Past and Future).
+      * **Syntax:** Accepts simple dates (`YYYY/MM/DD`) or full timestamps (`YYYY/MM/DD@HH:MM:SS.mmm`).
+  * **Duration:** Stored as **Milliseconds** (Relative).
+      * Represents a span of time independent of a calendar.
+      * **Syntax:** `HH:MM:SS` or `HH:MM:SS.mmm`.
+      * **Arithmetic:**
+          * `Date + Duration` = `Date`
+          * `Date - Date` = `Duration`
   * **Version:** Stored as **Packed SemVer**.
-      * **Bits 63-48:** Major (16 bits, max 65,535)
-      * **Bits 47-32:** Minor (16 bits, max 65,535)
-      * **Bits 31-0:** Patch (32 bits, max 4,294,967,295)
+      * **Bits 63-48:** Major (16 bits)
+      * **Bits 47-32:** Minor (16 bits)
+      * **Bits 31-0:** Patch (32 bits)
+      * **Suffixes:** Prerelease and Build metadata are stored as auxiliary text pointers.
   * **Key:** Stored as **Interned Global ID**.
-      * When a Key `` `id `` is created, the VM checks a global symbol table.
-      * If unique, it is assigned a monotonic `int64` ID.
       * Comparison (`k1 == k2`) is a fast integer check. Keys are never garbage collected during the process lifetime.
 
 ### 5.4 The Empty Value (`___`)
@@ -1094,24 +1143,41 @@ Since `%=` starts with `%`, the Lexer treats it as a comment and hides it from
 the Parser. An IDE, however, can scan the hidden channel tokens to find `%=` and
 run the assertions.
 
-### General Symbols
+#### Literals & Values
 
-| Symbol     | Name       | Role          | Syntax          | Meaning                                     |
-|:-----------|:-----------|:--------------|:----------------|:--------------------------------------------|
-| **`!`**    | Base       | Receiver      | `!\field`       | "My field" (Mutable/Immutable based on def) |
-| **`@`**    | Parent     | Inheritance   | `!@console\log` | "My Parent named Console"                   |
-| **`\`**    | Access     | Member        | `user\name`     | "Field 'name' of user"                      |
-| **`___`**  | Empty      | Literal       | `x .= ___`      | Empty/Nil value                             |
-| **`***`**  | Panic      | Literal       | `x .= ***`      | Panic value (Crash/Error)                   |
-| **`_`**    | Ignore     | Literal       | `x .. _`        | Ignore/Placeholder Label                    |
-| **`^=`**   | Caret-Eq   | Destruct      | `[x; y] ^= pt`  | "Unpack Point into x, y"                    |
-| **`..`**   | Dot-Dot    | Select (Stop) | `yes .. log()`  | "If match, consume & execute"               |
-| **`::`**   | Col-Col    | Select (Peek) | `yes :: log()`  | "If match, execute & continue"              |
-| **`->`**   | Arrow      | Function      | `[] -> ()`      | Function definition                         |
-| **`!>`**   | Bang-Arrow | Function      | `[] !> ()`      | Create method with bound \!                 |
-| **`+>`**   | Plus-Arrow | Function      | `[] +> ()`      | Define and execute immediately (IIFE)       |
-| **`!!`**   | Bang-Bang  | Bind          | `f !! obj`      | Rebind function to object                   |
-| **`<fn>`** | Ref        | Reference     | `fn2 .= <fn1>`  | Get function by reference (No call)         |
+Symbols that represent fixed data or references.
+
+| Symbol           | Name      | Syntax            | Meaning                                              |
+|:-----------------|:----------|:------------------|:-----------------------------------------------------|
+| **`___`**        | Empty     | `x .= ___`        | Empty/Nil value                                     |
+| **`***`**        | Panic     | `x .= ***`        | Panic/Error value                                   |
+| **`_`**          | Ignore    | `x .. _`          | Wildcard/Ignore pattern                             |
+| **`<fn>`**       | Reference | `f .= <g>`        | Subroutine Reference (Capture without executing)    |
+| **`1.0.0`**      | Version   | `v .= 1.0.0`      | Semantic Version Literal                            |
+| **`YYYY/MM/DD`** | DateTime  | `t .= 2025/12/31` | Date Literal (Year/Month/Day)                   |
+| **`HH:MM::SS.mmm`**   | Time      | `t .= 00:05:30`   | Duration Literal (Hour:Minute:Second, Milliseconds optional)                   |
+| **`01.0`**       | Decimal   | `d .= 01.0`       | Arbitrary Precision Decimal (Requires leading zero) |
+| **`.-`**         | DotDash   | `1.-`             | Wildcard Suffix (for Versions and Decimals)         |
+| **`<$>`**        | Realm     | `r .= <$>`        | Child Realm Literal                                |
+| **`<\|>`**       | Realm     | `r .= <\|>`       | Detached Realm Literal                            |
+| **`<{}>`**       | Vassal    | `v .= <{}>`       | Vassal (Proxy) Literal                              |
+
+#### General Operators
+
+Symbols used for object access, assignment, and function definition.
+
+| Symbol   | Name       | Role        | Syntax      | Meaning                                      |
+|:---------|:-----------|:------------|:------------|:---------------------------------------------|
+| **`!`**  | Base       | Receiver    | `!\field`   | "My field" (Mutable/Immutable based on def) |
+| **`@`**  | Parent     | Inheritance | `f@log`     | Delegate/Parent access                      |
+| **`\`**  | Access     | Member      | `u\name`    | Field access operator                    |
+| **`^=`** | Destruct   | Assign      | `[.a] ^= b` | Destructuring assignment                    |
+| **`..`** | Dot-Dot    | Select      | `x .. f`    | Match & Consume (Stop)                      |
+| **`::`** | Col-Col    | Select      | `x :: f`    | Match & Continue (Peek)                     |
+| **`->`** | Arrow      | Function    | `[] -> ()`  | Function definition                         |
+| **`!>`** | Bang-Arrow | Method      | `[] !> ()`  | Method definition (binds `!` to receiver)   |
+| **`+>`** | Plus-Arrow | IIFE        | `[] +> ()`  | Define and execute immediately              |
+| **`!!`** | Bang-Bang  | Bind        | `f !! obj`  | Rebind function to new object               |
 
 
 ### Concurrency Symbols
