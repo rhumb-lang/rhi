@@ -4,15 +4,23 @@
 
 ![Vibe Coded](https://img.shields.io/badge/Code_Style-Vibe_Coded-ff69b4?style=flat-square&logo=openai)
 
-> This programming language is a passion project built in my free time. To maintain momentum and focus on high-level design, this project is primarily **vibe coded**.
+> This programming language is a passion project built in my free time. To
+> maintain momentum and focus on high-level design, this project is primarily
+> **vibe coded**.
 >
 > **What this means:** I utilize AI tools heavily for implementation speed.
 >
-> **What this does NOT mean:** I am not blindly committing output. I provide the architectural roadmap, deeply scrutinize the generated code, and manually intervene constantly. This workflow allows me to build a complex language faster without sacrificing my vision or technical standards.
+> **What this does NOT mean:** I am not blindly committing output. I provide the
+> architectural roadmap and the entire ANTLR grammar, I deeply scrutinize the
+> generated code, and manually intervene constantly. This workflow allows me to
+> build a complex language faster without sacrificing my vision or technical
+> standards.
 
-`rhi` is the reference interpreter for Rhumb, an image-based, prototype-oriented programming language designed to be English-language free.
+`rhi` is the reference interpreter for Rhumb, an image-based, prototype-oriented
+programming language designed to be English-language free.
 
-This repository contains the core runtime (rhi), comprising the lexer, bytecode compiler, and virtual machine.
+This repository contains the core runtime (rhi), comprising the lexer, bytecode
+compiler, and virtual machine.
 
 ## 📦 Installation
 
