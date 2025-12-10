@@ -80,35 +80,40 @@ The core language semantics are stable. The focus is now shifting from internal 
 
 ### Core Features (Implemented)
 
-  - [x] **Syntax & Grammar**: Full ANTLR4 grammar for Maps, Selectors, and Operators.
-  - [x] **Prototype Model**: Map objects (`[...]`), Fields, inheritance (`@`), and mutable/immutable assignment.
-  - [x] **Bytecode Compiler**: Single-pass incremental compiler with lexical scoping and variable hoisting.
-  - [x] **Cactus Stack VM**: Heap-allocated call frames supporting closures (`<fn>`) and "Zombie" frame persistence.
-  - [x] **Concurrency (The Tuplespace)**:
-      - [x] Signals (`#`) bubbling up the realm hierarchy.
-      - [x] Replies (`^`) drilling down into Zombie frames.
-      - [x] Realm creation (`<$>`, `<|>`) and Lifecycle.
-      - [x] Selectors (`{}`) as pattern-matching listeners.
-  - [x] **Control Flow**:
-      - [x] Native operators (`=>`, `~>`, `|>`) compiling to jump instructions.
-      - [x] Pattern Matching (`..`, `::`).
-  - [x] **Testing Infrastructure**: Built-in assertion runner via the `-test` flag.
+- [x] **Syntax & Grammar**: Full ANTLR4 grammar for Maps, Selectors, and Operators
+- [x] **Prototype Model**: Maps (`[...]`), Fields, inheritance (`@`), and mutable/immutable assignment
+- [x] **Bytecode Compiler**: Single-pass incremental compiler with lexical scoping and variable hoisting
+- [x] **Cactus Stack VM**: Heap-allocated call frames supporting closures (`<fn>`) and "Zombie" frame persistence
+- [x] **Concurrency (The Tuplespace)**:
+    - [x] Signals (`#`) bubbling up the realm hierarchy
+    - [x] Replies (`^`) drilling down into Zombie frames
+    - [x] Tuplespaces (`<$>`, `<|>`) and tuple lifecycle pattern-matching
+    - [x] Selectors (`{}`) as pattern-matching listeners
+- [x] **Control Flow**:
+    - [x] Native operators (`=>`, `~>`, `|>`) compiling to jump instructions
+    - [x] Pattern Matching (`..`, `::`)
+- [x] **Testing Infrastructure**: Built-in assertion runner via the `-test` flag.
 
 ### Todo List (Roadmap to v0.2)
 
 #### 🚧 In Progress
+- [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries.
+- [ ] **Missing Grammar Support**:
+    - [ ] **Vassals `<{}>`**: Compilation of security proxies.
+    - [ ] **Keys `` ` ``**: Compilation of private capability keys.
+    - [ ] **Spread `&`**: Implementation of `[...]` list spreading and slurping.
+    - [ ] **Panic `***`**: Runtime support for fatal error literals.
 
-  - [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries described in architecture docs. (Currently only basic intrinsics like `++`, `**` are native).
-  - [ ] **Optimizations**:
-      - [ ] Dictionary Mode for large Maps (Switching from linear scan to Hash Map).
-      - [ ] "Fast Path" for Signal propagation.
+#### ⚡ Optimizations
+- [ ] **Frame Pooling**: Reuse `CallFrame` structs to eliminate GC pressure during recursion (Targeting >5x speedup for `fib`).
+- [ ] **Hidden Classes**: Implement the `Legend` transition tree to allow map schema sharing.
+- [ ] **Inline Caching**: Cache field lookups in `OP_SEND` to achieve O(1) property access.
+- [ ] **Dictionary Mode**: Fallback to Hash Maps for objects with large numbers of fields.
 
 #### 🔮 Planned / Concept
-
-  - [ ] **The Freezer**: Serialization engine for persisting the Heap/Space to disk (`.ri` files).
-  - [ ] **RHIDE**: Wayland-native graphical IDE ("Code Projector").
-  - [ ] **Network Transparency**: Binding Realms to TCP/WebSocket sockets.
-  - [ ] **Babel Daemon**: Background text\<-\>binary synchronization for localization.
+- [ ] **The Freezer**: Serialization engine for persisting the Heap/Space to disk (`.ri` files).
+- [ ] **RHIDE**: Wayland-native graphical IDE ("Code Projector").
+- [ ] **Network Transparency**: Binding Realms to TCP/WebSocket sockets.
 
 ## 🧪 Testing
 
