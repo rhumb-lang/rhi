@@ -99,6 +99,9 @@ The core language semantics are stable. The focus is now shifting from internal 
 #### 🚧 In Progress
 - [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries.
 - [ ] **Missing Grammar Support**:
+    - [ ] **Dates/Durations**: A literal type for working with dates and times
+    - [ ] **Versions**: Builtin semver as a literal type
+    - [ ] **Decimals**: Builtin support for full precision decimal math
     - [ ] **Resolvers**: Implementation of the import system (`{ resolver | path | version }`).
         - [ ] Standard (`!`)
         - [ ] Local (`-`)
