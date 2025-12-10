@@ -380,15 +380,24 @@ Primitives are stack-allocated via a discriminated union. All bit-packed types u
 
 #### Bit-Packed Primitives (Using `int64` slot)
 
-  * **Date:** Stored as **Unix Milliseconds**.
-      * **Range:** `int64` range allows for \~292 million years from 1970 (Past and Future).
-      * **Syntax:** Accepts simple dates (`YYYY/MM/DD`) or full timestamps (`YYYY/MM/DD@HH:MM:SS.mmm`).
+  * **DateTime:** Stored as **Unix Milliseconds** (Absolute).
+      * **Concept:** Represents a specific point in time.
+      * **Range:** \~292 million years from 1970.
+      * **Syntax:**
+          * **Full:** `2025/01/01@12:00:00`
+          * **Date-Only:** `2025/01/01` (Time defaults to midnight).
+          * **Time-Only:** `00:05:00` (Date defaults to Unix Epoch: 1970-01-01).
   * **Duration:** Stored as **Milliseconds** (Relative).
-      * Represents a span of time independent of a calendar.
-      * **Syntax:** `HH:MM:SS` or `HH:MM:SS.mmm`.
+      * **Concept:** Represents a magnitude of time (Vector).
+      * **Syntax:** There is no distinct literal for Duration. Instead, use the **Unary Plus (`+`)** or **Unary Minus (`-`)** operator on a DateTime literal to cast it to a Duration.
+          * **Time Vectors:** `+00:05:00` (5 Minutes).
+          * **Calendar Vectors:** `+0001/00/00` (1 Year), `+0000/01/00` (1 Month), `+0000/00/01` (1 Day).
+          * **Composite Vectors:** `+0000/00/01 @ 12:00:00` (1 Day and 12 Hours).
+          * **Negative Vectors:** `-00:05:00` (Negative 5 Minutes).
       * **Arithmetic:**
-          * `Date + Duration` = `Date`
-          * `Date - Date` = `Duration`
+          * `Date ++ Duration` $\rightarrow$ `Date` (Time Travel).
+          * `Date -- Date` $\rightarrow$ `Duration` (Difference).
+          * `Date ++ Date` $\rightarrow$ **Error** (Nonsensical).
   * **Version:** Stored as **Packed SemVer**.
       * **Bits 63-48:** Major (16 bits)
       * **Bits 47-32:** Minor (16 bits)
@@ -1147,20 +1156,21 @@ run the assertions.
 
 Symbols that represent fixed data or references.
 
-| Symbol           | Name      | Syntax            | Meaning                                              |
-|:-----------------|:----------|:------------------|:-----------------------------------------------------|
-| **`___`**        | Empty     | `x .= ___`        | Empty/Nil value                                     |
-| **`***`**        | Panic     | `x .= ***`        | Panic/Error value                                   |
-| **`_`**          | Ignore    | `x .. _`          | Wildcard/Ignore pattern                             |
-| **`<fn>`**       | Reference | `f .= <g>`        | Subroutine Reference (Capture without executing)    |
-| **`1.0.0`**      | Version   | `v .= 1.0.0`      | Semantic Version Literal                            |
-| **`YYYY/MM/DD`** | DateTime  | `t .= 2025/12/31` | Date Literal (Year/Month/Day)                   |
-| **`HH:MM::SS.mmm`**   | Time      | `t .= 00:05:30`   | Duration Literal (Hour:Minute:Second, Milliseconds optional)                   |
-| **`01.0`**       | Decimal   | `d .= 01.0`       | Arbitrary Precision Decimal (Requires leading zero) |
-| **`.-`**         | DotDash   | `1.-`             | Wildcard Suffix (for Versions and Decimals)         |
-| **`<$>`**        | Realm     | `r .= <$>`        | Child Realm Literal                                |
-| **`<\|>`**       | Realm     | `r .= <\|>`       | Detached Realm Literal                            |
-| **`<{}>`**       | Vassal    | `v .= <{}>`       | Vassal (Proxy) Literal                              |
+| Symbol            | Name      | Syntax             | Meaning                                             |
+|:------------------|:----------|:-------------------|:----------------------------------------------------|
+| **`___`**         | Empty     | `x .= ___`         | Empty/Nil value                                     |
+| **`***`**         | Panic     | `x .= ***`         | Panic/Error value                                   |
+| **`_`**           | Ignore    | `x .. _`           | Wildcard/Ignore pattern                             |
+| **`<fn>`**        | Reference | `f .= <g>`         | Subroutine Reference (Capture without executing)    |
+| **`1.0.0`**       | Version   | `v .= 1.0.0`       | Semantic Version Literal                            |
+| **`2024/01/01`**  | DateTime  | `t .= 2025/12/31`  | DateTime Literal (Absolute Point).                  |
+| **`+00:00:00`**   | Duration  | `d .= +00:00:01`   | Time Duration (1 Second).                           |
+| **`+0000/00/00`** | Duration  | `d .= +0001/00/00` | Calendar Duration (1 Year).                         |
+| **`01.0`**        | Decimal   | `d .= 01.0`        | Arbitrary Precision Decimal (Requires leading zero) |
+| **`.-`**          | DotDash   | `1.-`              | Wildcard Suffix (for Versions and Decimals)         |
+| **`<$>`**         | Realm     | `r .= <$>`         | Child Realm Literal                                 |
+| **`<\|>`**        | Realm     | `r .= <\|>`        | Detached Realm Literal                              |
+| **`<{}>`**        | Vassal    | `v .= <{}>`        | Vassal (Proxy) Literal                              |
 
 #### General Operators
 
