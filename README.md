@@ -99,6 +99,10 @@ The core language semantics are stable. The focus is now shifting from internal 
 #### 🚧 In Progress
 - [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries.
 - [ ] **Missing Grammar Support**:
+    - [ ] **Resolvers**: Implementation of the import system (`{ resolver | path | version }`).
+        - [ ] Standard (`!`)
+        - [ ] Local (`-`)
+        - [ ] Remote/Git (`git`)
     - [ ] **Vassals `<{}>`**: Compilation of security proxies.
     - [ ] **Keys `` ` ``**: Compilation of private capability keys.
     - [ ] **Spread `&`**: Implementation of `[...]` list spreading and slurping.
