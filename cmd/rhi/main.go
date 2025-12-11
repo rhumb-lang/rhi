@@ -251,40 +251,6 @@ func (s *Session) execute(input string) {
 }
 
 func formatValue(val mapval.Value) string {
-	switch val.Type {
-	case mapval.ValInteger:
-		return fmt.Sprintf("%d", val.Integer)
-	case mapval.ValFloat:
-		return fmt.Sprintf("%f", val.Float)
-	case mapval.ValText:
-		return fmt.Sprintf("'%s'", val.Str)
-	case mapval.ValBoolean:
-		if val.Integer == 1 {
-			return "yes"
-		}
-		return "no"
-	case mapval.ValEmpty:
-		return "___"
-	case mapval.ValObject:
-		if m, ok := val.Obj.(*mapval.Map); ok {
-			var sb strings.Builder
-			sb.WriteString("[")
-			for i, field := range m.Fields {
-				if i > 0 {
-					sb.WriteString("; ")
-				}
-				sb.WriteString(formatValue(field))
-			}
-			sb.WriteString("]")
-			return sb.String()
-		}
-		return fmt.Sprintf("<Object %T>", val.Obj)
-	case mapval.ValRange:
-		if r, ok := val.Obj.(*mapval.Range); ok {
-			return fmt.Sprintf("%d|%d", r.Start, r.End)
-		}
-		return "<Range>"
-	default:
-		return fmt.Sprintf("?%d", val.Type)
-	}
+	// The Value.String() method already provides the canonical string representation for all types.
+	return val.String()
 }

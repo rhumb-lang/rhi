@@ -31,6 +31,23 @@ const (
 	ValKey      // Interned Global ID
 )
 
+func (vt ValueType) String() string {
+	return [...]string{
+		"Integer",
+		"Float",
+		"Decimal",
+		"Text",
+		"Object",
+		"Empty",
+		"Boolean",
+		"DateTime",
+		"Duration",
+		"Range",
+		"Version",
+		"Key",
+	}[vt]
+}
+
 type Value struct {
 	Type ValueType
 
@@ -73,7 +90,7 @@ func (v Value) String() string {
 		return "___"
 	case ValDateTime:
 		t := time.UnixMilli(v.Integer).UTC()
-		
+
 		// If value is exactly 0 (Epoch at Midnight), prints as "1970/01/01"
 		if v.Integer == 0 {
 			return "1970/01/01"
@@ -92,7 +109,7 @@ func (v Value) String() string {
 
 		// Epoch Suppression: If the date is 1970/01/01, the date part is hidden.
 		if t.Year() == 1970 && t.Month() == time.January && t.Day() == 1 {
-			if s == "1970/01/01" { 
+			if s == "1970/01/01" {
 				// This case is already covered by v.Integer == 0, where it prints "1970/01/01"
 				// but if it's 1970/01/01@time, we want just the time
 				return strings.TrimPrefix(s, "1970/01/01@")
@@ -143,7 +160,7 @@ func (v Value) String() string {
 		// Combine with Zero-Suppression
 		s := ""
 		if dateStr != "" && timeStr != "" {
-			s = dateStr + "@" + timeStr 
+			s = dateStr + "@" + timeStr
 		} else if dateStr != "" {
 			s = dateStr
 		} else if timeStr != "" {
@@ -486,16 +503,16 @@ func NewVersion(major, minor uint16, patch uint32, wildcard bool) Value {
 	// Major: 15 bits (0-32767).
 	// Minor: 16 bits.
 	// Patch: 32 bits.
-	
+
 	encoded := int64(major&0x7FFF) << 48
 	encoded |= int64(minor) << 32
 	encoded |= int64(patch)
-	
+
 	if wildcard {
 		// Set MSB (Bit 63) - which makes it negative in int64, but that's fine for storage
-		encoded |= -9223372036854775808 
+		encoded |= -9223372036854775808
 	}
-	
+
 	return Value{Type: ValVersion, Integer: encoded}
 }
 
@@ -513,10 +530,10 @@ func (v Value) VersionUnpack() (uint16, uint16, uint32, bool) {
 	}
 
 	raw := uint64(v.Integer)
-	
+
 	// MSB is Wildcard
 	wildcard := (raw & (1 << 63)) != 0
-	
+
 	// Major is bits 48-62 (15 bits)
 	major := uint16((raw >> 48) & 0x7FFF)
 

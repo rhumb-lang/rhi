@@ -5,7 +5,11 @@ import (
 	"math"
 
 	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/cockroachdb/apd/v3"
 )
+
+// Precision context for Decimal operations
+var decimalCtx = apd.BaseContext.WithPrecision(20)
 
 // --- Stack Ops ---
 
@@ -81,38 +85,67 @@ func (vm *VM) opAdd() error {
 	b := vm.pop()
 	a := vm.pop()
 
-	// 1. Date/Duration Arithmetic
-	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDuration {
-		// Date + Duration = Date
-		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: a.Integer + b.Integer})
-		return nil
-	}
-	if a.Type == mapval.ValDuration && b.Type == mapval.ValDuration {
-		// Duration + Duration = Duration
-		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: a.Integer + b.Integer})
-		return nil
-	}
-	if a.Type == mapval.ValDuration && b.Type == mapval.ValDateTime {
-		// Duration + Date = Date (Commutative)
-		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: b.Integer + a.Integer})
+	// --- Path A: Numeric (Non-Time) ---
+	// If both are numbers, use the Numeric Hierarchy
+	if isNumeric(a) && isNumeric(b) {
+		res, err := performNumericOp("+", a, b)
+		if err != nil {
+			return err
+		}
+		vm.push(res)
 		return nil
 	}
 
-	// 2. Integers
-	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
-		vm.push(mapval.NewInt(a.Integer + b.Integer))
-		return nil
+	// --- Path B: Time Algebra ---
+	isTimeA := a.Type == mapval.ValDateTime || a.Type == mapval.ValDuration
+	isTimeB := b.Type == mapval.ValDateTime || b.Type == mapval.ValDuration
+
+	// 1. Coerce Scalars to Duration if interacting with Time
+	var msA, msB int64
+
+	// Normalize A
+	if a.Type == mapval.ValDuration {
+		msA = a.Integer
+	} else if a.Type == mapval.ValDateTime {
+		msA = a.Integer
+	} else if okA, ms := scalarToDuration(a); okA {
+		msA = ms
 	}
-	
-	// 3. Floats (mixed)
-	if a.Type == mapval.ValFloat || b.Type == mapval.ValFloat {
-		fa := asFloat(a)
-		fb := asFloat(b)
-		vm.push(mapval.NewFloat(fa + fb))
+
+	// Normalize B
+	if b.Type == mapval.ValDuration {
+		msB = b.Integer
+	} else if b.Type == mapval.ValDateTime {
+		msB = b.Integer
+	} else if okB, ms := scalarToDuration(b); okB {
+		msB = ms
+	}
+
+	// 2. Perform Time Addition
+	// Case: Date + Duration (or Duration + Date) -> Date
+	if (a.Type == mapval.ValDateTime && (b.Type == mapval.ValDuration || isNumeric(b))) ||
+		(b.Type == mapval.ValDateTime && (a.Type == mapval.ValDuration || isNumeric(a))) {
+		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: msA + msB})
 		return nil
 	}
 
-	// 4. Map Concatenation
+	// Case: Duration + Duration -> Duration
+	// (Scalar + Duration is treated as Duration + Duration)
+	if (a.Type == mapval.ValDuration || isNumeric(a)) &&
+		(b.Type == mapval.ValDuration || isNumeric(b)) {
+		// Ensure at least one was actually a time type to trigger this path
+		if isTimeA || isTimeB {
+			vm.push(mapval.Value{Type: mapval.ValDuration, Integer: msA + msB})
+			return nil
+		}
+	}
+
+	// Case: Date + Date -> Error
+	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDateTime {
+		return fmt.Errorf("cannot add two dates")
+	}
+
+	// 3. Fallback: Map Concatenation
 	if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
 		mapA, okA := a.Obj.(*mapval.Map)
 		mapB, okB := b.Obj.(*mapval.Map)
@@ -125,39 +158,66 @@ func (vm *VM) opAdd() error {
 		}
 	}
 
-	return fmt.Errorf("operands must be numbers, maps, or dates for ADD")
+	return fmt.Errorf("invalid operands for addition: %s and %s", a, b)
 }
 
 func (vm *VM) opSub() error {
 	b := vm.pop()
 	a := vm.pop()
 
-	// 1. Date/Duration Arithmetic
-	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDuration {
-		// Date - Duration = Date
-		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: a.Integer - b.Integer})
+	// --- Path A: Numeric ---
+	if isNumeric(a) && isNumeric(b) {
+		res, err := performNumericOp("-", a, b)
+		if err != nil {
+			return err
+		}
+		vm.push(res)
 		return nil
 	}
+
+	// --- Path B: Time Algebra ---
+
+	// Normalize to Milliseconds (same logic as Add)
+	var msA, msB int64
+	if a.Type == mapval.ValDateTime || a.Type == mapval.ValDuration {
+		msA = a.Integer
+	} else if okA, ms := scalarToDuration(a); okA {
+		msA = ms
+	}
+
+	if b.Type == mapval.ValDateTime || b.Type == mapval.ValDuration {
+		msB = b.Integer
+	} else if okB, ms := scalarToDuration(b); okB {
+		msB = ms
+	}
+
+	// Case: Date - Duration (or Scalar) -> Date
+	if a.Type == mapval.ValDateTime && (b.Type == mapval.ValDuration || isNumeric(b)) {
+		vm.push(mapval.Value{Type: mapval.ValDateTime, Integer: msA - msB})
+		return nil
+	}
+
+	// Case: Date - Date -> Duration
 	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDateTime {
-		// Date - Date = Duration
-		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: a.Integer - b.Integer})
-		return nil
-	}
-	if a.Type == mapval.ValDuration && b.Type == mapval.ValDuration {
-		// Duration - Duration = Duration
-		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: a.Integer - b.Integer})
+		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: msA - msB})
 		return nil
 	}
 
-	// 2. Integers
-	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
-		vm.push(mapval.NewInt(a.Integer - b.Integer))
-		return nil
+	// Case: Duration - Duration -> Duration
+	if (a.Type == mapval.ValDuration || isNumeric(a)) &&
+		(b.Type == mapval.ValDuration || isNumeric(b)) {
+		if a.Type == mapval.ValDuration || b.Type == mapval.ValDuration {
+			vm.push(mapval.Value{Type: mapval.ValDuration, Integer: msA - msB})
+			return nil
+		}
 	}
 
-	// 3. Floats
-	vm.push(mapval.NewFloat(asFloat(a) - asFloat(b)))
-	return nil
+	// Case: Scalar - Date -> Error
+	if isNumeric(a) && b.Type == mapval.ValDateTime {
+		return fmt.Errorf("cannot subtract date from scalar")
+	}
+
+	return fmt.Errorf("invalid operands for subtraction")
 }
 
 func (vm *VM) opCoerceNum() error {
@@ -185,6 +245,7 @@ func (vm *VM) opNumNeg() error {
 		vm.push(mapval.Value{Type: mapval.ValDuration, Integer: -val.Integer})
 		return nil
 	}
+
 	if val.Type == mapval.ValInteger {
 		vm.push(mapval.NewInt(-val.Integer))
 		return nil
@@ -193,25 +254,45 @@ func (vm *VM) opNumNeg() error {
 		vm.push(mapval.NewFloat(-val.Float))
 		return nil
 	}
+	if val.Type == mapval.ValDecimal {
+		d := toDecimal(val)
+		res := new(apd.Decimal)
+		res.Neg(d)
+		vm.push(mapval.Value{Type: mapval.ValDecimal, Obj: &mapval.Decimal{D: res}})
+		return nil
+	}
+
 	return fmt.Errorf("cannot negate type %d", val.Type)
 }
 
 func (vm *VM) opMult() error {
 	b := vm.pop()
 	a := vm.pop()
-	if a.Type == mapval.ValInteger && b.Type == mapval.ValInteger {
-		vm.push(mapval.NewInt(a.Integer * b.Integer))
-	} else {
-		vm.push(mapval.NewFloat(asFloat(a) * asFloat(b)))
+
+	if isNumeric(a) && isNumeric(b) {
+		res, err := performNumericOp("*", a, b)
+		if err != nil {
+			return err
+		}
+		vm.push(res)
+		return nil
 	}
-	return nil
+	return fmt.Errorf("invalid operands for multiplication")
 }
 
 func (vm *VM) opDivFloat() error {
 	b := vm.pop()
 	a := vm.pop()
-	vm.push(mapval.NewFloat(asFloat(a) / asFloat(b)))
-	return nil
+
+	if isNumeric(a) && isNumeric(b) {
+		res, err := performNumericOp("/", a, b)
+		if err != nil {
+			return err
+		}
+		vm.push(res)
+		return nil
+	}
+	return fmt.Errorf("invalid operands for division")
 }
 
 func (vm *VM) opDivInt() error {
@@ -223,9 +304,121 @@ func (vm *VM) opDivInt() error {
 		}
 		vm.push(mapval.NewInt(a.Integer / b.Integer))
 	} else {
+		// Promote to integer? or perform numeric op and truncate?
+		// Usually // is int div.
+		// If dealing with floats/decimals, we might want to floor.
+		// For now, let's keep it simple or promote to float then floor.
 		vm.push(mapval.NewInt(int64(asFloat(a) / asFloat(b))))
 	}
 	return nil
+}
+
+// performNumericOp handles +, -, *, / for pure numbers (Int, Float, Decimal)
+// Returns result Value or error.
+func performNumericOp(op string, a, b mapval.Value) (mapval.Value, error) {
+	// 1. If either is Decimal -> Promote both to Decimal
+	if a.Type == mapval.ValDecimal || b.Type == mapval.ValDecimal {
+		dA := toDecimal(a)
+		dB := toDecimal(b)
+		res := new(apd.Decimal)
+
+		var err error
+		switch op {
+		case "+":
+			_, err = decimalCtx.Add(res, dA, dB)
+		case "-":
+			_, err = decimalCtx.Sub(res, dA, dB)
+		case "*":
+			_, err = decimalCtx.Mul(res, dA, dB)
+		case "/":
+			_, err = decimalCtx.Quo(res, dA, dB)
+		}
+		if err != nil {
+			return mapval.NewEmpty(), err
+		}
+		return mapval.Value{Type: mapval.ValDecimal, Obj: &mapval.Decimal{D: res}}, nil
+	}
+
+	// 2. If either is Float -> Promote both to Float
+	if a.Type == mapval.ValFloat || b.Type == mapval.ValFloat {
+		fA := asFloat(a)
+		fB := asFloat(b)
+		switch op {
+		case "+":
+			return mapval.NewFloat(fA + fB), nil
+		case "-":
+			return mapval.NewFloat(fA - fB), nil
+		case "*":
+			return mapval.NewFloat(fA * fB), nil
+		case "/":
+			return mapval.NewFloat(fA / fB), nil
+		}
+	}
+
+	// 3. Fallback: Both are Integers
+	iA := a.Integer
+	iB := b.Integer
+	switch op {
+	case "+":
+		return mapval.NewInt(iA + iB), nil
+	case "-":
+		return mapval.NewInt(iA - iB), nil
+	case "*":
+		return mapval.NewInt(iA * iB), nil
+	case "/":
+		if iB == 0 {
+			return mapval.NewEmpty(), fmt.Errorf("division by zero")
+		}
+		// opDivInt handles integer division
+		if op == "/" {
+			return mapval.NewFloat(float64(iA) / float64(iB)), nil
+		}
+		return mapval.NewInt(iA / iB), nil
+	}
+
+	return mapval.NewEmpty(), fmt.Errorf("unknown numeric operator %s", op)
+}
+
+// toDecimal converts Int/Float/Decimal to *apd.Decimal
+func toDecimal(v mapval.Value) *apd.Decimal {
+	if v.Type == mapval.ValDecimal {
+		return v.Obj.(*mapval.Decimal).D
+	}
+	d := new(apd.Decimal)
+	if v.Type == mapval.ValInteger {
+		d.SetInt64(v.Integer)
+	} else if v.Type == mapval.ValFloat {
+		d.SetFloat64(v.Float)
+	}
+	return d
+}
+
+// scalarToDuration converts a numeric value to Milliseconds (int64)
+// Returns (true, ms) if convertible, (false, 0) if not a number.
+func scalarToDuration(v mapval.Value) (bool, int64) {
+	switch v.Type {
+	case mapval.ValInteger:
+		// Integer -> Milliseconds (Direct)
+		return true, v.Integer
+	case mapval.ValFloat:
+		// Float -> Seconds -> Milliseconds
+		return true, int64(v.Float * 1000)
+	case mapval.ValDecimal:
+		// Decimal -> Seconds -> Milliseconds
+		d := v.Obj.(*mapval.Decimal).D
+		// Multiply by 1000
+		thou := apd.New(1000, 0)
+		res := new(apd.Decimal)
+		decimalCtx.Mul(res, d, thou)
+		// Convert to Int64
+		i, _ := res.Int64()
+		return true, i
+	}
+	return false, 0
+}
+
+func isNumeric(v mapval.Value) bool {
+	return v.Type == mapval.ValInteger || v.Type == mapval.ValFloat || v.Type == mapval.ValDecimal
 }
 
 func (vm *VM) opMod() error {
