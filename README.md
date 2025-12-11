@@ -97,7 +97,6 @@ The core language semantics are stable. The focus is now shifting from internal 
 ### Todo List (Roadmap to v0.3)
 
 #### 🚧 In Progress
-- [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries.
 - [ ] **Missing Grammar Support**:
     - [x] **Dates/Durations**: A literal type for working with dates and times
     - [x] **Versions**: Builtin semver as a literal type
@@ -110,6 +109,7 @@ The core language semantics are stable. The focus is now shifting from internal 
     - [ ] **Keys `` ` ``**: Compilation of private capability keys.
     - [ ] **Spread `&`**: Implementation of `[...]` list spreading and slurping.
     - [ ] **Panic `***`**: Runtime support for fatal error literals.
+- [ ] **Standard Library**: Implementation of the `math`, `io`, and `sys` libraries.
 
 #### ⚡ Optimizations
 - [ ] **Frame Pooling**: Reuse `CallFrame` structs to eliminate GC pressure during recursion (Targeting >5x speedup for `fib`).
