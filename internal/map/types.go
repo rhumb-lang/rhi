@@ -86,31 +86,25 @@ func (v Value) String() string {
 	case ValEmpty:
 		return "___"
 	case ValDateTime:
-		t := time.UnixMilli(v.Integer).UTC()
-
-		// If value is exactly 0 (Epoch at Midnight), prints as "1970/01/01"
 		if v.Integer == 0 {
-			return "1970/01/01"
+			return "0000/00/00"
 		}
+
+		t := time.UnixMilli(v.Integer).UTC()
 
 		s := ""
 		// Midnight Suppression: If the time is 00:00:00.000, the time part is hidden.
 		if t.Hour() == 0 && t.Minute() == 0 && t.Second() == 0 && t.Nanosecond() == 0 {
 			s = t.Format("2006/01/02")
+		} else if t.Nanosecond() > 0 {
+			s = t.Format("2006/01/02@15:04:05.000")
 		} else {
 			s = t.Format("2006/01/02@15:04:05")
-			if t.Nanosecond() > 0 {
-				s += fmt.Sprintf(".%03d", t.Nanosecond()/1000000) // Add milliseconds
-			}
 		}
 
 		// Epoch Suppression: If the date is 1970/01/01, the date part is hidden.
 		if t.Year() == 1970 && t.Month() == time.January && t.Day() == 1 {
-			if s == "1970/01/01" {
-				// This case is already covered by v.Integer == 0, where it prints "1970/01/01"
-				// but if it's 1970/01/01@time, we want just the time
-				return strings.TrimPrefix(s, "1970/01/01@")
-			}
+			return strings.TrimPrefix(s, "1970/01/01@")
 		}
 		return s
 	case ValDuration:
