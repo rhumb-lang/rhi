@@ -1,5 +1,7 @@
 ## 8\. rhIDE (The Rhumb IDE)
 
+> 🚧 Not Yet Implemented 🚧
+
 The IDE is a **Spatial Integrated Development Environment (SIDE)** that behaves like a Window Manager / Operating System rather than a text editor.
 
 ### 8\.1 Metaphor: The Route & The Desktop
