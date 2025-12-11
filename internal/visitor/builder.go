@@ -305,9 +305,12 @@ func (b *ASTBuilder) VisitWholeNumber(ctx *grammar.WholeNumberContext) interface
 
 		// Case 2: Version Wildcard -> 1.-
 		// We treat this as a VersionLiteral with IsWildcard=true
+		// 1.- means 1.*.*. Set Minor and Patch to MAX to indicate wildcard at Minor level (and below).
 		val, _ := strconv.ParseUint(baseText, 10, 16)
 		return &ast.VersionLiteral{
 			Major:      uint16(val),
+			Minor:      0xFFFF,     // MaxUint16
+			Patch:      0xFFFFFFFF, // MaxUint32
 			IsWildcard: true,
 		}
 	}
@@ -355,10 +358,18 @@ func (b *ASTBuilder) VisitVersionNumber(ctx *grammar.VersionNumberContext) inter
 	if len(parts) > 1 {
 		i, _ := strconv.ParseUint(parts[1], 10, 16)
 		v.Minor = uint16(i)
+	} else if isWildcard {
+		// If 1.- (though usually handled by WholeNumber), or 1. (invalid?)
+		// If 1.-, Minor is Wild.
+		v.Minor = 0xFFFF
 	}
+	
 	if len(parts) > 2 {
 		i, _ := strconv.ParseUint(parts[2], 10, 32)
 		v.Patch = uint32(i)
+	} else if isWildcard {
+		// 1.2.- -> Patch is Wild.
+		v.Patch = 0xFFFFFFFF
 	}
 
 	return v

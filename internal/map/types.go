@@ -192,14 +192,17 @@ func (v Value) String() string {
 		maj, min, pat, wild := v.VersionUnpack()
 		s := ""
 		if wild {
-			// Zero-suppression for wildcard: don't print 0.0 if wildcard exists
-			if pat == 0 {
-				if min == 0 {
+			// Zero/Max-suppression for wildcard
+			// 0xFFFFFFFF is Sentinel for "Any Patch"
+			// 0xFFFF is Sentinel for "Any Minor"
+			// We also check 0 for legacy support or manual construction
+			if pat == 0xFFFFFFFF || pat == 0 {
+				if min == 0xFFFF || min == 0 {
 					s = fmt.Sprintf("%d.-", maj)
 				} else {
 					s = fmt.Sprintf("%d.%d.-", maj, min)
 				}
-			} else { // This case should not be hit if parsing correctly sets patch to 0 for x.y.-
+			} else {
 				s = fmt.Sprintf("%d.%d.%d.-", maj, min, pat)
 			}
 		} else {

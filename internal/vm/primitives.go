@@ -482,18 +482,27 @@ func (vm *VM) opNot() {
 func (vm *VM) opEq() {
 	b := vm.pop()
 	a := vm.pop()
+	// Use Equality (Wildcard aware for versions) for ==
 	vm.push(mapval.NewBoolean(isEqual(a, b)))
 }
 
 func (vm *VM) opNeq() {
 	b := vm.pop()
 	a := vm.pop()
-	vm.push(mapval.NewBoolean(!isEqual(a, b)))
+	// Use Strict inequality for ~~
+	vm.push(mapval.NewBoolean(!isStrictEqual(a, b)))
 }
 
 func (vm *VM) opGt() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+		cmp := compareVersions(a, b)
+		vm.push(mapval.NewBoolean(cmp == 1))
+		return nil
+	}
+
 	res, err := numericCompare(a, b)
 	if err != nil {
 		return err
@@ -505,6 +514,13 @@ func (vm *VM) opGt() error {
 func (vm *VM) opLt() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+		cmp := compareVersions(a, b)
+		vm.push(mapval.NewBoolean(cmp == -1))
+		return nil
+	}
+
 	res, err := numericCompare(a, b)
 	if err != nil {
 		return err
@@ -516,6 +532,13 @@ func (vm *VM) opLt() error {
 func (vm *VM) opGte() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+		cmp := compareVersions(a, b)
+		vm.push(mapval.NewBoolean(cmp == 1 || cmp == 0))
+		return nil
+	}
+
 	res, err := numericCompare(a, b)
 	if err != nil {
 		return err
@@ -527,12 +550,157 @@ func (vm *VM) opGte() error {
 func (vm *VM) opLte() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+		cmp := compareVersions(a, b)
+		vm.push(mapval.NewBoolean(cmp == -1 || cmp == 0))
+		return nil
+	}
+
 	res, err := numericCompare(a, b)
 	if err != nil {
 		return err
 	}
 	vm.push(mapval.NewBoolean(res <= 0))
 	return nil
+}
+
+func asFloat(v mapval.Value) float64 {
+	// ... (unchanged)
+	if v.Type == mapval.ValInteger {
+		return float64(v.Integer)
+	}
+	if v.Type == mapval.ValFloat {
+		return v.Float
+	}
+	return 0.0
+}
+
+func isStrictEqual(a, b mapval.Value) bool {
+	if a.Type != b.Type {
+		if (a.Type == mapval.ValInteger || a.Type == mapval.ValFloat) && (b.Type == mapval.ValInteger || b.Type == mapval.ValFloat) {
+			return asFloat(a) == asFloat(b)
+		}
+		return false
+	}
+	switch a.Type {
+	case mapval.ValInteger:
+		return a.Integer == b.Integer
+	case mapval.ValFloat:
+		return a.Float == b.Float
+	case mapval.ValBoolean:
+		return a.Integer == b.Integer
+	case mapval.ValEmpty:
+		return true
+	case mapval.ValText:
+		return a.Str == b.Str
+	case mapval.ValVersion:
+		// Strict check: Integer encoding and Suffix must match
+		return a.Integer == b.Integer && a.Str == b.Str
+	case mapval.ValObject:
+		// Handle Map equality
+		mapA, okA := a.Obj.(*mapval.Map)
+		mapB, okB := b.Obj.(*mapval.Map)
+		if okA && okB {
+			if len(mapA.Fields) != len(mapB.Fields) {
+				return false
+			}
+			for i := range mapA.Fields {
+				if !isStrictEqual(mapA.Fields[i], mapB.Fields[i]) {
+					return false
+				}
+			}
+			return true
+		}
+		// Handle Tuple/Signal equality?
+		tupA, okTA := a.Obj.(*mapval.Tuple)
+		tupB, okTB := b.Obj.(*mapval.Tuple)
+		if okTA && okTB {
+			return tupA.Kind == tupB.Kind && tupA.Topic == tupB.Topic // And payload?
+		}
+		return a.Obj == b.Obj // Reference equality for others
+	default:
+		return false
+	}
+}
+
+func isEqual(a, b mapval.Value) bool {
+	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+		return compareVersions(a, b) == 0
+	}
+	return isStrictEqual(a, b)
+}
+
+func compareVersions(a, b mapval.Value) int {
+	M1, m1, p1, w1 := a.VersionUnpack()
+	M2, m2, p2, w2 := b.VersionUnpack()
+
+	// Major
+	if M1 > M2 {
+		return 1
+	}
+	if M1 < M2 {
+		return -1
+	}
+
+	// Minor
+	// Check Wildcards: If either is wildcard AT THIS LEVEL, it's a match (0) for this and subsequent levels.
+	// Wildcard bit is set.
+	// How to check level? Use Sentinel values.
+	// MaxUint16 = 65535
+	// MaxUint32 = 4294967295
+
+	wild1 := w1 && m1 == 0xFFFF
+	wild2 := w2 && m2 == 0xFFFF
+
+	if wild1 || wild2 {
+		// If either is 1.- (Major Wildcard), then any Minor/Patch matches.
+		// Base versions match (Major is same).
+		return 0
+	}
+
+	if m1 > m2 {
+		return 1
+	}
+	if m1 < m2 {
+		return -1
+	}
+
+	// Patch
+	wild1 = w1 && p1 == 0xFFFFFFFF
+	wild2 = w2 && p2 == 0xFFFFFFFF
+
+	if wild1 || wild2 {
+		return 0
+	}
+
+	if p1 > p2 {
+		return 1
+	}
+	if p1 < p2 {
+		return -1
+	}
+
+	// Suffixes
+	// If suffixes differ, return Incomparable? Or non-zero?
+	// Tests:
+	// v1 (1.0.0) vs v7 (1.0.0-pre) -> GT=no, LT=no, EQ=no.
+	// This implies compareVersions returned something other than 1, -1, 0.
+	// Let's use -2.
+
+	if a.Str != b.Str {
+		// If wildcards were active at patch level, we returned 0 already.
+		// "Wildcards cannot be used in conjunction with suffixes".
+		// But if comparing `1.-` vs `1.0.0-pre`?
+		// `1.-` has `wild1` true at minor/patch. We returned 0.
+		// So suffixes ignored if wildcard matched earlier.
+		// But here, no wildcard matched.
+		// Exact version match `1.0.0` vs `1.0.0`.
+		// Suffixes differ.
+		return -2
+	}
+
+	return 0
 }
 
 // --- Flow Ops ---
@@ -586,10 +754,6 @@ func (vm *VM) opMakeFn() {
 }
 
 func (vm *VM) captureUpvalue(location int) *mapval.Upvalue {
-	// TODO: Reuse open upvalues (list in VM/Frame?) to support aliasing.
-	// For now, always create new (no aliasing support between closures yet).
-	// Proper implementation requires keeping a linked list of open upvalues.
-
 	val := &vm.Stack[location]
 	return &mapval.Upvalue{Location: val}
 }
@@ -638,61 +802,6 @@ func (vm *VM) opReturn() (int, error) {
 	vm.SP = frame.Base - 1
 	vm.push(result)
 	return 0, nil
-}
-
-func asFloat(v mapval.Value) float64 {
-	if v.Type == mapval.ValInteger {
-		return float64(v.Integer)
-	}
-	if v.Type == mapval.ValFloat {
-		return v.Float
-	}
-	return 0.0
-}
-
-func isEqual(a, b mapval.Value) bool {
-	if a.Type != b.Type {
-		if (a.Type == mapval.ValInteger || a.Type == mapval.ValFloat) && (b.Type == mapval.ValInteger || b.Type == mapval.ValFloat) {
-			return asFloat(a) == asFloat(b)
-		}
-		return false
-	}
-	switch a.Type {
-	case mapval.ValInteger:
-		return a.Integer == b.Integer
-	case mapval.ValFloat:
-		return a.Float == b.Float
-	case mapval.ValBoolean:
-		return a.Integer == b.Integer
-	case mapval.ValEmpty:
-		return true
-	case mapval.ValText:
-		return a.Str == b.Str
-	case mapval.ValObject:
-		// Handle Map equality
-		mapA, okA := a.Obj.(*mapval.Map)
-		mapB, okB := b.Obj.(*mapval.Map)
-		if okA && okB {
-			if len(mapA.Fields) != len(mapB.Fields) {
-				return false
-			}
-			for i := range mapA.Fields {
-				if !isEqual(mapA.Fields[i], mapB.Fields[i]) {
-					return false
-				}
-			}
-			return true
-		}
-		// Handle Tuple/Signal equality?
-		tupA, okTA := a.Obj.(*mapval.Tuple)
-		tupB, okTB := b.Obj.(*mapval.Tuple)
-		if okTA && okTB {
-			return tupA.Kind == tupB.Kind && tupA.Topic == tupB.Topic // And payload?
-		}
-		return a.Obj == b.Obj // Reference equality for others
-	default:
-		return false
-	}
 }
 
 func (vm *VM) isFalsy(val mapval.Value) bool {
