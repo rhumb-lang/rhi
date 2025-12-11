@@ -258,7 +258,7 @@ func (vm *VM) opNumNeg() error {
 		d := toDecimal(val)
 		res := new(apd.Decimal)
 		res.Neg(d)
-		vm.push(mapval.Value{Type: mapval.ValDecimal, Obj: &mapval.Decimal{D: res}})
+		vm.push(mapval.Value{Type: mapval.ValDecimal, Obj: &mapval.Decimal{Raw: res}})
 		return nil
 	}
 
@@ -336,7 +336,7 @@ func performNumericOp(op string, a, b mapval.Value) (mapval.Value, error) {
 		if err != nil {
 			return mapval.NewEmpty(), err
 		}
-		return mapval.Value{Type: mapval.ValDecimal, Obj: &mapval.Decimal{D: res}}, nil
+		return mapval.Value{Type: mapval.ValDecimal, Obj: &mapval.Decimal{Raw: res}}, nil
 	}
 
 	// 2. If either is Float -> Promote both to Float
@@ -382,7 +382,7 @@ func performNumericOp(op string, a, b mapval.Value) (mapval.Value, error) {
 // toDecimal converts Int/Float/Decimal to *apd.Decimal
 func toDecimal(v mapval.Value) *apd.Decimal {
 	if v.Type == mapval.ValDecimal {
-		return v.Obj.(*mapval.Decimal).D
+		return v.Obj.(*mapval.Decimal).Raw
 	}
 	d := new(apd.Decimal)
 	if v.Type == mapval.ValInteger {
@@ -405,7 +405,7 @@ func scalarToDuration(v mapval.Value) (bool, int64) {
 		return true, int64(v.Float * 1000)
 	case mapval.ValDecimal:
 		// Decimal -> Seconds -> Milliseconds
-		d := v.Obj.(*mapval.Decimal).D
+		d := v.Obj.(*mapval.Decimal).Raw
 		// Multiply by 1000
 		thou := apd.New(1000, 0)
 		res := new(apd.Decimal)

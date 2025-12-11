@@ -69,16 +69,13 @@ func (v Value) String() string {
 	case ValInteger:
 		return fmt.Sprintf("%d", v.Integer)
 	case ValFloat:
-		// Suppress trailing .0 for integers represented as floats (e.g., 5.0 -> 5)
-		s := fmt.Sprintf("%f", v.Float)
-		s = strings.TrimSuffix(s, ".000000") // Default Go float format
-		// If after trimming it becomes just "5", it's fine.
-		return s
+		return fmt.Sprintf("%f", v.Float)
 	case ValDecimal:
 		if d, ok := v.Obj.(*Decimal); ok {
 			return d.String()
+		} else {
+			panic("ValDecimal contains invalid Decimal value")
 		}
-		return "0.0"
 	case ValText:
 		return fmt.Sprintf("'%s'", v.Str)
 	case ValBoolean:
@@ -245,25 +242,26 @@ const (
 
 // Decimal wrapper
 type Decimal struct {
-	D        *apd.Decimal
-	Original string // Preserves strict formatting (e.g. 01.5)
+	Raw *apd.Decimal
 }
 
 func (d *Decimal) Type() ObjectType { return ObjTypeDecimal }
 func (d *Decimal) String() string {
-	if d.Original != "" {
-		return d.Original
+	s := "00.0"
+
+	if d.Raw != nil {
+		s = d.Raw.Text('f')
 	}
-	if d.D == nil {
-		return "0.0"
+
+	if s[0] != '0' {
+		var sb strings.Builder
+		sb.WriteRune('0')
+		sb.WriteString(s)
+		s = sb.String()
 	}
-	s := d.D.String()
-	// apd sometimes outputs .0 for integers. Remove it if no fractional part.
-	s = strings.TrimSuffix(s, ".0")
+
 	return s
 }
-
-// ... rest of file (Tuple, Range, etc.)
 
 // TupleKind
 type TupleKind uint8

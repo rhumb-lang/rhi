@@ -29,7 +29,7 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 	case *ast.DecimalLiteral:
 		c.emitConstant(mapval.Value{
 			Type: mapval.ValDecimal,
-			Obj:  &mapval.Decimal{D: e.Value, Original: e.Original},
+			Obj:  &mapval.Decimal{Raw: e.Value},
 		})
 	case *ast.LabelLiteral:
 		// 1. Variable Access (Local)

@@ -77,16 +77,25 @@ func (l *VersionLiteral) String() string {
 
 // DecimalLiteral represents an arbitrary precision decimal.
 type DecimalLiteral struct {
-	Value    *apd.Decimal
-	Original string // e.g. "01.5"
+	Value *apd.Decimal
 }
 
 func (l *DecimalLiteral) expressionNode() {}
 func (l *DecimalLiteral) String() string {
-	if l.Value == nil {
-		return "0.0"
+	s := "00.0"
+
+	if l.Value != nil {
+		s = l.Value.Text('f')
 	}
-	return l.Value.String()
+
+	if s[0] != '0' {
+		var sb strings.Builder
+		sb.WriteRune('0')
+		sb.WriteString(s)
+		s = sb.String()
+	}
+
+	return s
 }
 
 // TextSegment is a part of an interpolated string.
