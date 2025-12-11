@@ -244,13 +244,9 @@ func (d *Decimal) String() string {
 	s := "00.0"
 
 	if d.Raw != nil {
-		s = d.Raw.Text('f')
-	}
-
-	if s[0] != '0' {
 		var sb strings.Builder
 		sb.WriteRune('0')
-		sb.WriteString(s)
+		sb.WriteString(d.Raw.Text('f'))
 		s = sb.String()
 	}
 

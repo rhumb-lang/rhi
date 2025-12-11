@@ -6,4 +6,4 @@ m .= [
   `secret :: "hidden"
 ]
 m %?
-m %= [10; 20; :x; .cofig; .@logger] % canonical map representations
+m %= [10; 20; :x; .config; .@logger] % canonical map representations
