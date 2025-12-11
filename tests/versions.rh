@@ -1,0 +1,30 @@
+v1 := 1.0.0
+v2 := 0.1.0
+v1 >> v2 %= yes % basic version comparison
+v3 := 0.1.-
+v1 >> v3 %= yes % wildcard major comparison
+v4 := 0.2.0
+v3 << v4 %= yes % wildcard minor comparison
+
+v5 := 0.1.1 % wildcards are not greater than or less than versions that reside within their wildcard level
+v5 >> v3 %= no % equal patch versus patch wildcard [gt]
+v5 << v3 %= no % equal patch versus patch wildcard [lt]
+v5 == v3 %= yes % wildcard equal patch [eq]
+v5 ~~ v3 %= yes % wildcard equal patch [ne]
+
+v6 := 0.- % integers (including single dotdash) are treated as minor wildcaards
+v6 >> v1 %= no % minor wildcard versus greater major
+v2 >> v6 %= no % equal minor versus minor wildcard [gt]
+v2 << v6 %= no % equal minor versus minor wildcard [lt]
+v5 == v6 %= yes % semi-equal patch [eq]
+v5 ~~ v6 %= yes % semi-equal patch [ne]
+v6 == v2 %= yes % true-equal patch [eq]
+v6 ~~ v2 %= yes % true-equal patch [ne]
+
+v7 := 1.0.0-pre % version with prerelease tag
+v1 >> v7 %= no % equal major versus major w/ tag [gt]
+v1 << v7 %= no % equal major versus major w/ tag [lt]
+v1 == v7 %= no % equal major versus major w/ tag [eq]
+v1 ~~ v7 %= yes % equal major versus major w/ tag [ne]
+
+
