@@ -8,7 +8,7 @@ fizzbuzz := [n] -> (
       _ -/ 3 == 0 .. 'Fizz'
       _
     }
-    list := list ++ [val]
+    list := list && [val]
     i := i ++ 1
   )
   list

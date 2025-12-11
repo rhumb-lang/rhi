@@ -3,7 +3,6 @@ package vm
 import (
 	"fmt"
 	"math"
-	"strconv"
 
 	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 	"github.com/cockroachdb/apd/v3"
@@ -144,44 +143,6 @@ func (vm *VM) opAdd() error {
 	// Case: Date + Date -> Error
 	if a.Type == mapval.ValDateTime && b.Type == mapval.ValDateTime {
 		return fmt.Errorf("cannot add two dates")
-	}
-
-	// 3. Fallback: Map Concatenation
-	if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
-		mapA, okA := a.Obj.(*mapval.Map)
-		mapB, okB := b.Obj.(*mapval.Map)
-		if okA && okB {
-			newMap := mapval.NewMap()
-
-			// 1. Copy A
-			newMap.Legend.Fields = append(newMap.Legend.Fields, mapA.Legend.Fields...)
-			newMap.Fields = append(newMap.Fields, mapA.Fields...)
-
-			// Calc max positional in A
-			maxIdx := 0
-			for _, f := range mapA.Legend.Fields {
-				if idx, err := strconv.Atoi(f.Name); err == nil && idx > maxIdx {
-					maxIdx = idx
-				}
-			}
-
-			// 2. Append B (Renaming positionals)
-			for i, desc := range mapB.Legend.Fields {
-				newName := desc.Name
-				if idx, err := strconv.Atoi(desc.Name); err == nil && idx > 0 {
-					newName = strconv.Itoa(maxIdx + idx)
-				}
-
-				newMap.Legend.Fields = append(newMap.Legend.Fields, mapval.FieldDesc{
-					Name: newName,
-					Kind: desc.Kind,
-				})
-				newMap.Fields = append(newMap.Fields, mapB.Fields[i])
-			}
-
-			vm.push(mapval.Value{Type: mapval.ValObject, Obj: newMap})
-			return nil
-		}
 	}
 
 	return fmt.Errorf("invalid operands for addition: %s and %s", a, b)

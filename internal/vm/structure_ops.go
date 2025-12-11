@@ -1,6 +1,8 @@
 package vm
 
 import (
+	"strconv"
+
 	"git.sr.ht/~madcapjake/rhi/internal/map"
 )
 
@@ -17,14 +19,53 @@ func (vm *VM) opCoalesce() {
 func (vm *VM) opConcat() {
 	b := vm.pop()
 	a := vm.pop()
+	
 	// String concat
 	if a.Type == mapval.ValText && b.Type == mapval.ValText {
 		vm.push(mapval.NewText(a.Str + b.Str))
-	} else {
-		// TODO: List concat
-		// For now, error or empty
-		vm.push(mapval.NewEmpty())
+		return
 	}
+	
+	// Map concat
+	if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
+		mapA, okA := a.Obj.(*mapval.Map)
+		mapB, okB := b.Obj.(*mapval.Map)
+		if okA && okB {
+			newMap := mapval.NewMap()
+
+			// 1. Copy A
+			newMap.Legend.Fields = append(newMap.Legend.Fields, mapA.Legend.Fields...)
+			newMap.Fields = append(newMap.Fields, mapA.Fields...)
+
+			// Calc max positional in A
+			maxIdx := 0
+			for _, f := range mapA.Legend.Fields {
+				if idx, err := strconv.Atoi(f.Name); err == nil && idx > maxIdx {
+					maxIdx = idx
+				}
+			}
+
+			// 2. Append B (Renaming positionals)
+			for i, desc := range mapB.Legend.Fields {
+				newName := desc.Name
+				if idx, err := strconv.Atoi(desc.Name); err == nil && idx > 0 {
+					newName = strconv.Itoa(maxIdx + idx)
+				}
+
+				newMap.Legend.Fields = append(newMap.Legend.Fields, mapval.FieldDesc{
+					Name: newName,
+					Kind: desc.Kind,
+				})
+				newMap.Fields = append(newMap.Fields, mapB.Fields[i])
+			}
+
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: newMap})
+			return
+		}
+	}
+
+	// Fallback
+	vm.push(mapval.NewEmpty())
 }
 
 func (vm *VM) opRange() {
