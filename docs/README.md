@@ -100,20 +100,20 @@ The codebase follows a "Small File" philosophy with strict separation between Ru
 
 ## Documentation Index
 
-### 📐 [Syntax & Grammar](docs/01_syntax.md)
+### 📐 [Syntax & Grammar](01_syntax.md)
 Detailed specification of the language grammar, symbols, literals (DateTime, Duration, Version), and meta-syntax.
 
-### 🧬 [The Map (Object) Model](docs/02_object_model.md)
+### 🧬 [The Map (Object) Model](02_object_model.md)
 Explains the "Self"-style Prototype system, the Universal Legend (schema optimization), and the memory layout of Values.
 
-### ⚙️ [The Runtime (VM)](docs/03_runtime.md)
+### ⚙️ [The Runtime (VM)](03_runtime.md)
 Deep dive into the Cactus Stack, the Bytecode Compiler, and the Dynamic Type Interaction matrix.
 
-### 📡 [Concurrency & Space](docs/04_concurrency.md)
+### 📡 [Concurrency & Space](04_concurrency.md)
 Describes the Tuplespace model, Realm hierarchies, and the Signal/Reply propagation algorithms.
 
-### 📦 [Project System](docs/05_project_system.md)
+### 📦 [Project System](05_project_system.md)
 Covers the Library Resolution protocol, Catalogs (`.rhy`), and the "Tip" folder structure for versioning.
 
-### 🛠️ [Tooling & IDE](docs/07_tooling.md)
+### 🛠️ [Tooling & IDE](07_tooling.md)
 Specifications for the `rhide` "Code Projector", Testing strategies (`%=`), and the Window Manager.
