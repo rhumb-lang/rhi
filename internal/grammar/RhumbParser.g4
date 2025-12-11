@@ -50,7 +50,7 @@ literal
     ;
 
 number
-    : NumberPart DotDash?
+    : (Zero | NumberPart) DotDash?
     ;
 
 fieldLiteral
