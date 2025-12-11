@@ -101,19 +101,30 @@ The codebase follows a "Small File" philosophy with strict separation between Ru
 ## Documentation Index
 
 ### 📐 [Syntax & Grammar](01_syntax.md)
-Detailed specification of the language grammar, symbols, literals (DateTime, Duration, Version), and meta-syntax.
+Detailed specification of the language grammar, symbols, literals (DateTime,
+Duration, Version), and meta-syntax.
 
 ### 🧬 [The Map (Object) Model](02_object_model.md)
-Explains the "Self"-style Prototype system, the Universal Legend (schema optimization), and the memory layout of Values.
+Explains the "Self"-style Prototype system, the Universal Legend (schema
+optimization), and the memory layout of Values.
 
 ### ⚙️ [The Runtime (VM)](03_runtime.md)
-Deep dive into the Cactus Stack, the Bytecode Compiler, and the Dynamic Type Interaction matrix.
+Deep dive into the Cactus Stack, the Bytecode Compiler, and the Dynamic Type
+Interaction matrix.
 
 ### 📡 [Concurrency & Space](04_concurrency.md)
-Describes the Tuplespace model, Realm hierarchies, and the Signal/Reply propagation algorithms.
+Describes the Tuplespace model, Realm hierarchies, and the Signal/Reply
+propagation algorithms.
 
 ### 📦 [Project System](05_project_system.md)
-Covers the Library Resolution protocol, Catalogs (`.rhy`), and the "Tip" folder structure for versioning.
+Covers the Library Resolution protocol, Catalogs (`.rhy`), and the "Tip" folder
+structure for versioning.
 
-### 🛠️ [Tooling & IDE](07_tooling.md)
-Specifications for the `rhide` "Code Projector", Testing strategies (`%=`), and the Window Manager.
+### 🧪 [Testing](07_testing.md)
+Details the multi-layered testing strategy, including Fuzzing, Concurrency
+Stress Testing (Chaos Monkey), and the "Blessed Output" assertion syntax (%=).
+
+### 🖥️ [rhIDE](08_rhide.md)
+Specifications for the graphical environment, including the "Code Projector",
+the spatial "Route/Desktop" metaphor, window management, and the
+dual-persistence strategy.
