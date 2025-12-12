@@ -125,8 +125,10 @@ my_project:
     📂: src # if the libraries and desktop books are in non-root folder
 
 # all remaining values in the catalog are versions of the project
+-:
+    <-: 0.1.0 # this "<-" symbol as a key means that this version has the same dependencies as the value
 0.1.0:
-    core_mechanics: <- # this "<-" symbol means that core_mechanics shelf contains its own catalog
+    core_mechanics: <- # this "<-" symbol as a value means that core_mechanics shelf contains its own catalog
     win_conditions: <-
     physics: # objects with version keys means that the shelf's catalog is included here
         0.1.0:
@@ -178,9 +180,8 @@ $ tree . # inside of a Rhumb project
 Since Rhumb is managed by an IDE, the **Working Copy** is decoupled from the
 **Archived Versions**.
 
-Instead of editing files directly inside a numbered version folder (which
-changes name), you perform all work in a **stable "tip" folder (with a name that
-is a single dash `-`)** (which never changes name). When you "bump" a version,
+Instead of editing files directly inside of the numbered version folder (which
+changes name), you perform all work in the **"tip" folder (`-`)** (which never changes name). When you "bump" a version,
 the IDE snapshots that folder into a numbered archive.
 
 ## 5\.7 The Entry Point (`+`)
