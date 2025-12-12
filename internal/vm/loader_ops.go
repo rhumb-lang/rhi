@@ -5,7 +5,7 @@ func (vm *VM) opResolve() error {
 	path := vm.pop()
 	resolver := vm.pop()
 
-	lib, err := vm.Loader.Load(resolver.Str, path.Str, version.String())
+	lib, err := vm.Loader.Load(resolver.Str, path.Str, version)
 	if err != nil {
 		return err
 	}

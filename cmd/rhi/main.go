@@ -11,6 +11,7 @@ import (
 	"git.sr.ht/~madcapjake/rhi/internal/compiler"
 	"git.sr.ht/~madcapjake/rhi/internal/config"
 	"git.sr.ht/~madcapjake/rhi/internal/grammar"
+	"git.sr.ht/~madcapjake/rhi/internal/loader"
 	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 	"git.sr.ht/~madcapjake/rhi/internal/parser_util" // Import the new package
 	"git.sr.ht/~madcapjake/rhi/internal/visitor"
@@ -38,13 +39,14 @@ func NewSession(cfg *config.Config) *Session {
 	v.Config = cfg
 
 	// Initialize Loader
-	v.Loader.Registry = make(map[string]mapval.Value)
-	v.Loader.Sitemap = make(map[string]string)
-	v.Loader.Config = cfg
-	v.Loader.VM = v
-	
 	cwd, _ := os.Getwd()
-	v.Loader.ProjectRoot = cwd
+	v.Loader = &loader.LibraryLoader{
+		Registry:    make(map[string]mapval.Value),
+		Sitemap:     make(map[string]string),
+		ProjectRoot: cwd,
+		Config:      cfg,
+		VM:          v,
+	}
 
 	return &Session{
 		Compiler: compiler.NewCompiler(),

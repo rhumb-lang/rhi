@@ -10,6 +10,11 @@ import (
 const StackMax = 2048
 const MaxFrames = 64 // Kept for legacy limits if needed, but not used for storage
 
+// Loader defines the interface for loading libraries.
+type Loader interface {
+	Load(resolver, logicalPath string, constraint mapval.Value) (mapval.Value, error)
+}
+
 type VM struct {
 	CurrentFrame *CallFrame
 
@@ -18,7 +23,7 @@ type VM struct {
 
 	Config *config.Config
 
-	Loader LibraryLoader
+	Loader Loader
 }
 
 // Result code for the VM interpretation
@@ -79,10 +84,32 @@ func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
 // CallAndReturn executes a standalone chunk/closure (used for libraries).
 // It creates a temporary frame, runs until return, and gives back the value.
 func (vm *VM) CallAndReturn(chunk *mapval.Chunk) (mapval.Value, error) {
-	// 1. Wrap chunk in Closure
-	// 2. Push Frame
-	// 3. Run Loop
-	// 4. Return vm.pop()
+	fn := &mapval.Function{
+		Name:  "<library>",
+		Chunk: chunk,
+	}
+	closure := &mapval.Closure{Fn: fn}
+
+	vm.CurrentFrame = &CallFrame{
+		Closure: closure,
+		IP:      0,
+		Base:    vm.SP,
+		Parent:  vm.CurrentFrame,
+	}
+
+	res, err := vm.RunSynchronous()
+	if err != nil {
+		return mapval.NewEmpty(), err
+	}
+	if res != Ok && res != Halt {
+		return mapval.NewEmpty(), fmt.Errorf("library execution failed: %s", res)
+	}
+	
+	// result is on stack
+	if vm.SP == 0 {
+		return mapval.NewEmpty(), nil
+	}
+	return vm.pop(), nil
 }
 
 // Continue resumes execution from the given offset in the script frame.
@@ -278,6 +305,19 @@ func (vm *VM) Step() (Result, error) {
 
 	case mapval.OP_MAKE_MAP:
 		vm.opMakeMap()
+
+	case mapval.OP_LOAD_STATIC:
+		// Not implemented yet
+		return RuntimeError, fmt.Errorf("OP_LOAD_STATIC not implemented")
+
+	case mapval.OP_MATCH_BIND:
+		// Not implemented yet
+		return RuntimeError, fmt.Errorf("OP_MATCH_BIND not implemented")
+
+	case mapval.OP_RESOLVE:
+		err = vm.opResolve()
+
+	// --- BANK 2: Map & Inheritance ---
 
 	case mapval.OP_SEND:
 		err = vm.opSend()

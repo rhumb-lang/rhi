@@ -77,6 +77,37 @@ func (b *ASTBuilder) VisitWholeNumber(ctx *grammar.WholeNumberContext) interface
 	return &ast.IntegerLiteral{Value: val}
 }
 
+func (b *ASTBuilder) VisitNumber(ctx *grammar.NumberContext) interface{} {
+	text := ctx.GetText()
+
+	// Check for ".-" suffix (Wildcard or Decimal Precision)
+	if strings.HasSuffix(text, ".-") || strings.HasSuffix(text, ",-") {
+		baseText := text[:len(text)-2]
+
+		// Case 1: Decimal (Leading Zero) -> 01.-
+		if len(baseText) > 1 && strings.HasPrefix(baseText, "0") {
+
+			d, _, err := apd.NewFromString(baseText)
+			if err != nil {
+				panic(fmt.Errorf("error creating apd.Decimal from string: %s", err))
+			}
+			return &ast.DecimalLiteral{Value: d}
+		}
+
+		// Case 2: Version Wildcard -> 1.-
+		val, _ := strconv.ParseUint(baseText, 10, 16)
+		return &ast.VersionLiteral{
+			Major:      uint16(val),
+			Minor:      0xFFFF,     // MaxUint16
+			Patch:      0xFFFFFFFF, // MaxUint32
+			IsWildcard: true,
+		}
+	}
+
+	val, _ := strconv.ParseInt(text, 10, 64)
+	return &ast.IntegerLiteral{Value: val}
+}
+
 // Add this helper method to ASTBuilder (can be in numbers.go)
 func (b *ASTBuilder) parseVersionString(text string) *ast.VersionLiteral {
 	suffix := ""
