@@ -138,9 +138,13 @@ my_project:
     integration_checks: false # false means that this is a non-resource folder that should be excluded from any distribution
 ---
 # ./core_mechanics/core_mechanics@.rhy
+-:
+    <-: 0.3.2
 0.3.2: null # null means that this is a rhumb folder but there's no dependencies and no inner shelves
 ---
 # ./win_conditions/win_conditions@.rhy
+-:
+    <-: 0.2.1
 0.2.1:
     core_mechanics: 0.3.2
     physics: 0.1.0
