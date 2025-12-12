@@ -121,7 +121,6 @@ my_project:
     📝: >
         This is a description of the project and it can span
         multiple lines using thr yaml ">" operator
-    ▶️: main.rh # starting point for routes (applications/executables)
     📂: src # if the libraries and desktop books are in non-root folder
 
 # all remaining values in the catalog are versions of the project
@@ -138,19 +137,38 @@ my_project:
     integration_checks: false # false means that this is a non-resource folder that should be excluded from any distribution
 ---
 # ./core_mechanics/core_mechanics@.rhy
--:
-    <-: 0.3.2
+-: null # since none of the versions contain dependencies, no pointer is needed
+0.4.1: null
 0.3.2: null # null means that this is a rhumb folder but there's no dependencies and no inner shelves
 ---
 # ./win_conditions/win_conditions@.rhy
--:
-    <-: 0.2.1
+-: # we're using the new core_mechanics version in this top shelf
+    core_mechanics: 0.4.1
+    physics: 0.1.0
 0.2.1:
     core_mechanics: 0.3.2
     physics: 0.1.0
 0.2.0:
     core_mechanics: 0.3.2
     physics: 0.1.0
+---
+# ./integration_checks/integration_checks@.rhy
+# even though this shelf isn't part of the main library/route, it can still have a catalog
+-:
+  <-: 0.5.0
+0.5.0:
+  <-: 0.4.0 # if you are adding only, you can keep the pointer
+  win_conditions: 0.2.1
+0.4.0:
+  core_mechanics: 0.4.1
+  physics: 0.1.0
+0.3.0:
+  core_mechanics: 0.3.2
+  physics: 0.1.0
+0.2.0:
+  <-: 0.1.0
+0.1.0:
+  physics: 0.1.0
 ```
 
 ```console
@@ -158,7 +176,7 @@ $ tree . # inside of a Rhumb project
 /project_name
   ├── project_name@.rhy
   └── /src
-       ├── main.rh
+       ├── +main.rh
        ├── /core_mechanics
        │     ├── /-
        │     │    ├── player.rh
@@ -178,20 +196,20 @@ $ tree . # inside of a Rhumb project
        │     ├── hero.png
        │     └── map.json
        └── /integration_checks
-            └── movement_test.rh
+            └── +integration_checks.rh
 ```
 
 Since Rhumb is managed by an IDE, the **Working Copy** is decoupled from the
 **Archived Versions**.
 
 Instead of editing files directly inside of the numbered version folder (which
-changes name), you perform all work in the **"tip" folder (`-`)** (which never changes name). When you "bump" a version,
+changes name), you perform all work in the **"top shelf" (`-`)** (which never changes name). When you "bump" a version,
 the IDE snapshots that folder into a numbered archive.
 
 ## 5\.7 The Entry Point (`+`)
 
-The entry point of any Shelf (folder) is strictly defined by the file naming
-convention.
+The entry point of any Shelf (local library) is strictly defined by the file
+naming convention.
 
   * **Syntax:** `+filename.rh`
   * **Constraint:** A Shelf version may contain **only one** file with the `+` prefix.
