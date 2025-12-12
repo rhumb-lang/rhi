@@ -108,17 +108,30 @@ file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 Catalog files must have the same name as the folder but with `@` followed by any additional label (for breaking a catalog into multiple files)
 
 ```yaml
-# ./project_name@.rhy
-project_name: # one non-version key is allowed for project/shelf metadata
-    author: Jake Russo
-    license: MIT
-0.1.0:  # main keys are project versions
-    core_mechanics: "@" # this means that core_mechanics shelf contains its own catalog
-    win_conditions: "@"
+# ./my_project@.rhy
+# one non-version key is allowed for project/shelf metadata
+my_project: 
+    👤: Jake Russo # author
+    🪪: MIT # license
+    📦: https://github.com/user/repo
+    🏷️: # keywords
+        - programming 
+        - cryptography
+        - server
+    📝: >
+        This is a description of the project and it can span
+        multiple lines using thr yaml ">" operator
+    ▶️: main.rh # starting point for routes
+    📂: src # if the libraries and desktop books are in non-root folder
+
+# all remaining values in the catalog are versions of the project
+0.1.0:
+    core_mechanics: <- # this "<-" symbol means that core_mechanics shelf contains its own catalog
+    win_conditions: <-
     physics: # objects with version keys means that the shelf's catalog is included here
         0.1.0:
-            core_mechanics: "0.3.2" # this means that physics@0.1.0 depends on core_mechanics@0.3.2
-            math: "!@0.1.0" # the ! means standard library (all standard libraries are versioned)
+            core_mechanics: 0.3.2 # this means that physics@0.1.0 depends on core_mechanics@0.3.2
+            math: 0.1.0! # the ! means standard library (all standard libraries are versioned)
     art_files: true # true means this is a asset/resource folder that should be included in any distribution
     integration_checks: false # false means that this is a non-resource folder that should be excluded from any distribution
 ---
@@ -138,26 +151,28 @@ project_name: # one non-version key is allowed for project/shelf metadata
 $ tree . # inside of a Rhumb project
 /project_name
   ├── project_name@.rhy
-  ├── /core_mechanics
-  │     ├── /-
-  │     │    ├── player.rh
-  │     │    └── movement.rh
-  │     ├── /0.3.2
-  │     │    ├── player.rh
-  │     │    └── movement.rh
-  │     └── core_mechanics@.rhy
-  ├── /physics
-  │     ├── /-
-  │     │    ├── particle.rh
-  │     │    └── ball.rh
-  │     └── /0.1.0
-  │          ├── particle.rh
-  │          └── ball.rh
-  ├── /art_files
-  │     ├── hero.png
-  │     └── map.json
-  └── /integration_checks
-        └── movement_test.rh
+  └── /src
+       ├── main.rh
+       ├── /core_mechanics
+       │     ├── /-
+       │     │    ├── player.rh
+       │     │    └── movement.rh
+       │     ├── /0.3.2
+       │     │    ├── player.rh
+       │     │    └── movement.rh
+       │     └── core_mechanics@.rhy
+       ├── /physics
+       │     ├── /-
+       │     │    ├── particle.rh
+       │     │    └── ball.rh
+       │     └── /0.1.0
+       │          ├── particle.rh
+       │          └── ball.rh
+       ├── /art_files
+       │     ├── hero.png
+       │     └── map.json
+       └── /integration_checks
+            └── movement_test.rh
 ```
 
 Since Rhumb is managed by an IDE, the **Working Copy** is decoupled from the
