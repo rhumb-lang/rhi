@@ -11,7 +11,8 @@ func TestValue_Version(t *testing.T) {
 		t.Errorf("Expected Type ValVersion, got %v", v1.Type)
 	}
 
-	maj, min, pat := v1.VersionUnpack()
+	// TODO: change _ to wildcard
+	maj, min, pat, _ := v1.VersionUnpack()
 	if maj != 1 || min != 2 || pat != 3 {
 		t.Errorf("Expected 1.2.3, got %d.%d.%d", maj, min, pat)
 	}
