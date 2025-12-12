@@ -1,0 +1,6 @@
+% Entry point for math library
+% It should export 'add' from calc.rh implicitly because they share the shelf
+
+% Inspect that we loaded
+%? "Init Math"
+"Init Math" % Placeholder expression

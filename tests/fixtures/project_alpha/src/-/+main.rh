@@ -1,0 +1,5 @@
+math := {-|libs/math|-};
+sum := math\add(10; 20);
+sum %? "sum calculated";
+sum %= 30 % Library loaded and function used
+

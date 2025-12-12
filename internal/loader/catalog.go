@@ -3,6 +3,7 @@ package loader
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -33,29 +34,69 @@ func LoadCatalog(path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	// 1. Decode Metadata
-	var m Manifest
-	if err := yaml.Unmarshal(data, &m); err != nil {
-		return nil, err
-	}
-	m.Versions = make(map[string]VersionConfig)
-
-	// 2. Decode Dynamic Versions
+	// Decode into raw map
 	var raw map[string]interface{}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, err
+	}
+
+	m := &Manifest{
+		Versions: make(map[string]VersionConfig),
 	}
 
 	knownKeys := map[string]bool{
 		"👤": true, "🪪": true, "📦": true, "🏷️": true, "📝": true, "📂": true,
 	}
 
+	// 1. Check for Flat Metadata
+	hasFlatMetadata := false
+	for k := range raw {
+		if knownKeys[k] {
+			hasFlatMetadata = true
+			break
+		}
+	}
+
+	if hasFlatMetadata {
+		if err := yaml.Unmarshal(data, m); err != nil {
+			return nil, err
+		}
+	}
+
+	// 2. Scan for Nested Metadata (if not flat) & Versions
 	for key, val := range raw {
 		if knownKeys[key] {
-			continue
+			continue // Already handled (if flat)
 		}
 
-		// It's a version!
+		// Check if it's a Metadata Block (Project Name)
+		// Heuristic: Not a version number, and value is a map containing metadata keys
+		// Or assume any non-version key is metadata?
+		// Version keys: "-", "0.1.0", "1.0"
+		isVersion := key == "-" || strings.Contains(key, ".") || (len(key) > 0 && key[0] >= '0' && key[0] <= '9')
+		
+		if !isVersion {
+			if vMap, ok := val.(map[string]interface{}); ok {
+				// Check for metadata keys inside
+				isMetaBlock := false
+				for subK := range vMap {
+					if knownKeys[subK] {
+						isMetaBlock = true
+						break
+					}
+				}
+				
+				if isMetaBlock && !hasFlatMetadata {
+					// Extract metadata from this nested map
+					// Re-marshal and unmarshal to Manifest
+					subData, _ := yaml.Marshal(val)
+					yaml.Unmarshal(subData, m)
+					continue
+				}
+			}
+		}
+
+		// It's a version (or treated as one)!
 		vc := VersionConfig{
 			Dependencies: make(map[string]string),
 		}
@@ -73,8 +114,6 @@ func LoadCatalog(path string) (*Manifest, error) {
 				case string:
 					vc.Dependencies[k] = val
 				case bool:
-					// Store boolean as string for now, or flag IsResource if appropriate
-					// Assuming simple dependency map for now.
 					vc.Dependencies[k] = fmt.Sprintf("%v", val)
 					if val {
 						vc.IsResource = true
@@ -85,5 +124,5 @@ func LoadCatalog(path string) (*Manifest, error) {
 
 		m.Versions[key] = vc
 	}
-	return &m, nil
+	return m, nil
 }

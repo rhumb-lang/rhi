@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"git.sr.ht/~madcapjake/rhi/internal/ast"
@@ -34,16 +35,65 @@ type Session struct {
 	IsRepl   bool
 }
 
-func NewSession(cfg *config.Config) *Session {
+func findProjectRoot(startPath string) string {
+	dir := startPath
+	if stat, err := os.Stat(dir); err == nil && !stat.IsDir() {
+		dir = filepath.Dir(dir)
+	}
+
+	for {
+		entries, err := os.ReadDir(dir)
+		if err == nil {
+			for _, e := range entries {
+				if !e.IsDir() && strings.HasSuffix(e.Name(), ".rhy") {
+					return dir
+				}
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	// Fallback to CWD
+	cwd, _ := os.Getwd()
+	return cwd
+}
+
+func NewSession(cfg *config.Config, scriptPath string) *Session {
 	v := vm.NewVM()
 	v.Config = cfg
 
 	// Initialize Loader
-	cwd, _ := os.Getwd()
+	projectRoot := findProjectRoot(scriptPath)
+	
+	// Load Catalog to check for SourceRoot
+	// We need to find the specific .rhy file again or just list
+	// Assuming findProjectRoot found it.
+	var sourceRoot string
+	entries, _ := os.ReadDir(projectRoot)
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".rhy") {
+			manifest, err := loader.LoadCatalog(filepath.Join(projectRoot, e.Name()))
+			if err == nil && manifest.SourceRoot != "" {
+				sourceRoot = manifest.SourceRoot
+			}
+			break
+		}
+	}
+	
+	// Adjust ProjectRoot to include SourceRoot
+	finalRoot := projectRoot
+	if sourceRoot != "" {
+		finalRoot = filepath.Join(projectRoot, sourceRoot)
+	}
+
 	v.Loader = &loader.LibraryLoader{
 		Registry:    make(map[string]mapval.Value),
 		Sitemap:     make(map[string]string),
-		ProjectRoot: cwd,
+		ProjectRoot: finalRoot,
 		Config:      cfg,
 		VM:          v,
 	}
@@ -80,7 +130,14 @@ func main() {
 
 	args := flag.Args()
 
-	session := NewSession(cfg)
+	var scriptPath string
+	if len(args) > 0 {
+		scriptPath, _ = filepath.Abs(args[0])
+	} else {
+		scriptPath, _ = os.Getwd()
+	}
+
+	session := NewSession(cfg, scriptPath)
 
 	if len(args) == 0 {
 		session.IsRepl = true
