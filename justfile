@@ -1,7 +1,7 @@
 # rhi Justfile
 
 # just --set version v0.3.0
-version := "v0.2.0"
+version := "v0.3.0"
 
 # Default recipe
 default: build
