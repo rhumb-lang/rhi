@@ -133,3 +133,11 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 	}
 	return nil
 }
+
+func resolveVersionValue(c ast.VersionConstraint) mapval.Value {
+	isWild := c.Type == ast.ConstraintMinor || c.Type == ast.ConstraintPatch || c.Type == ast.ConstraintMajor
+	
+	// Convert constraint fields to Value fields
+	// Note: VersionConstraint uses uint16/uint32 but NewVersion expects matching types
+	return mapval.NewVersion(c.Major, c.Minor, c.Patch, isWild)
+}

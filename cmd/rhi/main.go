@@ -36,6 +36,16 @@ type Session struct {
 func NewSession(cfg *config.Config) *Session {
 	v := vm.NewVM()
 	v.Config = cfg
+
+	// Initialize Loader
+	v.Loader.Registry = make(map[string]mapval.Value)
+	v.Loader.Sitemap = make(map[string]string)
+	v.Loader.Config = cfg
+	v.Loader.VM = v
+	
+	cwd, _ := os.Getwd()
+	v.Loader.ProjectRoot = cwd
+
 	return &Session{
 		Compiler: compiler.NewCompiler(),
 		VM:       v,
