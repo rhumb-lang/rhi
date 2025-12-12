@@ -794,13 +794,21 @@ func (vm *VM) opReturn() (int, error) {
 
 	vm.CurrentFrame = frame.Parent // Pop frame
 
+	// Reset Stack Pointer
+	// If Base > 0, it means there is a Closure (or Caller's stack) below.
+	// Standard convention (OP_CALL): Base-1 is the Closure. We pop it.
+	// Interpret convention: Base=0. No Closure on stack. We just reset to 0.
+	targetSP := frame.Base
+	if targetSP > 0 {
+		targetSP--
+	}
+	
+	vm.SP = targetSP
+	vm.push(result)
+
 	if vm.CurrentFrame == nil {
-		vm.pop()      // Pop Main Script Closure
 		return 1, nil // Done
 	}
-
-	vm.SP = frame.Base - 1
-	vm.push(result)
 	return 0, nil
 }
 

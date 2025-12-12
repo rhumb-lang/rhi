@@ -90,10 +90,13 @@ func (vm *VM) CallAndReturn(chunk *mapval.Chunk) (mapval.Value, error) {
 	}
 	closure := &mapval.Closure{Fn: fn}
 
+	// Push closure to stack so OP_RETURN can pop it (Base-1)
+	vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
+
 	vm.CurrentFrame = &CallFrame{
 		Closure: closure,
 		IP:      0,
-		Base:    vm.SP,
+		Base:    vm.SP, // Locals start here (after closure)
 		Parent:  vm.CurrentFrame,
 	}
 
