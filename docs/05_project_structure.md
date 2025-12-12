@@ -383,6 +383,10 @@ Resources are defined in the `catalog.rhy` alongside code dependencies. To keep 
 
 **Example `project@.rhy`:**
 ```yaml
+-:
+  <-: 0.1.0 # uses dependency graph for 0.1.0
+  # if any files change from 0.1.0, the pointer can no longer be used
+  # if only new files are added, the pointer can still be used alongside the new key-value resource pairs
 0.1.0:
   # --- Auto-Discovery ---
   # Inferred from extension (.json -> Map, .png -> Binary)
