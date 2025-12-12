@@ -105,7 +105,10 @@ file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 
 ## 5\.6 Catalogs
 
-Catalog files must have the same name as the folder but with `@` followed by any additional label (for breaking a catalog into multiple files)
+Catalog files must have the same name as the folder but with `@` followed by any
+additional label (for breaking a catalog into multiple files). Dependencies are
+defined in the version map. Rhumb differentiates between **Code Dependencies**
+(Strings) and **Resource Dependencies** (Arrays).
 
 ```yaml
 # ./my_project@.rhy
@@ -133,12 +136,23 @@ my_project:
         0.1.0:
             core_mechanics: 0.3.2 # this means that physics@0.1.0 depends on core_mechanics@0.3.2
             math: 0.1.0! # the ! means standard library (all standard libraries are versioned)
-    art_files: true # true means this is a asset/resource folder that should be included in any distribution
-    integration_checks: false # false means that this is a non-resource folder that should be excluded from any distribution
+
+    # The brackets indicate this is a Resource Shelf.
+    art_files: [0.1.0] # Maps to: /src/[art_files]/0.1.0
+    
+    # if you are using the flag for allowing wildcards, you could reference the tip version directly
+    sounds: [-] # Maps to: /src/[sounds]/-
+    # if you want to specify a resource catalog inline, use the - dash leading line to indicate []
+    icons: # Maps to: /src/[icons] (just a folder of files)
+    - logo.png: sha256:a1b2...
+    - spinner.gif: ___ # the triple underscore ____ means that the user has not yet added a checksum
+
+    # false means that this is a non-resource folder that should be excluded from any distribution
+    integration_checks: false # but it could still have its own catalog (like for testing routes)
 ---
 # ./core_mechanics/core_mechanics@.rhy
 -: null # since none of the versions contain dependencies, no pointer is needed
-0.4.1: null
+0.4.1: ~ # in YAML ~ is equivalent to null
 0.3.2: null # null means that this is a rhumb folder but there's no dependencies and no inner shelves
 ---
 # ./win_conditions/win_conditions@.rhy
@@ -373,15 +387,18 @@ Static assets (images, JSON configuration, database files) are imported using th
 
 **Syntax:** `{ = | path/to/shelf/filename.ext | version }`
 
-### 5\.10\.1 The Symbolic Catalog Protocol
+### 5\.10\.1 The Bracketed Protocol
 
-Resources are defined in the `catalog.rhy` alongside code dependencies. To keep the file concise, Rhumb uses a **Symbolic Protocol** encoded directly into the YAML keys and values.
+Resource Shelves are strictly typed in the catalog using YAML Arrays.
 
-**Format:**
-* **Key:** `filename [ ; option1 ; option2 ... ]`
-* **Value:** `checksum` or `___` (indicates a checksum should be generated)
+1.  **Catalog Definition:** `name: ["version"]`
+2.  **Disk Location:** The loader automatically looks for a folder named `[name]`.
+3.  **Versioning:**
+    * **Versioned:** `["1.0.0"]` → `src/[name]/1.0.0/`
+    * **Tip:** `[-]` → `src/[name]/-/`
+    * **Inline:** `[{...}]` → `src/[name]/` (The version is implicitly "local").
 
-**Example `project@.rhy`:**
+**Example `shelf@.rhy`:**
 ```yaml
 -:
   <-: 0.1.0 # uses dependency graph for 0.1.0
