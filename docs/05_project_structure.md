@@ -59,11 +59,12 @@ Dependencies are imported using the **Resolver Protocol**.
   * **Explicit Version:** `{ ! | math | 1.0.0 }`
   * **Latest/Default Version:** `{ ! | math | - }` (Use `-` to indicate no specific version)
 
-| Resolver     | Syntax | Use Case      | Example                                                                 |
-|:-------------|:-------|:--------------|:------------------------------------------------------------------------|
-| **Standard** | `!`    | Built-in Libs | `{!\|🧮\|-}`                                                            |
-| **Local**    | `-`    | Internal Code | `{-\|src/utils/math\|-}` (Path)<br>`{-\|my_alias\|-}` (Catalog) |
-| **Remote**   | `git`  | External Libs | `{git\|https://github...\|0.1.-}`                                     |
+| Resolver     | Syntax | Use Case      | Example                             |
+|:-------------|:-------|:--------------|:------------------------------------|
+| **Standard** | `!`    | Built-in Libs | `{!\|🧮\|-}`                        |
+| **Local**    | `-`    | Internal Code | `{-\|src\utils\math \|-}`        |
+| **Resource** | `=`    | Static Assets | `{=\|assets/icons/logo.png \|-}`  |
+| **Remote**   | `git`  | External Libs | `{git\|https://github...\|0.1.0}` |
 
 **Path Resolution Rules:**
 1.  **Implicit (Sibling):** Books within the same Shelf (Folder) can access each
@@ -366,3 +367,70 @@ phys\CheckOverlap(p1; p2)
 phys\_boxes_touch(p1, p2)
 ```
 
+## 5\.10 Resource Resolution
+
+Static assets (images, JSON configuration, database files) are imported using the **Resource Resolver `{=}`**. Unlike code imports which load a "Shelf," resource imports load a specific **File**.
+
+**Syntax:** `{ = | path/to/shelf/filename.ext | version }`
+
+### 5\.10\.1 The Symbolic Catalog Protocol
+
+Resources are defined in the `catalog.rhy` alongside code dependencies. To keep the file concise, Rhumb uses a **Symbolic Protocol** encoded directly into the YAML keys and values.
+
+**Format:**
+* **Key:** `filename [ ; option1 ; option2 ... ]`
+* **Value:** `checksum` or `___` (indicates a checksum should be generated)
+
+**Example `project@.rhy`:**
+```yaml
+0.1.0:
+  # --- Auto-Discovery ---
+  # Inferred from extension (.json -> Map, .png -> Binary)
+  config.json: sha256:a1b2c3...
+  hero.png: ___ # system will add checksum on next run
+
+  # --- Explicit Options (Key Suffix) ---
+  # Force specific encoding or MIME type via semicolon
+  legacy.data;iso-8859-1: sha256:e3b0c44...
+  raw_config.json;text/plain: sha256:c1c149af...  # Load as Text, do not parse
+
+  # --- Integrity & Security ---
+  # Checksums are required, the loader validates the bytes before returning.
+  secure.db: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+```
+
+### 5.10.2 Runtime Behavior Matrix
+
+The Loader determines the return type based on the MIME type, which is either inferred from the file extension or explicitly overridden in the catalog.
+
+| File Extension | Default MIME | Runtime Value | Description |
+| :--- | :--- | :--- | :--- |
+| **`.json`** | `application/json` | **Map** | Automatically parsed into a Rhumb Map. |
+| **`.txt`, `.rtf`, `.md`** | `text/plain` | **Text** | Loaded as a UTF-8 string. |
+| **`.png`, `.jpg`, etc.** | `image/*` | **Slip** | Returns a lightweight slip (see below). |
+| **`.db`, `.sqlite`** | `application/x-sqlite3` | **Slip** | Returns a slip for DB drivers. |
+| **(Unknown)** | `application/octet-stream` | **Slip** | Raw binary slip. |
+
+### 5.10.3 Options & Overrides
+
+You can modify the loading behavior by appending options to the filename in the catalog key.
+
+  * **`utf-8` / `iso-8859-1`**: Forces text decoding using the specified charset.
+  * **`base64`**: Loads binary data but returns it as a Base64-encoded **Text** string.
+  * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
+  * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
+
+### 5.10.4 Slips (Resource Handles)
+
+For binary assets (images, audio) or large files (databases), loading the entire content into the VM stack is inefficient. In these cases, the Resolver returns a **Slip** which is a resource handle.
+
+  * **Type:** `Slip`
+  * **Fields:**
+      * `\path`: The absolute path to the verified file on disk.
+      * `\mime`: The resolved MIME type.
+  * **Usage:** Standard Library functions accept slips directly.
+    ```rhumb
+    db_res := {=|database/users.db|0.1.0}  % Returns Slip
+    conn := sql\open(db_res)      % Opens the path defined in the slip
+    ```
+<!-- end list -->
