@@ -27,6 +27,14 @@ test-file PATH:
 test-integration:
     go run ./cmd/rhi -test tests/*.rh
 
+# Run resolver system tests
+test-resolvers:
+    go run ./cmd/rhi -test tests/resolvers/resolver_suite.rh
+    go run ./cmd/rhi -test tests/fixtures/resolver_tests/src/-/+alias_test.rh
+    # Cycle test expects failure, checking return code isn't enough in Just, but it runs.
+    go run ./cmd/rhi -test tests/fixtures/resolver_tests/src/-/+cycle_test.rh
+    RHUMB_LIB=./tests/fixtures/stdlib go run ./cmd/rhi -test tests/resolvers/stdlib_emoji_test.rh
+
 # Compile the ANTLR grammar (wraps go generate)
 grammar:
     go generate ./internal/grammar/...
