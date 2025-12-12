@@ -171,40 +171,92 @@ my_project:
   physics: 0.1.0
 ```
 
-```console
-$ tree . # inside of a Rhumb project
-/project_name
-  ├── project_name@.rhy
-  └── /src
-       ├── +main.rh
-       ├── /core_mechanics
-       │     ├── /-
-       │     │    ├── player.rh
-       │     │    └── movement.rh
-       │     ├── /0.3.2
-       │     │    ├── player.rh
-       │     │    └── movement.rh
-       │     └── core_mechanics@.rhy
-       ├── /physics
-       │     ├── /-
-       │     │    ├── particle.rh
-       │     │    └── ball.rh
-       │     └── /0.1.0
-       │          ├── particle.rh
-       │          └── ball.rh
-       ├── /art_files
-       │     ├── hero.png
-       │     └── map.json
-       └── /integration_checks
-            └── +integration_checks.rh
-```
+### 5\.6\.1 Catalog Metadata (User-Defined in `.rhy`)
+
+This is what exists in the `project@.rhy` file.
+
+| Emoji Key | Name | Type | Description |
+| :--- | :--- | :--- | :--- |
+| **`👤`** | **Author** | String | The maintainer or organization. |
+| **`🪪`** | **License** | String | SPDX license identifier. |
+| **`📦`** | **Repo** | URL | Source code repository. |
+| **`🏷️`** | **Tags** | List | Keywords for indexing/search. |
+| **`📝`** | **Desc** | String | Multi-line description. |
+| **`📂`** | **Root** | Path | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder. |
+
+
+### 5\.6\.2 Example Library/Route Folder
 
 Since Rhumb is managed by an IDE, the **Working Copy** is decoupled from the
 **Archived Versions**.
 
 Instead of editing files directly inside of the numbered version folder (which
 changes name), you perform all work in the **"top shelf" (`-`)** (which never changes name). When you "bump" a version,
-the IDE snapshots that folder into a numbered archive.
+the IDE snapshots that folder into a numbered archive. These folders sit alongside
+the shelves or other resource folders of the project.
+
+```console
+$ tree . # inside of a Rhumb project
+/project_name
+  ├── project_name@.rhy
+  └── /src
+       ├── /-                 <-- Root Project Tip
+       │    └── +main.rh
+       ├── /0.1.0             <-- Root Project Version
+       │    └── +main.rh
+       ├── /core_mechanics
+       │    ├── /-
+       │    │    ├── player.rh
+       │    │    └── movement.rh
+       │    ├── /0.3.2
+       │    │    ├── player.rh
+       │    │    └── movement.rh
+       │    └── core_mechanics@.rhy
+       ├── /physics
+       │    ├── /-
+       │    │    ├── particle.rh
+       │    │    └── ball.rh
+       │    └── /0.1.0
+       │         ├── particle.rh
+       │         └── ball.rh
+       ├── /art_files
+       │    ├── /-
+       │    │    ├── hero.png
+       │    │    ├── map.json
+       │    │    └── enemy.png
+       │    ├── /0.2.0
+       │    │    ├── hero.png
+       │    │    └── map.json
+       │    └── /0.1.0
+       │         ├── hero.png
+       │         └── map.json
+       └── /integration_checks
+            ├── /-
+            │    └── +integration_checks.rh
+            ├── /0.5.0
+            │    └── +integration_checks.rh
+            ├── /0.4.0
+            │    └── +integration_checks.rh
+            ├── /0.3.0
+            │    └── +integration_checks.rh
+            ├── /0.2.0
+            │    └── +integration_checks.rh
+            └── /0.1.0
+                 └── +integration_checks.rh
+```
+
+### 5\.6\.3 Runtime Metadata (Resolver-Generated)
+
+This is what the `LibraryLoader` generates and stores in memory (or the `.ri` snapshot) after scanning the disk.
+
+| Field                 | Type   | Source      | Purpose                                                                                                    |
+|:----------------------|:-------|:------------|:-----------------------------------------------------------------------------------------------------------|
+| **`ResolvedVersion`** | String | Calculated  | The concrete SemVer (e.g., `1.2.3`).                                                                       |
+| **`PhysicalPath`**    | Path   | Calculated  | Absolute path to the shelf directory (e.g., `/abs/project/src/physics/0.1.0`).                             |
+| **`EntryPoint`**      | Path   | **Scanned** | The absolute path to the `+filename.rh` file found in that directory. `null` if it's a library-only shelf. |
+| **`Dependencies`**    | List   | Manifest    | Pre-calculated list of dependencies for this specific version.                                             |
+| **`Integrity`**       | Hash   | Calculated  | SHA-256 of the shelf contents (for security/caching).                                                      |
+
 
 ## 5\.7 The Entry Point (`+`)
 
