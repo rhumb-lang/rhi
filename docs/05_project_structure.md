@@ -121,7 +121,7 @@ my_project:
     📝: >
         This is a description of the project and it can span
         multiple lines using thr yaml ">" operator
-    ▶️: main.rh # starting point for routes
+    ▶️: main.rh # starting point for routes (applications/executables)
     📂: src # if the libraries and desktop books are in non-root folder
 
 # all remaining values in the catalog are versions of the project
