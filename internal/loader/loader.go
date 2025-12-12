@@ -20,9 +20,16 @@ type LibraryLoader struct {
 	ProjectRoot string                  // Root of the current project (for local imports)
 	Config      *config.Config
 	VM          *vm.VM // Back-reference to execute code
+
+	RootCatalog *Catalog       // The parsed project@.rhy
+	Loading     map[string]bool // For cycle detection
 }
 
 func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Value) (mapval.Value, error) {
+	if l.Config.TraceLoader {
+		fmt.Printf("[Loader] Request: {%s | %s | %s}\n", resolver, logicalPath, constraint.Canonical())
+	}
+
 	// 1. Resolve Path
 	//    If resolver == "-", look in ProjectRoot/src (or configured root).
 	//    If resolver == "!", look in StdLib.
@@ -33,31 +40,54 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 		return mapval.NewEmpty(), err
 	}
 
-	// 2. Check Cache (Registry)
+	if l.Config.TraceLoader {
+		fmt.Printf("[Loader] Resolved: %s\n", physicalPath)
+	}
+
+	// 2. Cycle Check
+	if l.Loading[physicalPath] {
+		return mapval.NewEmpty(), fmt.Errorf("circular dependency detected: %s", physicalPath)
+	}
+
+	// 3. Check Cache (Registry)
 	if val, ok := l.Registry[physicalPath]; ok {
+		if l.Config.TraceLoader {
+			fmt.Println("[Loader] Cache Hit")
+		}
 		return val, nil
 	}
 
-	// 3. Scan Directory
+	// 4. Mark Loading
+	if l.Loading == nil {
+		l.Loading = make(map[string]bool)
+	}
+	l.Loading[physicalPath] = true
+	defer func() { delete(l.Loading, physicalPath) }()
+
+	// 5. Scan Directory
 	entryPoint, sources, err := FindShelfEntry(physicalPath)
 	if err != nil {
 		return mapval.NewEmpty(), err
 	}
 
-	// 4. Compile Shelf (See Phase 3)
+	if l.Config.TraceLoader {
+		fmt.Printf("[Loader] Sources: %v, Entry: %s\n", sources, entryPoint)
+	}
+
+	// 6. Compile Shelf (See Phase 3)
 	chunk, err := l.compileShelf(sources, entryPoint)
 	if err != nil {
 		return mapval.NewEmpty(), err
 	}
 
-	// 5. Execute
+	// 7. Execute
 	//    Use the VM helper to run the chunk and get the export map.
 	result, err := l.VM.CallAndReturn(chunk)
 	if err != nil {
 		return mapval.NewEmpty(), err
 	}
 
-	// 6. Cache & Return
+	// 8. Cache & Return
 	l.Registry[physicalPath] = result
 	return result, nil
 }

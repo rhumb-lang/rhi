@@ -1,0 +1,36 @@
+% Test 1: Version Precedence
+v_old := {- | tests/fixtures/resolver_tests/src/libs/calc | 1.0.0}
+%? v_old
+v_old\item %= 'apples'
+
+v_minor := {- | tests/fixtures/resolver_tests/src/libs/calc | 1.-}
+%? v_minor
+v_minor\item %= 'bananas'
+
+v_latest := {- | tests/fixtures/resolver_tests/src/libs/calc | -}
+%? v_latest
+v_latest\item %= 'dates'
+
+% Test 2: Shelf Scope
+u := {- | tests/fixtures/resolver_tests/src/libs/utils | -}
+u\val %= 42
+% u\public_op is exported. It is a function.
+u\public_op %? "Should be <function>"
+
+% u\_secret should NOT be in the map
+u\_secret %= ___
+
+% Test 3: Cycle Detection
+% This test will be run separately, expecting a graceful error from the CLI.
+% cycle := {- | tests/fixtures/resolver_tests/src/cycle_a | -} 
+
+% Test 4: Nested Shelves
+phys := {- | tests/fixtures/resolver_tests/src/physics | -}
+phys\name %= 'engine'
+
+% Import Child explicitly
+col := {- | tests/fixtures/resolver_tests/src/physics/collision | -}
+col\name %= 'box'
+
+% Ensure Parent DOES NOT contain Child automatically
+phys\collision %= ___

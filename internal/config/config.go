@@ -6,6 +6,7 @@ type Config struct {
 	TraceBytecode        bool
 	TraceStack           bool
 	TraceSpace           bool
+	TraceLoader          bool // Enable loader tracing
 	AllowUnsafeWildcards bool // If false, imports like {-|lib|-} are rejected
 }
 
@@ -16,6 +17,7 @@ func DefaultConfig() *Config {
 		TraceBytecode:        false,
 		TraceStack:           false,
 		TraceSpace:           false,
+		TraceLoader:          false,
 		AllowUnsafeWildcards: false,
 	}
 }

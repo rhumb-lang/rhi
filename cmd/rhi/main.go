@@ -25,6 +25,7 @@ var (
 	traceBytecode = flag.Bool("trace-bytecode", false, "Enable bytecode tracing")
 	traceStack    = flag.Bool("trace-stack", false, "Enable stack tracing")
 	traceSpace    = flag.Bool("trace-space", false, "Enable space/concurrency tracing")
+	traceLoader   = flag.Bool("trace-loader", false, "Enable loader tracing")
 	lastValue     = flag.Bool("last-value", false, "Print the last value of the execution")
 	testMode      = flag.Bool("test", false, "Run in test mode (check assertions)")
 )
@@ -70,15 +71,17 @@ func NewSession(cfg *config.Config, scriptPath string) *Session {
 	projectRoot := findProjectRoot(scriptPath)
 
 	// Load Catalog to check for SourceRoot
-	// We need to find the specific .rhy file again or just list
-	// Assuming findProjectRoot found it.
+	var rootCatalog *loader.Catalog
 	var sourceRoot string
 	entries, _ := os.ReadDir(projectRoot)
 	for _, e := range entries {
 		if strings.HasSuffix(e.Name(), ".rhy") {
 			catalog, err := loader.LoadCatalog(filepath.Join(projectRoot, e.Name()))
-			if err == nil && catalog.SourceRoot != "" {
-				sourceRoot = catalog.SourceRoot
+			if err == nil {
+				rootCatalog = catalog
+				if catalog.SourceRoot != "" {
+					sourceRoot = catalog.SourceRoot
+				}
 			}
 			break
 		}
@@ -96,6 +99,7 @@ func NewSession(cfg *config.Config, scriptPath string) *Session {
 		ProjectRoot: finalRoot,
 		Config:      cfg,
 		VM:          v,
+		RootCatalog: rootCatalog, // Assign the loaded catalog
 	}
 
 	return &Session{
@@ -120,12 +124,16 @@ func main() {
 	if !*traceSpace && os.Getenv("RHI_TRACE_SPACE") == "1" {
 		*traceSpace = true
 	}
+	if !*traceLoader && os.Getenv("RHI_TRACE_LOADER") == "1" {
+		*traceLoader = true
+	}
 
 	cfg := &config.Config{
 		TraceParser:   *traceParser,
 		TraceBytecode: *traceBytecode,
 		TraceStack:    *traceStack,
 		TraceSpace:    *traceSpace,
+		TraceLoader:   *traceLoader,
 	}
 
 	args := flag.Args()
@@ -320,6 +328,5 @@ func (s *Session) execute(input string) {
 }
 
 func formatValue(val mapval.Value) string {
-	// The Value.String() method already provides the canonical string representation for all types.
-	return val.String()
+	return val.Canonical()
 }

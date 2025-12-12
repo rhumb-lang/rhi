@@ -1,0 +1,2 @@
+_secret := 42
+public_op := [] -> _secret
