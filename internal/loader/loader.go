@@ -93,6 +93,20 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 }
 
 func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint mapval.Value) (string, error) {
+	// 1. Check Catalog Aliases (The "Package Manager" layer)
+	if l.RootCatalog != nil {
+		if rootVer, ok := l.RootCatalog.Versions["-"]; ok {
+			if depPath, ok := rootVer.Dependencies[logicalPath]; ok {
+				// logicalPath is an alias (e.g. "calc_alias" -> "libs/calc")
+				// We replace logicalPath with the resolved alias.
+				// Note: Ideally we should handle version constraints on the dependency too,
+				// but for now we assume the catalog points to a path and we apply the constraint
+				// to that path.
+				logicalPath = depPath
+			}
+		}
+	}
+
 	var basePath string
 	if resolver == "-" {
 		if l.ProjectRoot == "" {

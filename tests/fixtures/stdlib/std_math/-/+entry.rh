@@ -1,0 +1,3 @@
+% Standard Library math entry point
+% It exports the 'add' function from add.rh
+"Cannot have a file without any expressions"

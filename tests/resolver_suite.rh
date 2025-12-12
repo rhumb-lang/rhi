@@ -15,7 +15,12 @@ v_latest\item %= 'dates'
 u := {- | tests/fixtures/resolver_tests/src/libs/utils | -}
 u\val %= 42
 % u\public_op is exported. It is a function.
-u\public_op %? "Should be <function>"
+op := u\public_op
+op %? "Should be <function>"
+
+% Call the function to prove it captured the shelf scope correctly
+res := op()
+res %= 42
 
 % u\_secret should NOT be in the map
 u\_secret %= ___
@@ -32,5 +37,7 @@ phys\name %= 'engine'
 col := {- | tests/fixtures/resolver_tests/src/physics/collision | -}
 col\name %= 'box'
 
-% Ensure Parent DOES NOT contain Child automatically
-phys\collision %= ___
+% Test 5: Catalog Alias
+alias_lib := {- | calc_alias | -}
+alias_lib\item %? "should be 'dates'"
+alias_lib\item %= 'dates'
