@@ -166,7 +166,7 @@ func (s *Session) runFile(filename string) {
 
 func (s *Session) runREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Rhumb REPL (v0.3.0-dev)")
+	fmt.Println("Rhumb REPL (v0.3.0)")
 	for {
 		fmt.Print("> ")
 		if !scanner.Scan() {
