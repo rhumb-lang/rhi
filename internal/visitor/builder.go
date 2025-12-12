@@ -219,8 +219,6 @@ func (b *ASTBuilder) VisitTextSymbol(ctx *grammar.TextSymbolContext) interface{}
 	}
 }
 
-// --- Fields & Patterns ---
-
 func (b *ASTBuilder) VisitFields(ctx *grammar.FieldsContext) interface{} {
 	var fields []ast.Field
 	for _, f := range ctx.AllField() {
@@ -231,6 +229,3 @@ func (b *ASTBuilder) VisitFields(ctx *grammar.FieldsContext) interface{} {
 	}
 	return fields
 }
-
-// --- Structural Visitors ---
-// Moved to chain.go to avoid circular dependencies or massive files.
