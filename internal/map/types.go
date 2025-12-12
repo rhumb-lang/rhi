@@ -64,7 +64,7 @@ type Value struct {
 	Obj Object
 }
 
-func (v Value) String() string {
+func (v Value) Canonical() string {
 	switch v.Type {
 	case ValInteger:
 		return fmt.Sprintf("%d", v.Integer)
@@ -72,7 +72,7 @@ func (v Value) String() string {
 		return fmt.Sprintf("%f", v.Float)
 	case ValDecimal:
 		if d, ok := v.Obj.(*Decimal); ok {
-			return d.String()
+			return d.Canonical()
 		} else {
 			panic("ValDecimal contains invalid Decimal value")
 		}
@@ -166,28 +166,7 @@ func (v Value) String() string {
 		if v.Obj == nil {
 			return "nil"
 		}
-		if m, ok := v.Obj.(*Map); ok {
-			return m.String()
-		}
-		if t, ok := v.Obj.(*Tuple); ok {
-			kind := ""
-			switch t.Kind {
-			case TupleSignal:
-				kind = "#"
-			case TupleReply:
-				kind = "^"
-			case TupleProclamation:
-				kind = "$"
-			}
-			return fmt.Sprintf("<%s%s>", kind, t.Topic)
-		}
-		if f, ok := v.Obj.(*Function); ok {
-			return fmt.Sprintf("<%s>", f.Name)
-		}
-		if c, ok := v.Obj.(*Closure); ok {
-			return fmt.Sprintf("<%s>", c.Fn.Name)
-		}
-		return fmt.Sprintf("<Object %T>", v.Obj)
+		return v.Obj.Canonical()
 	case ValVersion:
 		maj, min, pat, wild := v.VersionUnpack()
 		s := ""
@@ -221,6 +200,17 @@ func (v Value) String() string {
 	}
 }
 
+func (v Value) String() string {
+	return v.Canonical()
+}
+
+func (v Value) Content() string {
+	if v.Type == ValText {
+		return v.Str
+	}
+	return v.Canonical()
+}
+
 // ---------------------------------------------------------
 // 2. The Heap Objects (Interfaces)
 // ---------------------------------------------------------
@@ -243,7 +233,7 @@ type Decimal struct {
 }
 
 func (d *Decimal) Type() ObjectType { return ObjTypeDecimal }
-func (d *Decimal) String() string {
+func (d *Decimal) Canonical() string {
 	s := "00.0"
 
 	if d.Raw != nil {
@@ -275,6 +265,20 @@ type Tuple struct {
 
 func (t *Tuple) Type() ObjectType { return ObjTypeTuple }
 
+func (t *Tuple) Canonical() string {
+	kind := ""
+	switch t.Kind {
+	case TupleSignal:
+		kind = "#"
+	case TupleReply:
+		kind = "^"
+	case TupleProclamation:
+		kind = "$"
+	}
+	return fmt.Sprintf("<%s%s>", kind, t.Topic)
+}
+
+
 // Range represents a lazy sequence.
 type Range struct {
 	Start int64
@@ -282,12 +286,16 @@ type Range struct {
 }
 
 func (r *Range) Type() ObjectType { return ObjTypeRange }
+func (r *Range) Canonical() string {
+	return "<Range>"
+}
 
 // ---------------------------------------------------------
 
 // Object is the common interface for heap entities
 type Object interface {
 	Type() ObjectType
+	Canonical() string
 }
 
 // ---------------------------------------------------------
@@ -303,7 +311,7 @@ type Map struct {
 
 func (m *Map) Type() ObjectType { return ObjTypeMap }
 
-func (m *Map) String() string {
+func (m *Map) Canonical() string {
 	var positionals []int
 	posMap := make(map[int]Value)
 	var named []FieldDesc
@@ -328,7 +336,7 @@ func (m *Map) String() string {
 
 	// 1. Positional Values
 	for _, idx := range positionals {
-		parts = append(parts, posMap[idx].String())
+		parts = append(parts, posMap[idx].Canonical())
 	}
 
 	// 2. Named Fields (Names Only)
@@ -387,6 +395,9 @@ type Function struct {
 }
 
 func (f *Function) Type() ObjectType { return ObjTypeFunction }
+func (f *Function) Canonical() string {
+	return fmt.Sprintf("<%s>", f.Name)
+}
 
 // Closure represents a running instance of a function
 type Closure struct {
@@ -395,6 +406,9 @@ type Closure struct {
 }
 
 func (c *Closure) Type() ObjectType { return ObjTypeClosure }
+func (c *Closure) Canonical() string {
+	return fmt.Sprintf("<%s>", c.Fn.Name)
+}
 
 // NativeFunction represents a native Go function callable from Rhumb
 type NativeFunction struct {

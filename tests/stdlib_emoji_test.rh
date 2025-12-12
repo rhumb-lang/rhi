@@ -1,0 +1,4 @@
+% Test Standard Library import with Emoji
+math := {! | 🧮 | -}
+sum := math\add(5; 5)
+sum %= 10

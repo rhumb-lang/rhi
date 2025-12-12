@@ -1,0 +1,2 @@
+% This test should fail with a circular dependency error
+cycle := {- | tests/fixtures/resolver_tests/src/cycle_a | -}

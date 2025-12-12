@@ -1,0 +1,5 @@
+resolver_tests:
+  📂: src
+
+-:
+  calc_alias: libs/calc

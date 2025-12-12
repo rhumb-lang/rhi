@@ -794,13 +794,21 @@ func (vm *VM) opReturn() (int, error) {
 
 	vm.CurrentFrame = frame.Parent // Pop frame
 
+	// Reset Stack Pointer
+	// If Base > 0, it means there is a Closure (or Caller's stack) below.
+	// Standard convention (OP_CALL): Base-1 is the Closure. We pop it.
+	// Interpret convention: Base=0. No Closure on stack. We just reset to 0.
+	targetSP := frame.Base
+	if targetSP > 0 {
+		targetSP--
+	}
+	
+	vm.SP = targetSP
+	vm.push(result)
+
 	if vm.CurrentFrame == nil {
-		vm.pop()      // Pop Main Script Closure
 		return 1, nil // Done
 	}
-
-	vm.SP = frame.Base - 1
-	vm.push(result)
 	return 0, nil
 }
 
@@ -842,7 +850,7 @@ func numericCompare(a, b mapval.Value) (int, error) {
 
 func (vm *VM) opInspect() {
 	val := vm.pop()
-	fmt.Printf("INSPECT: %s\n", val.String())
+	fmt.Printf("INSPECT: %s\n", val.Canonical())
 }
 
 func (vm *VM) opAssertEq() {
@@ -851,8 +859,27 @@ func (vm *VM) opAssertEq() {
 	actual := vm.pop()
 
 	// Expected is now ALWAYS a String (from the TextLiteral in builder)
+	// We want the RAW content of the expectation string (what the user typed inside quotes)
+	// Example: %= "apples" -> expected.Str is "apples"
 	expectedStr := expected.Str
-	actualStr := actual.String()
+	
+	// Actual should be the CANONICAL representation of the value
+	// Example: ValText("apples") -> Canonical() is "'apples'"
+	actualStr := actual.Canonical()
+
+	// Wait, if expectedStr is "apples" and actualStr is "'apples'", they won't match!
+	// The user must write %= "'apples'" to match canonical string?
+	// OR, if expected is a STRING, we treat it as the expected CANONICAL form?
+	
+	// If expectedStr is the canonical form, it should include quotes for strings.
+	// But `expected` is a TextLiteral. `expected.Str` is the content.
+	
+	// If I change tests to use single quotes: %= "'apples'".
+	// Then `expected.Str` is "'apples'".
+	// And `actual.Canonical()` is "'apples'".
+	// MATCH!
+	
+	// So `expected.Str` IS correct if the user provides the canonical form in the assertion string.
 
 	name := ""
 	if nameVal.Type == mapval.ValText {

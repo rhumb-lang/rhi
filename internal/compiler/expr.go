@@ -22,6 +22,14 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 			Type:    mapval.ValDateTime,
 			Integer: e.Value,
 		})
+	case *ast.LibraryLiteral:
+		c.emitConstant(mapval.NewText(e.Resolver))
+		c.emitConstant(mapval.NewText(e.Path))
+		// TODO: Push Version Value
+		//    If it's a Dash, push Empty or specialized Wildcard Value
+		//    If it's a VersionLiteral, push mapval.ValVersion
+		c.emitConstant(resolveVersionValue(e.Constraint))
+		c.emit(mapval.OP_RESOLVE)
 	case *ast.VersionLiteral:
 		val := mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard)
 		val.Str = e.Suffix
@@ -124,4 +132,12 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		return fmt.Errorf("unsupported expression type: %T", expr)
 	}
 	return nil
+}
+
+func resolveVersionValue(c ast.VersionConstraint) mapval.Value {
+	isWild := c.Type == ast.ConstraintMinor || c.Type == ast.ConstraintPatch || c.Type == ast.ConstraintMajor
+	
+	// Convert constraint fields to Value fields
+	// Note: VersionConstraint uses uint16/uint32 but NewVersion expects matching types
+	return mapval.NewVersion(c.Major, c.Minor, c.Patch, isWild)
 }

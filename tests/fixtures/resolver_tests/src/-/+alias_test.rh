@@ -1,0 +1,3 @@
+alias_lib := {- | calc_alias | -}
+alias_lib\item %? "should be 'dates'"
+alias_lib\item %= 'dates'

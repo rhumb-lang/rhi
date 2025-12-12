@@ -103,25 +103,6 @@ type DetachedRealmLiteral struct{}
 func (r *DetachedRealmLiteral) expressionNode() {}
 func (r *DetachedRealmLiteral) String() string  { return "<|>" }
 
-// LibraryLiteral represents a library import { name | "path" | 1.0.0 }.
-type LibraryLiteral struct {
-	Alias   string // Optional
-	Path    *TextLiteral
-	Version string // Keeping simpler for now
-}
-
-func (l *LibraryLiteral) expressionNode() {}
-func (l *LibraryLiteral) String() string {
-	var sb strings.Builder
-	sb.WriteString("{")
-	if l.Alias != "" {
-		sb.WriteString(l.Alias + " | ")
-	}
-	sb.WriteString(l.Path.String() + " | " + l.Version)
-	sb.WriteString("}")
-	return sb.String()
-}
-
 // NamedReference represents <Label>.
 type NamedReference struct {
 	Label string

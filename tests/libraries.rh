@@ -1,0 +1,28 @@
+% tests/libraries.rh
+
+% 1. Exact Version (Version Token)
+lib1 := {! | math | 1.0.0}
+% Expect: ConstraintExact, Major: 1, Minor: 0, Patch: 0
+
+% 2. Partial Wildcard (Version Token)
+lib2 := {! | math | 1.2.-}
+% Expect: ConstraintPartial, Major: 1, Minor: 2
+
+% 3. Major Wildcard (Number Rule -> VersionLiteral)
+lib3 := {! | math | 1.-}
+% Expect: ConstraintMajor, Major: 1
+
+% 4. Major Wildcard (Number Rule -> IntegerLiteral)
+lib4 := {! | math | 1}
+% Expect: ConstraintMajor, Major: 1
+
+% 5. Float Warning (FloatingPoint Token)
+lib5 := {! | math | 1.2}
+% Expect: ConstraintPartial, Warning: "Ambiguous Float..."
+
+% 6. Any (Dash Token)
+lib6 := {! | math | -}
+% Expect: ConstraintAny
+
+% 7. Complex Path
+lib7 := {- | src/utils/math | -}

@@ -59,19 +59,18 @@ Dependencies are imported using the **Resolver Protocol**.
   * **Explicit Version:** `{ ! | math | 1.0.0 }`
   * **Latest/Default Version:** `{ ! | math | - }` (Use `-` to indicate no specific version)
 
-| Resolver     | Syntax | Use Case      | Example                            |
-|:-------------|:-------|:--------------|:-----------------------------------|
-| **Standard** | `!`    | Built-in Libs | `{!\|🧮\|-}`                     |
-| **Local**    | `-`    | Internal Code | `{- \| src\utils\math \| -}`       |
-| **Remote**   | `git`  | External Libs | `{git \| https://github... \| dev}` |
+| Resolver     | Syntax | Use Case      | Example                                                                 |
+|:-------------|:-------|:--------------|:------------------------------------------------------------------------|
+| **Standard** | `!`    | Built-in Libs | `{!\|🧮\|-}`                                                            |
+| **Local**    | `-`    | Internal Code | `{-\|src/utils/math\|-}` (Path)<br>`{-\|my_alias\|-}` (Catalog) |
+| **Remote**   | `git`  | External Libs | `{git\|https://github...\|0.1.-}`                                     |
 
 **Path Resolution Rules:**
 1.  **Implicit (Sibling):** Books within the same Shelf (Folder) can access each
     other directly by label. No import block is required.
-2.  **Local Resolver (`-`):** When using the Local Resolver `{-}`, the path is
-    **always relative to the Project Root** (The Route / Library Desktop). It is
-    *not* relative to the current file. This ensures that moving a file does not
-    break its internal imports.
+2.  **Local Resolver (`-`):** The Local Resolver `{-}` performs a **Two-Step Lookup**:
+  * **Step A (Logical Alias):** It first checks the active `catalog.rhy` for a dependency key matching the provided label (e.g., `math`). If found, it resolves to the version or path defined in the catalog.
+  * **Step B (Physical Path):** If no alias is found, it treats the string as a **File System Path** relative to the **Project Root** (e.g., `src/libs/math`).
 
 **Version Syntax & Resolution:** The Resolver interprets the **Type** and
 **Format** of the literal provided in the version slot. Rhumb uses the `.-`
@@ -254,8 +253,32 @@ This is what the `LibraryLoader` generates and stores in memory (or the `.ri` sn
 | **`ResolvedVersion`** | String | Calculated  | The concrete SemVer (e.g., `1.2.3`).                                                                       |
 | **`PhysicalPath`**    | Path   | Calculated  | Absolute path to the shelf directory (e.g., `/abs/project/src/physics/0.1.0`).                             |
 | **`EntryPoint`**      | Path   | **Scanned** | The absolute path to the `+filename.rh` file found in that directory. `null` if it's a library-only shelf. |
-| **`Dependencies`**    | List   | Manifest    | Pre-calculated list of dependencies for this specific version.                                             |
+| **`Dependencies`**    | List   | Catalog    | Pre-calculated list of dependencies for this specific version.                                             |
 | **`Integrity`**       | Hash   | Calculated  | SHA-256 of the shelf contents (for security/caching).                                                      |
+
+### 5\.6\.4 Dependency Aliasing**
+
+The keys in the `Dependencies` block act as **Logical Aliases**. This allows you
+to rename libraries or move them without changing your source code imports.
+
+ **Catalog Example:**
+
+ ```yaml
+ # project@.rhy
+ 0.1.0:
+   # logical_name : specific_version_or_path
+   physics_engine: libs/physics
+   standard_math: 🧮@1.0.0! # we use the original name followed by @ for an alias
+ ```
+
+**Source Exmaple:**
+
+ ```rhumb
+% main.rh
+% Import using the alias, not the path
+phys := {-|physics_engine|-}
+math := {-|standard_math|-}
+ ```
 
 
 ## 5\.7 The Entry Point (`+`)
