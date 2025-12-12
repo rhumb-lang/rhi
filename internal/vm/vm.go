@@ -17,6 +17,8 @@ type VM struct {
 	SP    int // Stack Pointer (points to empty slot)
 
 	Config *config.Config
+
+	Loader LibraryLoader
 }
 
 // Result code for the VM interpretation
@@ -72,6 +74,15 @@ func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
 	}
 
 	return vm.run()
+}
+
+// CallAndReturn executes a standalone chunk/closure (used for libraries).
+// It creates a temporary frame, runs until return, and gives back the value.
+func (vm *VM) CallAndReturn(chunk *mapval.Chunk) (mapval.Value, error) {
+	// 1. Wrap chunk in Closure
+	// 2. Push Frame
+	// 3. Run Loop
+	// 4. Return vm.pop()
 }
 
 // Continue resumes execution from the given offset in the script frame.
@@ -384,15 +395,13 @@ func (vm *VM) Step() (Result, error) {
 	case mapval.OP_LTE:
 		err = vm.opLte()
 
-		// Testing
+	// Testing
 
-	
+	case mapval.OP_ASSERT_EQ:
+		vm.opAssertEq()
 
-		case mapval.OP_ASSERT_EQ:  vm.opAssertEq()
-
-		case mapval.OP_INSPECT:    vm.opInspect()
-
-	
+	case mapval.OP_INSPECT:
+		vm.opInspect()
 
 		// Selectors
 

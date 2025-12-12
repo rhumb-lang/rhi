@@ -77,9 +77,8 @@ func (b *ASTBuilder) VisitWholeNumber(ctx *grammar.WholeNumberContext) interface
 	return &ast.IntegerLiteral{Value: val}
 }
 
-func (b *ASTBuilder) VisitVersionNumber(ctx *grammar.VersionNumberContext) interface{} {
-	text := ctx.GetText()
-
+// Add this helper method to ASTBuilder (can be in numbers.go)
+func (b *ASTBuilder) parseVersionString(text string) *ast.VersionLiteral {
 	suffix := ""
 	base := text
 
@@ -112,14 +111,15 @@ func (b *ASTBuilder) VisitVersionNumber(ctx *grammar.VersionNumberContext) inter
 	if len(parts) > 0 {
 		i, _ := strconv.ParseUint(parts[0], 10, 16)
 		v.Major = uint16(i)
+	} else {
+		panic("should not have a version with zero parts")
 	}
+
 	if len(parts) > 1 {
 		i, _ := strconv.ParseUint(parts[1], 10, 16)
 		v.Minor = uint16(i)
-	} else if isWildcard {
-		// If 1.- (though usually handled by WholeNumber), or 1. (invalid?)
-		// If 1.-, Minor is Wild.
-		v.Minor = 0xFFFF
+	} else {
+		panic("should not have a version with one part")
 	}
 
 	if len(parts) > 2 {
@@ -128,9 +128,16 @@ func (b *ASTBuilder) VisitVersionNumber(ctx *grammar.VersionNumberContext) inter
 	} else if isWildcard {
 		// 1.2.- -> Patch is Wild.
 		v.Patch = 0xFFFFFFFF
+	} else {
+		panic("should not have only two parts and no wildcard")
 	}
 
+	// Returns *ast.VersionLiteral populated with Major, Minor, Patch, IsWildcard
 	return v
+}
+
+func (b *ASTBuilder) VisitVersionNumber(ctx *grammar.VersionNumberContext) interface{} {
+	return b.parseVersionString(ctx.GetText())
 }
 
 func (b *ASTBuilder) VisitDateNumber(ctx *grammar.DateNumberContext) interface{} {

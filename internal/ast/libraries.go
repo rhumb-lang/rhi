@@ -6,31 +6,42 @@ import "fmt"
 type ConstraintType int
 
 const (
-	ConstraintAny     ConstraintType = iota // "-"
-	ConstraintMajor                         // "1" or "1.-"
-	ConstraintPartial                       // "1.2" or "1.2.-"
-	ConstraintExact                         // "1.2.0"
+	ConstraintMajor ConstraintType = iota // "-"
+	ConstraintMinor                       // "1" or "1.-"
+	ConstraintPatch                       // "1.2" or "1.2.-"
+	ConstraintExact                       // "1.2.0"
 )
 
-// VersionConstraint holds the parsed rules
+// VersionConstraint is the semantic representation of the requirement
 type VersionConstraint struct {
-	Type  ConstraintType
-	Major int
-	Minor int
-	Patch int
-
-	// Original raw value for debugging/formatting
-	Raw string
+	Type       ConstraintType
+	Major      uint16
+	Minor      uint16
+	Patch      uint32
+	PreRelease string // e.g., "alpha"
+	Raw        string // For display/debugging
 }
 
-// LibraryLiteral is the AST node for importing a library
+func (vc VersionConstraint) Matches(vMajor, vMinor uint16, vPatch uint32) bool {
+	switch vc.Type {
+	case ConstraintMajor:
+		return true
+	case ConstraintMinor:
+		return vMajor == vc.Major
+	case ConstraintPatch:
+		return vMajor == vc.Major && vMinor == vc.Minor
+	case ConstraintExact:
+		return vMajor == vc.Major && vMinor == vc.Minor && vPatch == vc.Patch
+	default:
+		return false
+	}
+}
+
 type LibraryLiteral struct {
 	Resolver   string // "!", "-", "git"
-	Path       string // "math", "src/core"
+	Path       string
 	Constraint VersionConstraint
-
-	// Metadata for warnings (e.g., using Float 1.2 instead of 1.2.-)
-	Warnings []string
+	Warnings   []string // Store warnings generated during parsing
 }
 
 func (l *LibraryLiteral) expressionNode() {}

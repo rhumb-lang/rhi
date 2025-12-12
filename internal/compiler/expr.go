@@ -22,6 +22,14 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 			Type:    mapval.ValDateTime,
 			Integer: e.Value,
 		})
+	case *ast.LibraryLiteral:
+		c.emitConstant(mapval.NewText(e.Resolver))
+		c.emitConstant(mapval.NewText(e.Path))
+		// TODO: Push Version Value
+		//    If it's a Dash, push Empty or specialized Wildcard Value
+		//    If it's a VersionLiteral, push mapval.ValVersion
+		c.emitConstant(resolveVersionValue(e.Constraint))
+		c.emit(mapval.OP_RESOLVE)
 	case *ast.VersionLiteral:
 		val := mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard)
 		val.Str = e.Suffix
