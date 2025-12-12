@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Manifest struct {
+type Catalog struct {
 	Author      string   `yaml:"👤"`
 	License     string   `yaml:"🪪"`
 	Repository  string   `yaml:"📦"`
@@ -28,7 +28,7 @@ type VersionConfig struct {
 	IsResource   bool              // For "assets: true"
 }
 
-func LoadCatalog(path string) (*Manifest, error) {
+func LoadCatalog(path string) (*Catalog, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func LoadCatalog(path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	m := &Manifest{
+	m := &Catalog{
 		Versions: make(map[string]VersionConfig),
 	}
 
@@ -74,7 +74,7 @@ func LoadCatalog(path string) (*Manifest, error) {
 		// Or assume any non-version key is metadata?
 		// Version keys: "-", "0.1.0", "1.0"
 		isVersion := key == "-" || strings.Contains(key, ".") || (len(key) > 0 && key[0] >= '0' && key[0] <= '9')
-		
+
 		if !isVersion {
 			if vMap, ok := val.(map[string]interface{}); ok {
 				// Check for metadata keys inside
@@ -85,10 +85,10 @@ func LoadCatalog(path string) (*Manifest, error) {
 						break
 					}
 				}
-				
+
 				if isMetaBlock && !hasFlatMetadata {
 					// Extract metadata from this nested map
-					// Re-marshal and unmarshal to Manifest
+					// Re-marshal and unmarshal to Catalog
 					subData, _ := yaml.Marshal(val)
 					yaml.Unmarshal(subData, m)
 					continue
@@ -109,7 +109,7 @@ func LoadCatalog(path string) (*Manifest, error) {
 					}
 					continue
 				}
-				
+
 				switch val := v.(type) {
 				case string:
 					vc.Dependencies[k] = val

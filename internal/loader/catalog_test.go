@@ -34,32 +34,32 @@ func TestLoadCatalog(t *testing.T) {
 	}
 
 	// 2. Load the catalog
-	manifest, err := LoadCatalog(catalogPath)
+	catalog, err := LoadCatalog(catalogPath)
 	if err != nil {
 		t.Fatalf("LoadCatalog failed: %v", err)
 	}
 
 	// 3. Assert Metadata
-	if manifest.Author != "Jake Russo" {
-		t.Errorf("expected author 'Jake Russo', got '%s'", manifest.Author)
+	if catalog.Author != "Jake Russo" {
+		t.Errorf("expected author 'Jake Russo', got '%s'", catalog.Author)
 	}
-	if manifest.License != "MIT" {
-		t.Errorf("expected license 'MIT', got '%s'", manifest.License)
+	if catalog.License != "MIT" {
+		t.Errorf("expected license 'MIT', got '%s'", catalog.License)
 	}
-	if manifest.SourceRoot != "src" {
-		t.Errorf("expected source root 'src', got '%s'", manifest.SourceRoot)
+	if catalog.SourceRoot != "src" {
+		t.Errorf("expected source root 'src', got '%s'", catalog.SourceRoot)
 	}
-	if len(manifest.Keywords) != 2 {
-		t.Errorf("expected 2 keywords, got %d", len(manifest.Keywords))
+	if len(catalog.Keywords) != 2 {
+		t.Errorf("expected 2 keywords, got %d", len(catalog.Keywords))
 	}
 
 	// 4. Assert Versions
-	if len(manifest.Versions) != 2 {
-		t.Errorf("expected 2 versions, got %d", len(manifest.Versions))
+	if len(catalog.Versions) != 2 {
+		t.Errorf("expected 2 versions, got %d", len(catalog.Versions))
 	}
 
 	// Check "0.1.0"
-	v010, ok := manifest.Versions["0.1.0"]
+	v010, ok := catalog.Versions["0.1.0"]
 	if !ok {
 		t.Fatal("version 0.1.0 not found")
 	}
@@ -71,7 +71,7 @@ func TestLoadCatalog(t *testing.T) {
 	}
 
 	// Check "-"
-	vDash, ok := manifest.Versions["-"]
+	vDash, ok := catalog.Versions["-"]
 	if !ok {
 		t.Fatal("version - not found")
 	}

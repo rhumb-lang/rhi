@@ -254,7 +254,7 @@ This is what the `LibraryLoader` generates and stores in memory (or the `.ri` sn
 | **`ResolvedVersion`** | String | Calculated  | The concrete SemVer (e.g., `1.2.3`).                                                                       |
 | **`PhysicalPath`**    | Path   | Calculated  | Absolute path to the shelf directory (e.g., `/abs/project/src/physics/0.1.0`).                             |
 | **`EntryPoint`**      | Path   | **Scanned** | The absolute path to the `+filename.rh` file found in that directory. `null` if it's a library-only shelf. |
-| **`Dependencies`**    | List   | Manifest    | Pre-calculated list of dependencies for this specific version.                                             |
+| **`Dependencies`**    | List   | Catalog    | Pre-calculated list of dependencies for this specific version.                                             |
 | **`Integrity`**       | Hash   | Calculated  | SHA-256 of the shelf contents (for security/caching).                                                      |
 
 

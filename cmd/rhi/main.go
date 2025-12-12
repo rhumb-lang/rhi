@@ -68,7 +68,7 @@ func NewSession(cfg *config.Config, scriptPath string) *Session {
 
 	// Initialize Loader
 	projectRoot := findProjectRoot(scriptPath)
-	
+
 	// Load Catalog to check for SourceRoot
 	// We need to find the specific .rhy file again or just list
 	// Assuming findProjectRoot found it.
@@ -76,14 +76,14 @@ func NewSession(cfg *config.Config, scriptPath string) *Session {
 	entries, _ := os.ReadDir(projectRoot)
 	for _, e := range entries {
 		if strings.HasSuffix(e.Name(), ".rhy") {
-			manifest, err := loader.LoadCatalog(filepath.Join(projectRoot, e.Name()))
-			if err == nil && manifest.SourceRoot != "" {
-				sourceRoot = manifest.SourceRoot
+			catalog, err := loader.LoadCatalog(filepath.Join(projectRoot, e.Name()))
+			if err == nil && catalog.SourceRoot != "" {
+				sourceRoot = catalog.SourceRoot
 			}
 			break
 		}
 	}
-	
+
 	// Adjust ProjectRoot to include SourceRoot
 	finalRoot := projectRoot
 	if sourceRoot != "" {
