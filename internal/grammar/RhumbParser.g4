@@ -85,6 +85,8 @@ expression
     | <assoc=left> expression NL* conjunctiveOp NL* expression # conjunctive
     | <assoc=left> expression NL* disjunctiveOp NL* expression # disjunctive
     | <assoc=right> expression NL* applicativeOp NL* expression # applicative
+    | <assoc=left> expression NL* conditionalOp NL* expression # conditional
+    | <assoc=right> expression NL* destructiveOp NL* expression # destructive
     | <assoc=right> expression NL* conditionalOp NL* expression # conditional
     | <assoc=right> (chainExpression | fieldLiteral) NL* assignmentOp NL* expression # assignLabel
     | literal # simpleExpression
@@ -198,7 +200,10 @@ conditionalOp
     | PipeGreater    # while
     | EqualGreater   # then
     | TildeGreater   # else
-    | CaretEqual     # destructure
+    ;
+
+destructiveOp
+    : CaretEqual
     ;
 
 additiveOp
