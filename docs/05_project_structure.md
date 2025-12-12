@@ -403,30 +403,43 @@ Resources are defined in the `catalog.rhy` alongside code dependencies. To keep 
   secure.db: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ```
 
-### 5.10.2 Runtime Behavior Matrix
+**Constraint:** Resource filenames defined in the catalog must not contain
+semi-colons (;). If a file on disk has one, it must be renamed to be compatible
+with the Symbolic Protocol.
 
-The Loader determines the return type based on the MIME type, which is either inferred from the file extension or explicitly overridden in the catalog.
+**Generation:** Setting the value to `___` acts as a request for the **IDE or
+Build Tool** to calculate the SHA-256 hash and update the catalog file. The
+Runtime (VM) will throw an error if it encounters `___` in a production/frozen
+environment, enforcing integrity.
 
-| File Extension | Default MIME | Runtime Value | Description |
-| :--- | :--- | :--- | :--- |
-| **`.json`** | `application/json` | **Map** | Automatically parsed into a Rhumb Map. |
-| **`.txt`, `.rtf`, `.md`** | `text/plain` | **Text** | Loaded as a UTF-8 string. |
-| **`.png`, `.jpg`, etc.** | `image/*` | **Slip** | Returns a lightweight slip (see below). |
-| **`.db`, `.sqlite`** | `application/x-sqlite3` | **Slip** | Returns a slip for DB drivers. |
-| **(Unknown)** | `application/octet-stream` | **Slip** | Raw binary slip. |
+### 5\.10\.2 Runtime Behavior Matrix
 
-### 5.10.3 Options & Overrides
+The Loader determines the return type based on the MIME type, which is either
+inferred from the file extension or explicitly overridden in the catalog.
 
-You can modify the loading behavior by appending options to the filename in the catalog key.
+| File Extension            | Default MIME               | Runtime Value | Description                             |
+|:--------------------------|:---------------------------|:--------------|:----------------------------------------|
+| **`.json`**               | `application/json`         | **Map**       | Automatically parsed into a Rhumb Map.  |
+| **`.txt`, `.rtf`, `.md`** | `text/plain`               | **Text**      | Loaded as a UTF-8 string.               |
+| **`.png`, `.jpg`, etc.**  | `image/*`                  | **Slip**      | Returns a lightweight slip (see below). |
+| **`.db`, `.sqlite`**      | `application/x-sqlite3`    | **Slip**      | Returns a slip for DB drivers.          |
+| **(Unknown)**             | `application/octet-stream` | **Slip**      | Raw binary slip.                        |
+
+### 5\.10\.3 Options & Overrides
+
+You can modify the loading behavior by appending options to the filename in the
+catalog key.
 
   * **`utf-8` / `iso-8859-1`**: Forces text decoding using the specified charset.
   * **`base64`**: Loads binary data but returns it as a Base64-encoded **Text** string.
   * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
   * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
 
-### 5.10.4 Slips (Resource Handles)
+### 5\.10\.4 Slips (Resource Handles)
 
-For binary assets (images, audio) or large files (databases), loading the entire content into the VM stack is inefficient. In these cases, the Resolver returns a **Slip** which is a resource handle.
+For binary assets (images, audio) or large files (databases), loading the entire
+content into the VM stack is inefficient. In these cases, the Resolver returns a
+**Slip** which is a resource handle.
 
   * **Type:** `Slip`
   * **Fields:**
@@ -438,3 +451,17 @@ For binary assets (images, audio) or large files (databases), loading the entire
     conn := sql\open(db_res)      % Opens the path defined in the slip
     ```
 <!-- end list -->
+
+**Semantics:** A Slip represents **Verified Permission** to access a specific
+asset. It does not load the asset into memory.
+
+**Streaming:** Standard library functions (like `io\open(slip)`) use the Slip to
+open a file descriptor, allowing for random access and streaming of large assets
+(video/databases) without memory pressure.
+
+**Security:** Slips are **Opaque Handles**. They cannot be constructed manually
+via Map literals. This ensures that all Slips passed to standard library
+functions have originated from the verified Resolver logic and point to
+sandboxed, checksummed assets.
+
+
