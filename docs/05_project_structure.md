@@ -117,7 +117,7 @@ for *declarations* (functions/classes) because of the multi-pass Hoister.
 However, circular *initialization logic* (top-level code that depends on another
 file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 
-### 5\.5\.1 Initial Library State
+#### 5\.5\.1 Initial Library State
 
 A resolved module is not just a bag of code; it must be explicitly granted
 capabilities to interact with the outside world through a **Vassal** (see
@@ -157,7 +157,7 @@ dlib := {-|dangerous_library|-} || <{
 }>
 ```
 
-### 5\.5\.2 Signal Pattern Ranges
+#### 5\.5\.2 Signal Pattern Ranges
 
 Capabilities are expressed as **Signal Patterns** on the system channels.
 
@@ -202,7 +202,7 @@ If the `weather` library attempts to read `/etc/passwd` (emitting
 `#💾("/etc/passwd" | ___)`), the Vassal will fail to match the pattern, and the
 signal will dissolve into `___` (Empty), effectively sandboxing the code.
 
-## 5\.6 Catalogs
+### 5\.6 Catalogs
 
 Catalog files serves a dual purpose: they are both the **Dependency Manifest**
 (Human Intent) and the **Integrity Anchor** (Machine Reality). Rhumb
@@ -211,7 +211,7 @@ Dependencies** (YAML Strings inside Arrays). They must have the same name as the
 folder but with `@` followed by any additional label (for breaking a catalog
 into multiple files). 
 
-### 5\.6\.1 The Anchor Protocol
+#### 5\.6\.1 The Anchor Protocol
 
 Every dependency entry in the catalog must eventually include an **anchor** (cryptographic
 checksum). This "freezes" the dependency to a specific sequence of bytes,
@@ -245,7 +245,7 @@ preventing "Left-Pad" incidents or malicious updates.
     - data.json: ___
 ```
 
-### 5\.6\.2 Integrity States
+#### 5\.6\.2 Integrity States
 
 The VM treats the anchor field (`___` vs `sha256:...`) differently based on the runtime mode:
 
@@ -254,7 +254,7 @@ The VM treats the anchor field (`___` vs `sha256:...`) differently based on the 
   * **CI / Production Mode:** If `___` is found, the VM **Halts** immediately.
     In production, all dependencies must be anchored.
 
-### 5\.6\.3 Catalog Metadata (User-Defined in `.rhy`)
+#### 5\.6\.3 Catalog Metadata (User-Defined in `.rhy`)
 
 A catalog file can contain one non-version key which is the project's name (best
 practice is that this matches the folder's name). This non-version key hold's an
@@ -270,7 +270,7 @@ object with a few metadata fields:
 | **`📂`** | **Root** | Path | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder. |
 
 
-### 5\.6\.4 Example Library/Route Folder
+#### 5\.6\.4 Example Library/Route Folder
 
 Since Rhumb is managed by an IDE, the **Working Copy** is decoupled from the
 **Archived Versions**.
@@ -330,7 +330,7 @@ $ tree . # inside of a Rhumb project
                  └── +integration_checks.rh
 ```
 
-### 5\.6\.5 Runtime Metadata (Resolver-Generated)
+#### 5\.6\.5 Runtime Metadata (Resolver-Generated)
 
 This is what the `LibraryLoader` generates and stores in memory (or the `.ri` snapshot) after scanning the disk.
 
@@ -342,7 +342,7 @@ This is what the `LibraryLoader` generates and stores in memory (or the `.ri` sn
 | **`Dependencies`**    | List   | Catalog    | Pre-calculated list of dependencies for this specific version.                                             |
 | **`Integrity`**       | Hash   | Calculated  | SHA-256 of the shelf contents (for security/caching).                                                      |
 
-### 5\.6\.6 Dependency Aliasing
+#### 5\.6\.6 Dependency Aliasing
 
 The keys in the `Dependencies` block act as **Logical Aliases**. This allows you
 to rename libraries or move them without changing your source code imports.
@@ -371,48 +371,111 @@ math := [
 n := math\game\random()
  ```
 
-## 5.7 Resource Slips
+### 5\.7 Resource Shelves & Slips
 
 Static assets (images, JSON configuration, database files) are imported using the **Resource Resolver `{=}`**. Unlike code imports which load a "Shelf," resource imports load a specific **File**.
 
 **Syntax:** `{ = | path/to/shelf/filename.ext | version }`
 
-#### 5.7.1 The Bracketed Protocol
+#### 5\.7\.1 The Bracketed Protocol
 
 Resource Shelves are denoted by surrounding the version or sub-catalog in a YAML Array (`[]`).
 
-1.  **Catalog Definition:** `name: ["version"]`
+1.  **Catalog Definition:** `name: [version]`
 2.  **Disk Location:** The loader automatically looks for a folder named `[name]`.
 3.  **Versioning:**
-      * **Versioned:** `["1.0.0"]` → `src/[name]/1.0.0/`
+      * **Versioned:** `[1.0.0]` → `src/[name]/1.0.0/`
       * **Tip:** `[-]` → `src/[name]/-/`
-      * **Inline:** `[{...}]` → `src/[name]/` (The version is implicitly "local").
-
-**Example `shelf@.rhy`:**
-
+      * **Inline:** `[{...}]` → `src/[name]/-/` (The version is implicitly Tip-based).
+      * **Block:**
+      ```yaml
+      0.1.0:
+        art_files: # yaml has a dash block syntax that means []
+          - image.png: sha256:d4c3...
+      ```
+**Example `art_files@.rhy`:**
 ```yaml
 -:
-  <-: 0.1.0 
+  <-: 0.1.0 # uses dependency graph for 0.1.0
+  # if any files change from 0.1.0, the pointer can no longer be used
+  # if only new files are added, the pointer can still be used alongside the new key-value resource pairs
 0.1.0:
-  # Inferred from extension
+  # --- Auto-Discovery ---
+  # Inferred from extension (.json -> Map, .png -> Binary)
   config.json: sha256:a1b2c3...
-  
-  # Explicit Options via Key Suffix
-  raw_config.json;text/plain: sha256:c1c149af...
+  hero.png: ___ # system will add checksum on next run
+
+  # --- Explicit Options (Key Suffix) ---
+  # Force specific encoding or MIME type via semicolon
+  legacy.data;iso-8859-1: sha256:e3b0c44...
+  raw_config.json;text/plain: sha256:c1c149af...  # Load as Text, do not parse
+
+  # --- Integrity & Security ---
+  # Checksums are required, the loader validates the bytes before returning.
+  secure.db: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ```
+**Constraint:** Resource filenames defined in the catalog must not contain
+semi-colons (;). If a file on disk has one, it must be renamed to be compatible
+with the Symbolic Protocol.
 
-#### 5.7.2 Slips (Resource Handles)
+**Generation:** Setting the value to `___` acts as a request for the **IDE or
+Build Tool** to calculate the SHA-256 hash and update the catalog file. The
+Runtime (VM) will throw an error if it encounters `___` in a production/frozen
+environment, enforcing integrity.
 
-For binary assets (images, audio) or large files (databases), loading the entire content into the VM stack is inefficient. In these cases, the Resolver returns a **Slip**.
+#### 5\.7\.2 Runtime Behavior Matrix
+
+The Loader determines the return type based on the MIME type, which is either
+inferred from the file extension or explicitly overridden in the catalog.
+
+| File Extension            | Default MIME               | Runtime Value | Description                             |
+|:--------------------------|:---------------------------|:--------------|:----------------------------------------|
+| **`.json`**               | `application/json`         | **Map**       | Automatically parsed into a Rhumb Map.  |
+| **`.txt`, `.rtf`, `.md`** | `text/plain`               | **Text**      | Loaded as a UTF-8 string.               |
+| **`.png`, `.jpg`, etc.**  | `image/*`                  | **Slip**      | Returns a lightweight slip (see below). |
+| **`.db`, `.sqlite`**      | `application/x-sqlite3`    | **Slip**      | Returns a slip for DB drivers.          |
+| **(Unknown)**             | `application/octet-stream` | **Slip**      | Raw binary slip.                        |
+
+### 5\.7\.3 Options & Overrides
+
+You can modify the loading behavior by appending options to the filename in the
+catalog key.
+
+  * **`utf-8` / `iso-8859-1`**: Forces text decoding using the specified charset.
+  * **`base64`**: Loads binary data but returns it as a Base64-encoded **Text** string.
+  * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
+  * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
+
+### 5\.7\.4 Slips (Resource Handles)
+
+For binary assets (images, audio) or large files (databases), loading the entire
+content into the VM stack is inefficient. In these cases, the Resolver returns a
+**Slip** which is a resource handle.
 
   * **Type:** `Slip`
   * **Fields:**
       * `\path`: The absolute path to the verified file on disk.
       * `\mime`: The resolved MIME type.
-  * **Security:** Slips are **Opaque Handles**. They cannot be constructed manually via Map literals.
+  * **Usage:** Standard Library functions accept slips directly.
+    ```rhumb
+    db_res := {=|database/users.db|0.1.0}  % Returns Slip
+    conn := sql\open(db_res)      % Opens the path defined in the slip
+    ```
+<!-- end list -->
 
+**Semantics:** A Slip represents **Verified Permission** to access a specific
+asset. It does not load the asset into memory.
 
-## 5\.8 The Entry Point (`+`)
+**Streaming:** Standard library functions (like `io\open(slip)`) use the Slip to
+open a file descriptor, allowing for random access and streaming of large assets
+(video/databases) without memory pressure.
+
+**Security:** Slips are **Opaque Handles**. They cannot be constructed manually
+via Map literals. This ensures that all Slips passed to standard library
+functions have originated from the verified Resolver logic and point to
+sandboxed, checksummed assets.
+
+### 5\.8 The Entry Point (`+`)
 
 The entry point of any Shelf (local library) is strictly defined by the file
 naming convention.
@@ -437,7 +500,7 @@ naming convention.
   └── _helpers.rh    <-- A standard source file.
 ```
 
-## 5\.9 Shelf Scope (Internal Visibility)
+### 5\.9 Shelf Scope (Internal Visibility)
 
 Rhumb uses a **"Flattened Directory Scope."**
 
@@ -447,18 +510,18 @@ Rhumb uses a **"Flattened Directory Scope."**
 
 -----
 
-## 5\.10 External Visibility (Exports)
+### 5\.10 External Visibility (Exports)
 
 Visibility is controlled entirely by the **Label Naming Convention**.
 
-### 5\.10\.1 Public by Default
+#### 5\.10\.1 Public by Default
 
 Any top-level label (function, variable, constant, key) that **does not** start with an underscore is automatically exported.
 
   * **Definition:** `calculate := [] -> ( ... )`
   * **Access:** Visible to any library or route that imports this Shelf.
 
-### 5\.10\.2 Private by Prefix (`_`)
+#### 5\.10\.2 Private by Prefix (`_`)
 
 Any top-level label starting with an underscore `_` is strictly internal.
 
@@ -467,7 +530,7 @@ Any top-level label starting with an underscore `_` is strictly internal.
       * Visible to sibling files (e.g., `logic.rh` can call `_validate` defined in `helpers.rh`).
       * **Invisible** to importers (e.g., if `Game` imports `Physics`, it cannot see `Physics\_validate`).
 
-### 5\.10\.3 Visual Example
+#### 5\.10\.3 Visual Example
 
 **File: `/physics/collision.rh`**
 
@@ -497,107 +560,7 @@ phys\CheckOverlap(p1; p2)
 phys\_boxes_touch(p1, p2)
 ```
 
-## 5\.11 Resource Resolution
-
-Static assets (images, JSON configuration, database files) are imported using the **Resource Resolver `{=}`**. Unlike code imports which load a "Shelf," resource imports load a specific **File**.
-
-**Syntax:** `{ = | path/to/shelf/filename.ext | version }`
-
-### 5\.11\.1 The Bracketed Protocol
-
-Resource Shelves are strictly typed in the catalog using YAML Arrays.
-
-1.  **Catalog Definition:** `name: ["version"]`
-2.  **Disk Location:** The loader automatically looks for a folder named `[name]`.
-3.  **Versioning:**
-    * **Versioned:** `["1.0.0"]` → `src/[name]/1.0.0/`
-    * **Tip:** `[-]` → `src/[name]/-/`
-    * **Inline:** `[{...}]` → `src/[name]/` (The version is implicitly "local").
-
-**Example `shelf@.rhy`:**
-```yaml
--:
-  <-: 0.1.0 # uses dependency graph for 0.1.0
-  # if any files change from 0.1.0, the pointer can no longer be used
-  # if only new files are added, the pointer can still be used alongside the new key-value resource pairs
-0.1.0:
-  # --- Auto-Discovery ---
-  # Inferred from extension (.json -> Map, .png -> Binary)
-  config.json: sha256:a1b2c3...
-  hero.png: ___ # system will add checksum on next run
-
-  # --- Explicit Options (Key Suffix) ---
-  # Force specific encoding or MIME type via semicolon
-  legacy.data;iso-8859-1: sha256:e3b0c44...
-  raw_config.json;text/plain: sha256:c1c149af...  # Load as Text, do not parse
-
-  # --- Integrity & Security ---
-  # Checksums are required, the loader validates the bytes before returning.
-  secure.db: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-```
-
-**Constraint:** Resource filenames defined in the catalog must not contain
-semi-colons (;). If a file on disk has one, it must be renamed to be compatible
-with the Symbolic Protocol.
-
-**Generation:** Setting the value to `___` acts as a request for the **IDE or
-Build Tool** to calculate the SHA-256 hash and update the catalog file. The
-Runtime (VM) will throw an error if it encounters `___` in a production/frozen
-environment, enforcing integrity.
-
-### 5\.11\.2 Runtime Behavior Matrix
-
-The Loader determines the return type based on the MIME type, which is either
-inferred from the file extension or explicitly overridden in the catalog.
-
-| File Extension            | Default MIME               | Runtime Value | Description                             |
-|:--------------------------|:---------------------------|:--------------|:----------------------------------------|
-| **`.json`**               | `application/json`         | **Map**       | Automatically parsed into a Rhumb Map.  |
-| **`.txt`, `.rtf`, `.md`** | `text/plain`               | **Text**      | Loaded as a UTF-8 string.               |
-| **`.png`, `.jpg`, etc.**  | `image/*`                  | **Slip**      | Returns a lightweight slip (see below). |
-| **`.db`, `.sqlite`**      | `application/x-sqlite3`    | **Slip**      | Returns a slip for DB drivers.          |
-| **(Unknown)**             | `application/octet-stream` | **Slip**      | Raw binary slip.                        |
-
-### 5\.11\.3 Options & Overrides
-
-You can modify the loading behavior by appending options to the filename in the
-catalog key.
-
-  * **`utf-8` / `iso-8859-1`**: Forces text decoding using the specified charset.
-  * **`base64`**: Loads binary data but returns it as a Base64-encoded **Text** string.
-  * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
-  * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
-
-### 5\.11\.4 Slips (Resource Handles)
-
-For binary assets (images, audio) or large files (databases), loading the entire
-content into the VM stack is inefficient. In these cases, the Resolver returns a
-**Slip** which is a resource handle.
-
-  * **Type:** `Slip`
-  * **Fields:**
-      * `\path`: The absolute path to the verified file on disk.
-      * `\mime`: The resolved MIME type.
-  * **Usage:** Standard Library functions accept slips directly.
-    ```rhumb
-    db_res := {=|database/users.db|0.1.0}  % Returns Slip
-    conn := sql\open(db_res)      % Opens the path defined in the slip
-    ```
-<!-- end list -->
-
-**Semantics:** A Slip represents **Verified Permission** to access a specific
-asset. It does not load the asset into memory.
-
-**Streaming:** Standard library functions (like `io\open(slip)`) use the Slip to
-open a file descriptor, allowing for random access and streaming of large assets
-(video/databases) without memory pressure.
-
-**Security:** Slips are **Opaque Handles**. They cannot be constructed manually
-via Map literals. This ensures that all Slips passed to standard library
-functions have originated from the verified Resolver logic and point to
-sandboxed, checksummed assets.
-
-## 5\.12 Full Catalog Example
+### 5\.11 Full Catalog Example
 
 ```yaml
 # ./my_project@.rhy
