@@ -29,7 +29,7 @@ External dependencies are defined via **Catalogs**.
 * **Naming Convention:** `LibraryName@SubCatalog.rhy`
     * Example: `networking@http.rhy`
     * **Anonymous Project:** `___@config.rhy` (Project name defined inside the
-      YAML).=
+      YAML).
 * **Role:** The Catalog is the **Authority** on:
     * **Versioning:** Mapping a physical folder (e.g., `src/0.1.0`) to a
       semantic version.
@@ -121,7 +121,7 @@ file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 
 A resolved module is not just a bag of code; it must be explicitly granted
 capabilities to interact with the outside world through a **Vassal** (see
-*§4.7*).
+[§4.7](04_concurrency.md#47-vassals-facets--attenuation)).
 
 ```rhumb
 % { resolver | path | version }
@@ -211,7 +211,7 @@ Dependencies** (YAML Strings inside Arrays). They must have the same name as the
 folder but with `@` followed by any additional label (for breaking a catalog
 into multiple files). 
 
-#### 5\.6\.1 The Anchor Protocol
+### 5\.6\.1 The Anchor Protocol
 
 Every dependency entry in the catalog must eventually include an **anchor** (cryptographic
 checksum). This "freezes" the dependency to a specific sequence of bytes,
@@ -245,7 +245,7 @@ preventing "Left-Pad" incidents or malicious updates.
     - data.json: ___
 ```
 
-#### 5\.6\.2 Integrity States
+### 5\.6\.2 Integrity States
 
 The VM treats the anchor field (`___` vs `sha256:...`) differently based on the runtime mode:
 
@@ -342,7 +342,7 @@ This is what the `LibraryLoader` generates and stores in memory (or the `.ri` sn
 | **`Dependencies`**    | List   | Catalog    | Pre-calculated list of dependencies for this specific version.                                             |
 | **`Integrity`**       | Hash   | Calculated  | SHA-256 of the shelf contents (for security/caching).                                                      |
 
-### 5\.6\.6 Dependency Aliasing**
+### 5\.6\.6 Dependency Aliasing
 
 The keys in the `Dependencies` block act as **Logical Aliases**. This allows you
 to rename libraries or move them without changing your source code imports.
@@ -358,19 +358,20 @@ to rename libraries or move them without changing your source code imports.
    standard_math: 🧮@1.0.0! ___ # aliases work for standard libraries too
  ```
 
-**Source Exmaple:**
+**Source Example:**
 
  ```rhumb
 % main.rh
 % Import using the alias, not the path
 phys := {-|physics_engine|-}
 math := [
-  game := {-|standard_math|-}
+  base .. {-|standard_math|-}
+  game .. {-|game_math|-}
 ]
-math := 
+n := math\game\random()
  ```
 
-### 5.7 Resource Slips
+## 5.7 Resource Slips
 
 Static assets (images, JSON configuration, database files) are imported using the **Resource Resolver `{=}`**. Unlike code imports which load a "Shelf," resource imports load a specific **File**.
 
