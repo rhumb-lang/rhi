@@ -227,48 +227,72 @@ p1 == p2 %= yes
 
 Selectors (`{...}`) behave differently based on the type of their Subject.
 
-**1. Argument Supply Mode (Subject is Subroutine):**
-When the subject is an anonymous subroutine `<(...)>`, the LHS of the selector acts as an argument provider.
+**1. Argument Supply Mode (Subject is Subroutine):** When the subject is an
+anonymous subroutine `<(...)>`, the LHS of the selector acts as an argument
+provider.
 
   * `1 .. f` : Supplies value `1` as an argument to function `f`.
   * `y .. _` : Assigns the Subject subroutine to variable `y`.
 
-**2. Dispatch Mode (Subject is Function/Value):**
-When the subject is a standard value or result, the selector acts as a switch/match block.
+**2. Dispatch Mode (Subject is Function/Value):** When the subject is a standard
+value or result, the selector acts as a switch/match block.
 
   * `1 .. f` : Compares Subject to `1`. If equal, executes `f`.
   * `x .. f` : Compares Subject to `x`. If equal, executes `f` (Pinning).
   * `y .. f` : Binds Subject to `y` and executes `f`.
 
-**3. Structural Mode (Subject is Map/Tuple):**
-Used heavily in Concurrency (`<>`). Matches the structure of the Subject against the LHS pattern.
+**3. Structural Mode (Subject is Map/Tuple):** Used heavily in Concurrency
+(`<>`). Matches the structure of the Subject against the LHS pattern.
 
   * `[x; 2] .. f` : Checks if Subject is a tuple where 2nd element is `2`. Binds 1st element to `x`.
 
-**4. Attachment Mode (Subject is Execution Context):**
-When attached to a function call (e.g., `func() { ... }`), the selector becomes a **Monitor** for that specific activation (Frame Space). It subscribes to the lifecycle of the call.
+**4. Attachment Mode (Subject is Execution Context):** When attached to a
+function call (e.g., `func() { ... }`), the selector becomes a **Monitor** for
+that specific activation (Frame Space). It subscribes to the lifecycle of the
+call.
 
-  * **Return:** The selector matches implicitly against the return value (unnamed signal).
-  * **Signals (`#`):** Acts as a Trap for signals bubbling up from *inside* the function call. `  #err .. log ` catches errors.
-  * **Replies (`^`):** Can inject replies back *down* into the running function. `^retry` sends data to a `TRAP_REPLY` inside.
-  * **Proclamations (`$`):** Can react to state changes within the function's local space. If the function executes `$status("working")`, the attached selector can match `$status(s) .. log(s)`.
+  * **Return:** The selector matches implicitly against the return value
+    (unnamed signal).
+  * **Signals (`#`):** Acts as a Trap for signals bubbling up from *inside* the
+    function call. `  #err .. log ` catches errors.
+  * **Replies (`^`):** Can inject replies back *down* into the running function.
+    `^retry` sends data to a `TRAP_REPLY` inside.
+  * **Proclamations (`$`):** Can react to state changes within the function's
+    local space. If the function executes `$status("working")`, the attached
+    selector can match `$status(s) .. log(s)`.
 
 
-To implement the **Zombie Frame** behavior required for the Reply (`^`) system, Rhumb cannot use a standard linear stack (like C or Java). It must use a **Cactus Stack** (also known as a Spaghetti Stack or Parent-Pointer Tree).
+To implement the **Zombie Frame** behavior required for the Reply (`^`) system,
+Rhumb cannot use a standard linear stack (like C or Java). It must use a
+**Cactus Stack** (also known as a Spaghetti Stack or Parent-Pointer Tree).
 
-This structure allows execution branches to fork, pause, and persist independently, which is the foundation of the concurrency model.
+This structure allows execution branches to fork, pause, and persist
+independently, which is the foundation of the concurrency model.
+
+#### 3\.6\.1 Vassals (Sub-Selectors)
+
+When you surround a selector in `<...>` it becomes a vassal which is a special
+kind of stored selector that we use for managing the boundaries of signals,
+replies and proclamations
+([§4.7](https://github.com/rhumb-lang/rhi/blob/main/docs/04_concurrency.md#47-vassals-facets--attenuation))
+as well as for managing the boundaries of libraries
+([§5.5.1](05_project_structure.md#551-initial-library-state)).
 
 -----
 
 ### 3\.7 Memory Model: The Cactus Stack
 
-To support **Zombie Frames** and **Resumable Replies**, the VM does not use a contiguous block of memory for the stack. Instead, it uses a **Cactus Stack** (a tree of linked frames allocated on the Heap).
+To support **Zombie Frames** and **Resumable Replies**, the VM does not use a
+contiguous block of memory for the stack. Instead, it uses a **Cactus Stack** (a
+tree of linked frames allocated on the Heap).
 
 #### 3\.7\.1 Structure
 
   * **Heap Allocation:** Every `CallFrame` is a struct allocated on the Go Heap.
   * **Parent Pointers:** Each frame holds a pointer to its **Caller** (`Parent`).
-  * **The Tree:** Because multiple closures or concurrent processes can be spawned from the same context, a single Parent Frame may have multiple active Child Frames (branches), giving the stack a cactus-like shape.
+  * **The Tree:** Because multiple closures or concurrent processes can be
+    spawned from the same context, a single Parent Frame may have multiple
+    active Child Frames (branches), giving the stack a cactus-like shape.
 
 <!-- end list -->
 
