@@ -1,4 +1,4 @@
-## 4\. Project Structure & Storage
+## 5\. Project Structure & Storage
 
 Rhumb adopts a unique nomenclature for its file artifacts to distinguish between executable scripts and library code.
 
