@@ -4,37 +4,49 @@ Rhumb adopts a unique nomenclature for its file artifacts to distinguish between
 
 ### 5\.1 Artifact Terminology
 
-| Term | Concept | Standard Ext | Optional Ext |
-| :--- | :--- | :--- | :--- |
-| **Letter** | **Script / Executable**. A one-off action. Runs standalone. | `.rh` | `.rhl` |
-| **Book** | **Module / Package**. A single file containing library code. Accesses its Shelf directly. | `.rh` | `.rhb` |
-| **Shelf** | **Folder**. A directory containing Books. No metadata attached. | N/A | N/A |
-| **Library** | **External Package**. A collection of Shelves/Books brought in from outside. | N/A | N/A |
-| **Catalog** | **Metadata**. Defines Library properties. | `.rhy` | `.rh.yaml` |
+| Term        | Concept                                                                                   | Standard Ext | Optional Ext |
+|:------------|:------------------------------------------------------------------------------------------|:-------------|:-------------|
+| **Letter**  | **Script / Executable**. A one-off action. Runs standalone.                               | `.rh`        | `.rhl`       |
+| **Book**    | **Module**. A single file containing library code. Accesses its Shelf directly.           | `.rh`        | `.rhb`       |
+| **Shelf**   | **Folder**. A directory containing Books and/or inner Shelves                             | N/A          | N/A          |
+| **Route**   | **Application**. A collection of Shelves/Books meant to be run by an end user.            | `.ri`        | N/A          |
+| **Library** | **Package**. A collection of Shelves/Books meant to be used by other Libraries or Routes. | `.ri`        | N/A          |
+| **Catalog** | **Metadata**. Defines Library properties.                                                 | `.rhy`       | `.rh.yaml`   |
 
-### 5\.2 Shelf Organization
+### 5\.2 Shelf Organization (The Folder Truth)
 
-  * **Scope:** A Book can access any other Book within the same Shelf (Folder) implicitly.
-  * **Enforcement:** Code structure is managed by the IDE or Compiler Tooling. There are no "package declaration" headers inside the files themselves; the folder structure is the source of truth.
+In Rhumb, a file's "package" is defined solely by its parent directory.
 
-### 5\.3 Libraries & Catalogs
+* **No Headers:** There are no `package` or `namespace` declarations inside `.rh` files.
+* **Implicit Scope:** A Book can access any other Book within the same Shelf (Folder) implicitly.
+* **Identity:** While the folder structure defines *grouping*, the **Catalog** (`.rhy`) defines *identity*. The folder tells the compiler "these files are one unit," but the Catalog tells the compiler "this group of files is the `math` shelf."
+
+### 5\.3 Libraries & Catalogs (The Project Truth)
 
 External dependencies are defined via **Catalogs**.
 
-  * **Format:** YAML files with the extension `.rhy` or `.rh.yaml`
-  * **Naming Convention:** `LibraryName@SubCatalog.rhy`
-      * Example: `networking@http.rhy`
-      * **Anonymous Project:** `___@config.rhy` (Project name defined inside the YAML).=
-  * **Role:** Catalogs cache the dependency graph and currently in-use libraries per shelf
+* **Format:** YAML files with the extension `.rhy` or `.rh.yaml`
+* **Naming Convention:** `LibraryName@SubCatalog.rhy`
+    * Example: `networking@http.rhy`
+    * **Anonymous Project:** `___@config.rhy` (Project name defined inside the
+      YAML).=
+* **Role:** The Catalog is the **Authority** on:
+    * **Versioning:** Mapping a physical folder (e.g., `src/0.1.0`) to a
+      semantic version.
+    * **Integrity:** Storing the **Anchors** (Checksums) for dependencies.
+    * **Aliasing:** Naming dependencies (e.g., mapping `math` to `🧮`).
 
 ### 5\.4 The "Babel" Persistence (Twin-File)
 
-For Books managed by the IDE, the source code is decomposed into three file types to support Localization and Git workflows:
+For Books managed by the IDE or build tool, the source code is decomposed into
+three file types to support Localization and Git workflows:
 
 1.  **Logic Node (`.__.rh`):** The Canonical AST
       * **Format:** `filename.__.rh`
-      * **Content:** Rhumb source using **Raw IDs** (`$x9A2`, `$L01`) instead of human labels
-      * **Role:** This is the Source of Truth for the compiler. It ensures referential integrity across renames and languages.
+      * **Content:** Rhumb source using **Raw IDs** (`$x9A2`, `$L01`) instead of
+        human labels
+      * **Role:** This is the Source of Truth for the compiler. It ensures
+        referential integrity across renames and languages.
 2.  **Translation Map (`.rhy`):** The Label Dictionary (YAML syntax)
       * **Format:** `filename.rhy`
       * **Content:** A YAML map of IDs to localized strings
@@ -49,8 +61,10 @@ For Books managed by the IDE, the source code is decomposed into three file type
     ```
 3.  **Localized Artifacts (`.<lang>.rh`):** Read-Only Views
       * **Format:** `filename.en_US.rh`
-      * **Content:** Valid Rhumb source generated by the IDE using the Logic Node + Translation Map.
-      * **Role:** Allows browsing the code in specific languages (e.g., on GitHub) without needing the Rhumb IDE.
+      * **Content:** Valid Rhumb source generated by the IDE using the Logic
+        Node + Translation Map.
+      * **Role:** Allows browsing the code in specific languages (e.g., on
+        GitHub/Gitlab) without needing the Rhumb IDE.
 
 ### 5\.5 Dependency Resolution
 
@@ -103,91 +117,148 @@ for *declarations* (functions/classes) because of the multi-pass Hoister.
 However, circular *initialization logic* (top-level code that depends on another
 file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 
-## 5\.6 Catalogs
+### 5\.5\.1 Initial Library State
 
-Catalog files must have the same name as the folder but with `@` followed by any
-additional label (for breaking a catalog into multiple files). Dependencies are
-defined in the version map. Rhumb differentiates between **Code Dependencies**
-(Strings) and **Resource Dependencies** (Arrays).
+A resolved module is not just a bag of code; it must be explicitly granted
+capabilities to interact with the outside world through a **Vassal** (see
+*§4.7*).
 
-```yaml
-# ./my_project@.rhy
-# one non-version key is allowed for project/shelf metadata
-my_project: 
-    👤: Jake Russo # author
-    🪪: MIT # license
-    📦: https://github.com/user/repo
-    🏷️: # keywords
-        - programming 
-        - cryptography
-        - server
-    📝: >
-        This is a description of the project and it can span
-        multiple lines using thr yaml ">" operator
-    📂: src # if the libraries and desktop books are in non-root folder
-
-# all remaining values in the catalog are versions of the project
--:
-    <-: 0.1.0 # this "<-" symbol as a key means that this version has the same dependencies as the value
-0.1.0:
-    core_mechanics: <- # this "<-" symbol as a value means that core_mechanics shelf contains its own catalog
-    win_conditions: <-
-    physics: # objects with version keys means that the shelf's catalog is included here
-        0.1.0:
-            core_mechanics: 0.3.2 # this means that physics@0.1.0 depends on core_mechanics@0.3.2
-            math: 0.1.0! # the ! means standard library (all standard libraries are versioned)
-
-    # The brackets indicate this is a Resource Shelf.
-    art_files: [0.1.0] # Maps to: /src/[art_files]/0.1.0
-    
-    # if you are using the flag for allowing wildcards, you could reference the tip version directly
-    sounds: [-] # Maps to: /src/[sounds]/-
-    # if you want to specify a resource catalog inline, use the - dash leading line to indicate []
-    icons: # Maps to: /src/[icons] (just a folder of files)
-    - logo.png: sha256:a1b2...
-    - spinner.gif: ___ # the triple underscore ____ means that the user has not yet added a checksum
-
-    # false means that this is a non-resource folder that should be excluded from any distribution
-    integration_checks: false # but it could still have its own catalog (like for testing routes)
----
-# ./core_mechanics/core_mechanics@.rhy
--: null # since none of the versions contain dependencies, no pointer is needed
-0.4.1: ~ # in YAML ~ is equivalent to null
-0.3.2: null # null means that this is a rhumb folder but there's no dependencies and no inner shelves
----
-# ./win_conditions/win_conditions@.rhy
--: # we're using the new core_mechanics version in this top shelf
-    core_mechanics: 0.4.1
-    physics: 0.1.0
-0.2.1:
-    core_mechanics: 0.3.2
-    physics: 0.1.0
-0.2.0:
-    core_mechanics: 0.3.2
-    physics: 0.1.0
----
-# ./integration_checks/integration_checks@.rhy
-# even though this shelf isn't part of the main library/route, it can still have a catalog
--:
-  <-: 0.5.0
-0.5.0:
-  <-: 0.4.0 # if you are adding only, you can keep the pointer
-  win_conditions: 0.2.1
-0.4.0:
-  core_mechanics: 0.4.1
-  physics: 0.1.0
-0.3.0:
-  core_mechanics: 0.3.2
-  physics: 0.1.0
-0.2.0:
-  <-: 0.1.0
-0.1.0:
-  physics: 0.1.0
+```rhumb
+% { resolver | path | version }
+dlib := {- | dangerous_library | -}
 ```
 
-### 5\.6\.1 Catalog Metadata (User-Defined in `.rhy`)
+When this statement executes, the runtime performs a two-stage security
+handshake:
 
-This is what exists in the `project@.rhy` file.
+1.  **Integrity Check (The Anchor):** The Loader calculates the SHA-256 hash of
+    the downloaded artifact and compares it against the entry in the
+    `catalog.rhy`. If they mismatch, the VM halts with a `SupplyChainViolation`.
+2.  **Capability Grant (The Vassal):** By default, imported modules have **Zero
+    Ambient Authority**. They can perform pure logic (math, data transformation)
+    but cannot access the Network, Disk, or Environment unless explicitly piped
+    into a Vassal that grants those permissions.
+
+
+
+To grant permissions, provide the raw library as an argument to a Vassal (to
+define the vassal directly after the library import, you can use the **Pipe
+Operator (`||`)**).
+
+```rhumb
+vassal .= <{
+  #🚀(%( permissions... %))
+}>
+dlib := vassal({-|dangerous_library|-})
+
+% or using the pipe operator
+dlib := {-|dangerous_library|-} || <{
+  #🚀(%( permissions... %))
+}>
+```
+
+### 5\.5\.2 Signal Pattern Ranges
+
+Capabilities are expressed as **Signal Patterns** on the system channels.
+
+**System Channels:**
+| Glyph | Channel | Purpose |
+| :--- | :--- | :--- |
+| **`#📡`** | **Network** | HTTP, Sockets, Fetch |
+| **`#💾`** | **Disk** | File System Read/Write |
+| **`#🚀`** | **Exec** | Subprocesses & Shell |
+| **`#⚙️`** | **Env** | Environment Variables |
+
+**The IO Range Syntax (`|`):**
+Capabilities are defined as **Ranges** representing the boundary between the module and the system.
+
+  * **Format:** `Ingress | Egress`
+  * **Ingress (Left):** What the module reads/accepts (File Reads, Port Listens).
+  * **Egress (Right):** What the module writes/sends (File Writes, Outbound Connections).
+  * **Deny (`___`):** Use the Empty value to block a side of the boundary.
+
+**Example: A Secure Import**
+
+```rhumb
+% Import a weather library.
+% We grant it Network access (to specific domains) but deny Disk and Env access.
+
+weather := {git|https://github.com/weather/api|1.0.0} || <{
+    % 📡 Network
+    % Ingress: Listen on port 8080 (Callback)
+    % Egress: Connect to api.weather.com
+    #📡( 8080 | "api.weather.com" )
+
+    % ⚙️ Environment
+    % Ingress: Read the API key
+    % Egress: Blocked (Cannot change Env)
+    #⚙️( "WEATHER_API_KEY" | ___ )
+
+    % Implicitly Deny: #💾 (Disk) and #🚀 (Exec)
+}>
+```
+
+If the `weather` library attempts to read `/etc/passwd` (emitting
+`#💾("/etc/passwd" | ___)`), the Vassal will fail to match the pattern, and the
+signal will dissolve into `___` (Empty), effectively sandboxing the code.
+
+## 5\.6 Catalogs
+
+Catalog files serves a dual purpose: they are both the **Dependency Manifest**
+(Human Intent) and the **Integrity Anchor** (Machine Reality). Rhumb
+differentiates between **Code Dependencies** (YAML Strings) and **Resource
+Dependencies** (YAML Strings inside Arrays). They must have the same name as the
+folder but with `@` followed by any additional label (for breaking a catalog
+into multiple files). 
+
+#### 5\.6\.1 The Anchor Protocol
+
+Every dependency entry in the catalog must eventually include an **anchor** (cryptographic
+checksum). This "freezes" the dependency to a specific sequence of bytes,
+preventing "Left-Pad" incidents or malicious updates.
+
+**Catalog Format w/ Anchors:**
+
+```yaml
+# project@.rhy
+0.1.0:
+  # === Code Dependencies ===
+  # Format: "alias: [version] [anchor]"
+
+  # 1. Secured Dependency (Production Ready)
+  # The loader verifies this SHA-256 before compiling.
+  physics: 1.2.0 sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+  # 2. Unsecured Dependency (Development)
+  # The "___" indicates the anchor is missing.
+  # The IDE will calculate this on the next successful run and update the file.
+  graphics: 1.0.- ___
+
+  # 3. Local/Standard (Implicit Trust)
+  # Resolvers '!' and '-' do not require anchors as they are part of the trust boundary.
+  std_math: 🧮@1.0.0!
+
+  # === Resource Dependencies ===
+  # Format: "filename: [anchor]"
+  assets:
+    - logo.png: sha256:a1b2...
+    - data.json: ___
+```
+
+#### 5\.6\.2 Integrity States
+
+The VM treats the anchor field (`___` vs `sha256:...`) differently based on the runtime mode:
+
+  * **Dev Mode:** If `___` is found, the VM downloads the library, calculates
+    the hash, and **writes it back** to the `.rhy` file (Trust On First Use).
+  * **CI / Production Mode:** If `___` is found, the VM **Halts** immediately.
+    In production, all dependencies must be anchored.
+
+### 5\.6\.3 Catalog Metadata (User-Defined in `.rhy`)
+
+A catalog file can contain one non-version key which is the project's name (best
+practice is that this matches the folder's name). This non-version key hold's an
+object with a few metadata fields:
 
 | Emoji Key | Name | Type | Description |
 | :--- | :--- | :--- | :--- |
@@ -199,7 +270,7 @@ This is what exists in the `project@.rhy` file.
 | **`📂`** | **Root** | Path | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder. |
 
 
-### 5\.6\.2 Example Library/Route Folder
+### 5\.6\.4 Example Library/Route Folder
 
 Since Rhumb is managed by an IDE, the **Working Copy** is decoupled from the
 **Archived Versions**.
@@ -259,7 +330,7 @@ $ tree . # inside of a Rhumb project
                  └── +integration_checks.rh
 ```
 
-### 5\.6\.3 Runtime Metadata (Resolver-Generated)
+### 5\.6\.5 Runtime Metadata (Resolver-Generated)
 
 This is what the `LibraryLoader` generates and stores in memory (or the `.ri` snapshot) after scanning the disk.
 
@@ -271,7 +342,7 @@ This is what the `LibraryLoader` generates and stores in memory (or the `.ri` sn
 | **`Dependencies`**    | List   | Catalog    | Pre-calculated list of dependencies for this specific version.                                             |
 | **`Integrity`**       | Hash   | Calculated  | SHA-256 of the shelf contents (for security/caching).                                                      |
 
-### 5\.6\.4 Dependency Aliasing**
+### 5\.6\.6 Dependency Aliasing**
 
 The keys in the `Dependencies` block act as **Logical Aliases**. This allows you
 to rename libraries or move them without changing your source code imports.
@@ -281,9 +352,10 @@ to rename libraries or move them without changing your source code imports.
  ```yaml
  # project@.rhy
  0.1.0:
-   # logical_name : specific_version_or_path
-   physics_engine: libs/physics
-   standard_math: 🧮@1.0.0! # we use the original name followed by @ for an alias
+   # logical_name : [ original_name @ ] specific_version_or_path
+   physics_engine: libs/physics ___
+   game_math: math@0.1.0 ___ # to make an alias, prefix the version name and an "@" before the version
+   standard_math: 🧮@1.0.0! ___ # aliases work for standard libraries too
  ```
 
 **Source Exmaple:**
@@ -292,11 +364,54 @@ to rename libraries or move them without changing your source code imports.
 % main.rh
 % Import using the alias, not the path
 phys := {-|physics_engine|-}
-math := {-|standard_math|-}
+math := [
+  game := {-|standard_math|-}
+]
+math := 
  ```
 
+### 5.7 Resource Slips
 
-## 5\.7 The Entry Point (`+`)
+Static assets (images, JSON configuration, database files) are imported using the **Resource Resolver `{=}`**. Unlike code imports which load a "Shelf," resource imports load a specific **File**.
+
+**Syntax:** `{ = | path/to/shelf/filename.ext | version }`
+
+#### 5.7.1 The Bracketed Protocol
+
+Resource Shelves are denoted by surrounding the version or sub-catalog in a YAML Array (`[]`).
+
+1.  **Catalog Definition:** `name: ["version"]`
+2.  **Disk Location:** The loader automatically looks for a folder named `[name]`.
+3.  **Versioning:**
+      * **Versioned:** `["1.0.0"]` → `src/[name]/1.0.0/`
+      * **Tip:** `[-]` → `src/[name]/-/`
+      * **Inline:** `[{...}]` → `src/[name]/` (The version is implicitly "local").
+
+**Example `shelf@.rhy`:**
+
+```yaml
+-:
+  <-: 0.1.0 
+0.1.0:
+  # Inferred from extension
+  config.json: sha256:a1b2c3...
+  
+  # Explicit Options via Key Suffix
+  raw_config.json;text/plain: sha256:c1c149af...
+```
+
+#### 5.7.2 Slips (Resource Handles)
+
+For binary assets (images, audio) or large files (databases), loading the entire content into the VM stack is inefficient. In these cases, the Resolver returns a **Slip**.
+
+  * **Type:** `Slip`
+  * **Fields:**
+      * `\path`: The absolute path to the verified file on disk.
+      * `\mime`: The resolved MIME type.
+  * **Security:** Slips are **Opaque Handles**. They cannot be constructed manually via Map literals.
+
+
+## 5\.8 The Entry Point (`+`)
 
 The entry point of any Shelf (local library) is strictly defined by the file
 naming convention.
@@ -321,7 +436,7 @@ naming convention.
   └── _helpers.rh    <-- A standard source file.
 ```
 
-## 5\.8 Shelf Scope (Internal Visibility)
+## 5\.9 Shelf Scope (Internal Visibility)
 
 Rhumb uses a **"Flattened Directory Scope."**
 
@@ -331,18 +446,18 @@ Rhumb uses a **"Flattened Directory Scope."**
 
 -----
 
-## 5\.9 External Visibility (Exports)
+## 5\.10 External Visibility (Exports)
 
 Visibility is controlled entirely by the **Label Naming Convention**.
 
-### 5\.9\.1 Public by Default
+### 5\.10\.1 Public by Default
 
 Any top-level label (function, variable, constant, key) that **does not** start with an underscore is automatically exported.
 
   * **Definition:** `calculate := [] -> ( ... )`
   * **Access:** Visible to any library or route that imports this Shelf.
 
-### 5\.9\.2 Private by Prefix (`_`)
+### 5\.10\.2 Private by Prefix (`_`)
 
 Any top-level label starting with an underscore `_` is strictly internal.
 
@@ -351,7 +466,7 @@ Any top-level label starting with an underscore `_` is strictly internal.
       * Visible to sibling files (e.g., `logic.rh` can call `_validate` defined in `helpers.rh`).
       * **Invisible** to importers (e.g., if `Game` imports `Physics`, it cannot see `Physics\_validate`).
 
-### 5\.9\.3 Visual Example
+### 5\.10\.3 Visual Example
 
 **File: `/physics/collision.rh`**
 
@@ -381,13 +496,13 @@ phys\CheckOverlap(p1; p2)
 phys\_boxes_touch(p1, p2)
 ```
 
-## 5\.10 Resource Resolution
+## 5\.11 Resource Resolution
 
 Static assets (images, JSON configuration, database files) are imported using the **Resource Resolver `{=}`**. Unlike code imports which load a "Shelf," resource imports load a specific **File**.
 
 **Syntax:** `{ = | path/to/shelf/filename.ext | version }`
 
-### 5\.10\.1 The Bracketed Protocol
+### 5\.11\.1 The Bracketed Protocol
 
 Resource Shelves are strictly typed in the catalog using YAML Arrays.
 
@@ -429,7 +544,7 @@ Build Tool** to calculate the SHA-256 hash and update the catalog file. The
 Runtime (VM) will throw an error if it encounters `___` in a production/frozen
 environment, enforcing integrity.
 
-### 5\.10\.2 Runtime Behavior Matrix
+### 5\.11\.2 Runtime Behavior Matrix
 
 The Loader determines the return type based on the MIME type, which is either
 inferred from the file extension or explicitly overridden in the catalog.
@@ -442,7 +557,7 @@ inferred from the file extension or explicitly overridden in the catalog.
 | **`.db`, `.sqlite`**      | `application/x-sqlite3`    | **Slip**      | Returns a slip for DB drivers.          |
 | **(Unknown)**             | `application/octet-stream` | **Slip**      | Raw binary slip.                        |
 
-### 5\.10\.3 Options & Overrides
+### 5\.11\.3 Options & Overrides
 
 You can modify the loading behavior by appending options to the filename in the
 catalog key.
@@ -452,7 +567,7 @@ catalog key.
   * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
   * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
 
-### 5\.10\.4 Slips (Resource Handles)
+### 5\.11\.4 Slips (Resource Handles)
 
 For binary assets (images, audio) or large files (databases), loading the entire
 content into the VM stack is inefficient. In these cases, the Resolver returns a
@@ -481,4 +596,81 @@ via Map literals. This ensures that all Slips passed to standard library
 functions have originated from the verified Resolver logic and point to
 sandboxed, checksummed assets.
 
+## 5\.12 Full Catalog Example
 
+```yaml
+# ./my_project@.rhy
+# one non-version key is allowed for project/shelf metadata
+my_project: 
+    👤: Jake Russo # author
+    🪪: MIT # license
+    📦: https://github.com/user/repo
+    🏷️: # keywords
+        - programming 
+        - cryptography
+        - server
+    📝: >
+        This is a description of the project and it can span
+        multiple lines using thr yaml ">" operator
+    📂: src # if the libraries and desktop books are in non-root folder
+
+# all remaining values in the catalog are versions of the project
+-:
+    <-: 0.1.0 # this "<-" symbol as a key means that this version has the same dependencies as the value
+0.1.0:
+    core_mechanics: <- # this "<-" symbol as a value means that core_mechanics shelf contains its own catalog
+    win_conditions: <-
+    physics: # objects with version keys means that the shelf's catalog is included here
+        0.1.0:
+            # the triple underscore ____ means that the user has not yet added an achor for these shelves
+            core_mechanics: 0.3.2 ___ # this means that physics@0.1.0 depends on core_mechanics@0.3.2
+            math: 0.1.0! ___ # the ! means standard library (all standard libraries are versioned and anchored)
+
+    # The brackets indicate this is a Resource Shelf.
+    art_files: [0.1.0] ___ # Maps to: /src/[art_files]/0.1.0
+    
+    # if you are using the flag for allowing wildcards, you could reference the tip version directly
+    sounds: [-] # Maps to: /src/[sounds]/-
+    # if you want to specify a resource sub-catalog across multiple lines, use dash - leading line to indicate []
+    icons: # Maps to: /src/[icons]
+    - logo.png: sha256:a1b2...
+      favicon.ico: sha256:c12f8... # multiple preceding YAML dashes are not required
+    - spinner.gif: ___ 
+
+    # false means that this is a non-resource folder that should be excluded from any distribution
+    integration_checks: false # but it could still have its own catalog (like for testing routes)
+---
+# ./core_mechanics/core_mechanics@.rhy
+-: null # since none of the versions contain dependencies, no pointer is needed
+0.4.1: ~ # in YAML ~ is equivalent to null
+0.3.2: null # null means that this is a rhumb folder but there's no dependencies and no inner shelves
+---
+# ./win_conditions/win_conditions@.rhy
+-: # we're using the new core_mechanics version in this top shelf
+    core_mechanics: 0.4.1
+    physics: 0.1.0
+0.2.1:
+    core_mechanics: 0.3.2
+    physics: 0.1.0
+0.2.0:
+    core_mechanics: 0.3.2
+    physics: 0.1.0
+---
+# ./integration_checks/integration_checks@.rhy
+# even though this shelf isn't part of the main library/route, it can still have a catalog
+-:
+  <-: 0.5.0
+0.5.0:
+  <-: 0.4.0 # if you are adding only, you can keep the pointer
+  win_conditions: 0.2.1
+0.4.0:
+  core_mechanics: 0.4.1
+  physics: 0.1.0
+0.3.0:
+  core_mechanics: 0.3.2
+  physics: 0.1.0
+0.2.0:
+  <-: 0.1.0
+0.1.0:
+  physics: 0.1.0
+```
