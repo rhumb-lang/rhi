@@ -114,7 +114,7 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 
 | Operator     | Syntax | Native Opcode      | Semantics                                    |
 |:-------------|:-------|:-------------------|:---------------------------------------------|
-| **Range**    | `\|`   | `OP_RANGE`         | Create inclusive **lazy** sequence (1\|3 -\> [1;2;3]) |
+| **Range**    | `\|`   | `OP_RANGE`         | Create **generic** lazy pair which can become different things depending on context (1\|3 -\> [1;2;3]) |
 | **Has Sub**  | `=@`   | `OP_HAS_SUBFIELD`  | Check for subfield presence                  |
 | **Not Sub**  | `~@`   | `OP_NOT_HAS_SUB`   | Check for subfield absence                   |
 | **Has Fld**  | `=\`   | `OP_HAS_FIELD`     | Check for field presence                     |

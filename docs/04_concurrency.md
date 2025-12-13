@@ -80,8 +80,9 @@ The syntax `realm <> [ pattern ] -> { body }` acts as a generic lifecycle manage
 
 ### 4\.7 Vassals (Facets & Attenuation)
 
-Vassals (`<{}>`) are **Bi-Directional Proxies** used to secure a Realm. They
-enforce the *Principle of Least Privilege*.
+Vassals (`<{}>`) are **Bi-Directional Proxies** used to secure a Realm or a
+Library. They enforce the *Principle of Least Privilege* by acting as a membrane
+between a Subject and the World.
 
 **Syntax:**
 
@@ -115,6 +116,39 @@ type Vassal struct {
     Rules  *Closure // The <{}> logic
 }
 ```
+
+#### 4.7.1 Capabilities as Ranges
+
+When securing a library (see *§5.5*), capabilities are defined as **IO Ranges** using the pipe operator `|`.
+
+  * **Operator:** `|` (Range) creates a generic `Range` object holding `{Start: Value, End: Value}`.
+  * **Vassal Interpretation:** When a Vassal encounters a Range in a pattern match, it interprets it as `Ingress | Egress`.
+
+| Side      | Term        | Direction           | Meaning                                                                |
+|:----------|:------------|:--------------------|:-----------------------------------------------------------------------|
+| **Left**  | **Ingress** | `Inside <- Outside` | Data flowing *into* the library. (Read File, Listen Port, Get Env).     |
+| **Right** | **Egress**  | `Inside -> Outside` | Data flowing *out* of the library. (Write File, Connect Port, Set Env). |
+
+**Common Policy Patterns:**
+
+1.  **Read-Only:** Block Egress with `___`.
+    ```rhumb
+    #💾( "data/*.txt" | ___ )
+    ```
+2.  **Write-Only:** Block Ingress with `___`.
+    ```rhumb
+    #💾( ___ | "/var/logs/app.log" )
+    ```
+3.  **Full Access:** Allow matching patterns on both sides.
+    ```rhumb
+    #📡( 8080 | "api.stripe.com" )
+    ```
+4.  **Reusable Policies:** Since Ranges are first-class Values, they can be defined once and applied to many libraries.
+    ```rhumb
+    web_safe := ___ | ["google.com"; "stripe.com"]
+    lib_a := {git|...|-} || <{ #📡(web_safe) }>
+    lib_b := {git|...|-} || <{ #📡(web_safe) }>
+    ```
 
 ### 4\.8 Go Implementation Strategy
 
@@ -151,6 +185,15 @@ type Tuple struct {
 
   * **Synchronous Return:** Code returning a value (unnamed signal) compiles to `RETURN`, bypassing the Tuplespace entirely for speed.
   * **Asynchronous IPC:** Only named signals (`#error`, `#log`) trigger the Tuplespace logic, preserving the "90/10" performance rule.
+
+#### Architecture Change: Generic Ranges
+
+To support Capability Ranges, the `OP_RANGE` instruction and the `Range` struct in the VM must be updated to support **Any Value**, not just Integers.
+
+  * **Old Definition:** `Range { Start int64, End int64 }`
+  * **New Definition:** `Range { Start Value, End Value }`
+
+This allows `|` to act as a general-purpose "Lazy Pair" constructor, which is essential for defining Ingress/Egress policies dynamically.
 
 ### 4\.9 Distributed Rhumb (Network Transparency)
 
