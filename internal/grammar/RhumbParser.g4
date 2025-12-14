@@ -93,9 +93,10 @@ expression
     ;
 
 libraryResolver
-    : Bang
-    | Dash
-    | Label
+    : Bang  # BaseResolver
+    | Dash  # ShelfResolver
+    | Equal # ResourceResolver
+    | Label # CustomResolver
     ;
 
 libraryPath
