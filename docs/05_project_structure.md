@@ -467,13 +467,36 @@ inferred from the file extension or explicitly overridden in the catalog.
 
 #### 5\.7\.3 Options & Overrides
 
-You can modify the loading behavior by appending options to the filename in the
-catalog key.
+You can modify the loading behavior by setting various options in the catalog entry for a resource.
 
   * **`utf-8` / `iso-8859-1`**: Forces text decoding using the specified charset.
   * **`base64`**: Loads binary data but returns it as a Base64-encoded **Text** string.
   * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
   * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
+
+Options can be defined in two places:
+
+1.  **In the Key (Suffix):** `filename;option: anchor`
+    * *Best for:* **Loading Instructions** (e.g., `base64`). This allows the
+        IDE to auto-generate the anchor (`___` -\> `sha256:...`) without
+        overwriting your manual options.
+2.  **In the Value (Prefix):** `filename: option anchor`
+    * *Best for:* **File Metadata** (e.g., `text/plain`). Cleaner to read but requires care when auto-generating anchors to preserve the existing text.
+
+**Example:**
+
+```yaml
+# [logo_folder]@.rhy
+-:
+  # Key-based (Safe for Auto-Anchor)
+  logo.png;base64: ___
+
+  # Value-based (Clean Readability)
+  config.json: text/plain sha256:e3b0c442...
+
+  # Mixed (Valid)
+  data.dat;base64: application/octet-stream sha256:a1b2...
+```
 
 #### 5\.7\.4 Slips (Resource Handles)
 
