@@ -436,7 +436,7 @@ inferred from the file extension or explicitly overridden in the catalog.
 | **`.db`, `.sqlite`**      | `application/x-sqlite3`    | **Slip**      | Returns a slip for DB drivers.          |
 | **(Unknown)**             | `application/octet-stream` | **Slip**      | Raw binary slip.                        |
 
-### 5\.7\.3 Options & Overrides
+#### 5\.7\.3 Options & Overrides
 
 You can modify the loading behavior by appending options to the filename in the
 catalog key.
@@ -446,7 +446,7 @@ catalog key.
   * **`text/plain`**: Forces treating a file (like `.json`) as raw text instead of parsing it.
   * **`application/json`**: Forces parsing a file (like `.config`) as JSON.
 
-### 5\.7\.4 Slips (Resource Handles)
+#### 5\.7\.4 Slips (Resource Handles)
 
 For binary assets (images, audio) or large files (databases), loading the entire
 content into the VM stack is inefficient. In these cases, the Resolver returns a
