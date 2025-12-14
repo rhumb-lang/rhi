@@ -213,12 +213,12 @@ func LoadCatalog(path string) (*Catalog, error) {
 			// Validate Shadowing
 			for key := range vc.Dependencies {
 				if _, exists := baseVC.Dependencies[key]; exists {
-					return fmt.Errorf("Pointer Invalid: Shadowing Detected in %s overriding %s from %s", ver, key, baseVer)
+					return fmt.Errorf("pointer Invalid: Shadowing Detected in %s overriding %s from %s", ver, key, baseVer)
 				}
 			}
 			for key := range vc.Resources {
 				if _, exists := baseVC.Resources[key]; exists {
-					return fmt.Errorf("Pointer Invalid: Resource Shadowing Detected in %s overriding %s", ver, key)
+					return fmt.Errorf("pointer Invalid: Resource Shadowing Detected in %s overriding %s", ver, key)
 				}
 			}
 
