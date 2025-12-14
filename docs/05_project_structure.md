@@ -204,7 +204,7 @@ signal will dissolve into `___` (Empty), effectively sandboxing the code.
 
 ### 5\.6 Catalogs
 
-Catalog files serves a dual purpose: they are both the **Dependency Manifest**
+Catalog files serve a dual purpose: they are both the **Dependency Manifest**
 (Human Intent) and the **Integrity Anchor** (Machine Reality). Rhumb
 differentiates between **Code Dependencies** (YAML Strings) and **Resource
 Dependencies** (YAML Strings inside Arrays). They must have the same name as the
