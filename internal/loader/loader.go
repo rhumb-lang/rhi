@@ -41,7 +41,7 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 	// 1. Resolve Path
 	//    If resolver == "-", look in ProjectRoot/src (or configured root).
 	//    If resolver == "!", look in StdLib.
-	//    Handle Version Matching (finding the right folder /0.1.0/ or /-/ 
+	//    Handle Version Matching (finding the right folder /0.1.0/ or /-/
 
 	physicalPath, err := l.resolvePath(resolver, logicalPath, constraint)
 	if err != nil {
@@ -134,7 +134,7 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 	// We construct a constraint manually?
 	// resolvePath expects mapval.Value.
 	// Let's implement parseConstraint helper.
-	
+
 	catConstraint := l.parseConstraint(spec.Version)
 	shelfPath, err := l.resolvePath("-", physicalName, catConstraint)
 	if err != nil {
@@ -154,17 +154,17 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 		// The `resolvePath` returns `.../src/[icons]/1.0.0`.
 		// The catalog file should be `.../src/[icons]/[icons]@.rhy`.
 		// But wait, `LoadCatalog` supports `Resources` map in `VersionConfig`.
-		
+
 		// If we load the catalog OF THE SHELF.
 		resolvedVer := filepath.Base(shelfPath) // "1.0.0" or "-"
 		// We need to find the catalog file.
 		// It's usually `[shelfname]@.rhy` in the shelf root? No, parent of version folder.
 		shelfRoot := filepath.Dir(shelfPath)
 		catPath := filepath.Join(shelfRoot, fmt.Sprintf("%s@.rhy", physicalName))
-		
+
 		// If not found, maybe just try `LoadCatalog` on shelfRoot?
 		// Actually, `LoadCatalog` logic expects `Resources` to be populated if filename has brackets.
-		
+
 		cat, err := LoadCatalog(catPath)
 		if err == nil {
 			if vc, ok := cat.Versions[resolvedVer]; ok {
@@ -194,35 +194,39 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 	}
 
 	// 6. Return Value Strategy
-    // A. Base64
-    for _, opt := range meta.Options {
-        if opt == "base64" {
+	// A. Base64
+	for _, opt := range meta.Options {
+		if opt == "base64" {
 			encoded := base64.StdEncoding.EncodeToString(data)
 			return mapval.NewText(encoded), nil
-        }
-    }
+		}
+	}
 
-    // B. Infer MIME
-    mime := meta.Mime
-    if mime == "" {
-        ext := filepath.Ext(filename)
-        switch ext {
-        case ".json": mime = "application/json"
-        case ".txt", ".md": mime = "text/plain"
-        case ".png", ".jpg": mime = "image/png"
-        default: mime = "application/octet-stream"
-        }
-    }
+	// B. Infer MIME
+	mime := meta.Mime
+	if mime == "" {
+		ext := filepath.Ext(filename)
+		switch ext {
+		case ".json":
+			mime = "application/json"
+		case ".txt", ".md":
+			mime = "text/plain"
+		case ".png", ".jpg":
+			mime = "image/png"
+		default:
+			mime = "application/octet-stream"
+		}
+	}
 
-    // C. Dispatch
-    if mime == "application/json" {
+	// C. Dispatch
+	if mime == "application/json" {
 		return l.parseJSON(data)
-    }
-    if strings.HasPrefix(mime, "text/") {
-        return mapval.NewText(string(data)), nil
-    }
+	}
+	if strings.HasPrefix(mime, "text/") {
+		return mapval.NewText(string(data)), nil
+	}
 
-    // D. Default: Slip
+	// D. Default: Slip
 	return mapval.NewSlip(fullPath, mime), nil
 }
 
@@ -252,7 +256,7 @@ func toRhumbValue(v interface{}) mapval.Value {
 		// Implementing basic construction:
 		fields := make([]mapval.FieldDesc, 0, len(val))
 		values := make([]mapval.Value, 0, len(val))
-		
+
 		// Sort keys for deterministic order
 		keys := make([]string, 0, len(val))
 		for k := range val {
@@ -269,7 +273,7 @@ func toRhumbValue(v interface{}) mapval.Value {
 			Kind:   mapval.LegendMap,
 			Fields: fields,
 		}
-		
+
 		return mapval.Value{
 			Type: mapval.ValObject,
 			Obj: &mapval.Map{
@@ -281,18 +285,18 @@ func toRhumbValue(v interface{}) mapval.Value {
 		// Create a Rhumb List (Map with integer keys)
 		fields := make([]mapval.FieldDesc, 0, len(val))
 		values := make([]mapval.Value, 0, len(val))
-		
+
 		for i, item := range val {
 			key := strconv.Itoa(i + 1) // 1-based indexing in Rhumb
 			fields = append(fields, mapval.FieldDesc{Name: key, Kind: mapval.FieldImmutable})
 			values = append(values, toRhumbValue(item))
 		}
-		
+
 		legend := &mapval.Legend{
 			Kind:   mapval.LegendMap,
 			Fields: fields,
 		}
-		
+
 		return mapval.Value{
 			Type: mapval.ValObject,
 			Obj: &mapval.Map{
@@ -333,7 +337,8 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 	}
 
 	var basePath string
-	if resolver == "-" {
+	switch resolver {
+	case "-":
 		if l.ProjectRoot == "" {
 			return "", fmt.Errorf("project root not set for local import")
 		}
@@ -341,14 +346,14 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 		if l.RootCatalog != nil && l.RootCatalog.SourceRoot != "" {
 			basePath = filepath.Join(basePath, l.RootCatalog.SourceRoot)
 		}
-	} else if resolver == "!" {
+	case "!":
 		// Use environment variable or default relative path
 		libPath := os.Getenv("RHUMB_LIB")
 		if libPath == "" {
 			return "", fmt.Errorf("base library path (RHUMB_LIB) not set")
 		}
 		basePath = libPath
-	} else {
+	default:
 		return "", fmt.Errorf("unsupported resolver: %s", resolver)
 	}
 
