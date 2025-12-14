@@ -236,15 +236,22 @@ preventing "Left-Pad" incidents or malicious updates.
   # The IDE will calculate the actual version and the anchor this on the next successful run and update the file.
   graphics: 1.0.- ___
 
-  # 3. Local/Standard (Implicit Trust)
-  # Resolvers '!' and '-' do not require anchors as they are part of the trust boundary.
-  std_math: 🧮@1.0.0!
+  # 3. Base Library (Verified)
+  # Resolvers '!' treat the base library like any other dependency.
+  # They must be anchored to ensure the runtime environment hasn't been tampered with.
+  std_math: 🧮@1.0.0! sha256:8f4b2...
+
+  # 4. Local Resolver (Implicit Trust)
+  # Only the Local Resolver '-' is exempt from anchoring, as it represents the
+  # mutable source code of the project itself.
+  local_utils: utils/-
 
   # === Resource Dependencies ===
   # Format: "filename: [anchor]"
   assets:
-    - logo.png: sha256:a1b2...
-    - data.json: ___
+    - -: # the initial dash indicates this is a bracketed sub-catalog
+      logo.png: sha256:a1b2...
+      data.json: ___
 ```
 
 1.  **Mandatory Tip (`-`):** Every catalog **must** contain a Tip version key
@@ -364,7 +371,7 @@ to rename libraries or move them without changing your source code imports.
    # logical_name : [ original_name @ ] specific_version_or_path
    physics_engine: libs/physics ___
    game_math: math@0.1.0 ___ # to make an alias, prefix the version name and an "@" before the version
-   standard_math: 🧮@1.0.0! ___ # aliases work for standard libraries too
+   standard_math: 🧮@1.0.0! ___ # IDE will calculate sha256 of the local stdlib on disk
  ```
 
 **Source Example:**

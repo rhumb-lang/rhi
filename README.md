@@ -110,8 +110,8 @@ The core language semantics are stable. The focus is now shifting from internal 
 ### Roadmap to v0.4
 
 #### 🚧 Missing Grammar Support
-- [ ] **Resolvers**:
-    - [ ] **Resource (`=`)**: Support for importing resources from Resource Shelves
+- [x] **Resolvers**:
+    - [x] **Resource (`=`)**: Support for importing resources from Resource Shelves
     - [ ] **Remote/Git (`git`)**: Support for importing directly from git repositories.
 - [ ] **Vassals `<{}>`**: Compilation of security proxies.
 - [ ] **Keys `` ` ``**: Compilation of private capability keys.
