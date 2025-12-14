@@ -4,3 +4,6 @@ project_alpha:
   <-: 0.1.0
 0.1.0:
   art: [1.0.0]
+  icons:
+    - logo.png: image/png
+    - config.json: text/plain

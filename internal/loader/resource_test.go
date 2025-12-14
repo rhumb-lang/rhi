@@ -66,4 +66,32 @@ func TestLoadResource(t *testing.T) {
 	if slip.Path != expectedPath {
 		t.Errorf("Expected path %s, got %s", expectedPath, slip.Path)
 	}
+
+	// Test Inline Merging (icons)
+	// icons:
+	//   - logo.png: image/png
+	//   - config.json: text/plain
+	res1, err := l.LoadResource("icons/logo.png", mapval.NewEmpty())
+	if err != nil {
+		t.Fatalf("Failed to load icons/logo.png: %v", err)
+	}
+	if res1.Type != mapval.ValObject {
+		t.Errorf("Failed to load first item in inline list, expected Object (Slip), got %v", res1.Type)
+	} else if res1.Obj.Type() != mapval.ObjTypeSlip {
+		t.Errorf("Expected ObjTypeSlip for logo.png, got %v", res1.Obj.Type())
+	} else {
+		s := res1.Obj.(*mapval.Slip)
+		if s.MimeType != "image/png" {
+			t.Errorf("Expected image/png for logo.png, got %s", s.MimeType)
+		}
+	}
+
+	res2, err := l.LoadResource("icons/config.json", mapval.NewEmpty())
+	if err != nil {
+		t.Fatalf("Failed to load icons/config.json: %v", err)
+	}
+	// config.json: text/plain -> Should be loaded as Text
+	if res2.Type != mapval.ValText {
+		t.Errorf("Failed to load second item in inline list, expected ValText, got %v", res2.Type)
+	}
 }

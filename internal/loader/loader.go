@@ -1,6 +1,10 @@
 package loader
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -180,13 +184,21 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 		return mapval.NewEmpty(), err
 	}
 
-	// TODO: Verify meta.Checksum here
+	// Verify Checksum
+	if meta.Checksum != "" && meta.Checksum != "___" {
+		hash := sha256.Sum256(data)
+		sum := "sha256:" + hex.EncodeToString(hash[:])
+		if sum != meta.Checksum {
+			return mapval.NewEmpty(), fmt.Errorf("integrity violation for '%s': expected %s, got %s", filename, meta.Checksum, sum)
+		}
+	}
 
 	// 6. Return Value Strategy
     // A. Base64
     for _, opt := range meta.Options {
         if opt == "base64" {
-            // return NewText(base64...)
+			encoded := base64.StdEncoding.EncodeToString(data)
+			return mapval.NewText(encoded), nil
         }
     }
 
@@ -204,7 +216,7 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 
     // C. Dispatch
     if mime == "application/json" {
-        // return l.parseJSON(data)
+		return l.parseJSON(data)
     }
     if strings.HasPrefix(mime, "text/") {
         return mapval.NewText(string(data)), nil
@@ -212,6 +224,84 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 
     // D. Default: Slip
 	return mapval.NewSlip(fullPath, mime), nil
+}
+
+func (l *LibraryLoader) parseJSON(data []byte) (mapval.Value, error) {
+	var v interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return mapval.NewEmpty(), err
+	}
+	return toRhumbValue(v), nil
+}
+
+func toRhumbValue(v interface{}) mapval.Value {
+	switch val := v.(type) {
+	case nil:
+		return mapval.NewEmpty()
+	case bool:
+		return mapval.NewBoolean(val)
+	case float64:
+		return mapval.NewFloat(val)
+	case string:
+		return mapval.NewText(val)
+	case map[string]interface{}:
+		// Create a Rhumb Map
+		// Note: We need to build Legend and Fields.
+		// For simplicity, we can create a map builder if available, or manually construct.
+		// Since we don't have a builder exposed here easily, let's assume mapval.NewMapFromGo exists or implement a basic one.
+		// Implementing basic construction:
+		fields := make([]mapval.FieldDesc, 0, len(val))
+		values := make([]mapval.Value, 0, len(val))
+		
+		// Sort keys for deterministic order
+		keys := make([]string, 0, len(val))
+		for k := range val {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			fields = append(fields, mapval.FieldDesc{Name: k, Kind: mapval.FieldImmutable})
+			values = append(values, toRhumbValue(val[k]))
+		}
+
+		legend := &mapval.Legend{
+			Kind:   mapval.LegendMap,
+			Fields: fields,
+		}
+		
+		return mapval.Value{
+			Type: mapval.ValObject,
+			Obj: &mapval.Map{
+				Legend: legend,
+				Fields: values,
+			},
+		}
+	case []interface{}:
+		// Create a Rhumb List (Map with integer keys)
+		fields := make([]mapval.FieldDesc, 0, len(val))
+		values := make([]mapval.Value, 0, len(val))
+		
+		for i, item := range val {
+			key := strconv.Itoa(i + 1) // 1-based indexing in Rhumb
+			fields = append(fields, mapval.FieldDesc{Name: key, Kind: mapval.FieldImmutable})
+			values = append(values, toRhumbValue(item))
+		}
+		
+		legend := &mapval.Legend{
+			Kind:   mapval.LegendMap,
+			Fields: fields,
+		}
+		
+		return mapval.Value{
+			Type: mapval.ValObject,
+			Obj: &mapval.Map{
+				Legend: legend,
+				Fields: values,
+			},
+		}
+	}
+	return mapval.NewEmpty()
 }
 
 func (l *LibraryLoader) parseConstraint(s string) mapval.Value {

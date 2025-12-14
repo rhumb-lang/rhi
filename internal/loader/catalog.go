@@ -260,24 +260,34 @@ func parseFilename(k string) string {
 func parseResourceMeta(k, v string) ResourceMeta {
 	meta := ResourceMeta{}
 
-	// Key Options
+	// 1. Parse Key Options (e.g. "file.png;base64")
 	if idx := strings.Index(k, ";"); idx != -1 {
-		meta.Options = strings.Split(k[idx+1:], ";")
+		meta.Options = append(meta.Options, strings.Split(k[idx+1:], ";")...)
 	}
 
-	// Value Checksum
-	if strings.HasPrefix(v, "sha256:") {
-		meta.Checksum = v
+	// 2. Parse Value Tokens (e.g. "text/plain sha256:...")
+	// We handle the value being potentially just "___" or a complex string
+	if v != "" && v != "___" {
+		tokens := strings.Fields(v) // Splits by whitespace
+		for _, token := range tokens {
+			if strings.HasPrefix(token, "sha256:") {
+				meta.Checksum = token
+			} else {
+				// Treat non-checksum tokens as Options/MIME
+				meta.Options = append(meta.Options, token)
+			}
+		}
 	}
 
-	// Process Options
+	// 3. Normalize Fields (MIME vs Charset)
+	// Consolidate options from both Key and Value sources
 	for _, opt := range meta.Options {
 		if strings.Contains(opt, "/") {
 			meta.Mime = opt
-		}
-		if opt == "utf-8" || opt == "iso-8859-1" {
+		} else if opt == "utf-8" || opt == "iso-8859-1" {
 			meta.Charset = opt
 		}
 	}
+	
 	return meta
 }

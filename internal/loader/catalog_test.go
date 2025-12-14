@@ -3,6 +3,7 @@ package loader
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -83,4 +84,28 @@ func TestLoadCatalog(t *testing.T) {
     if spec, ok := vDash.Dependencies["core"]; !ok || spec.Version != "1.0.0" {
         t.Errorf("expected inherited core dependency '1.0.0' in tip, got '%v'", spec)
     }
+}
+
+func TestCatalogShadowingError(t *testing.T) {
+	tmpDir := t.TempDir()
+	catalogPath := filepath.Join(tmpDir, "shadow@.rhy")
+
+	content := `
+-:
+  <-: 0.1.0
+  lib: 2.0.0 
+0.1.0:
+  lib: 1.0.0
+`
+	if err := os.WriteFile(catalogPath, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write catalog file: %v", err)
+	}
+
+	_, err := LoadCatalog(catalogPath)
+	if err == nil {
+		t.Fatal("Expected validation error for shadowing, got nil")
+	}
+	if !strings.Contains(err.Error(), "Shadowing Detected") {
+		t.Errorf("Expected shadowing error message, got: %v", err)
+	}
 }
