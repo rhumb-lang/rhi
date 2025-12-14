@@ -2,6 +2,7 @@ package mapval
 
 import (
 	"fmt"
+	"path/filepath" // Added for filepath.Base
 	"sort"
 	"strconv"
 	"strings"
@@ -225,6 +226,7 @@ const (
 	ObjTypeRange
 	ObjTypeTuple
 	ObjTypeDecimal
+	ObjTypeSlip
 )
 
 // Decimal wrapper
@@ -245,6 +247,26 @@ func (d *Decimal) Canonical() string {
 
 	return s
 }
+
+// Slip represents an opaque handle to a resource
+type Slip struct {
+	Path     string
+	MimeType string
+}
+
+func (s *Slip) Type() ObjectType { return ObjTypeSlip }
+func (s *Slip) Canonical() string {
+	return fmt.Sprintf("<Slip: %s (%s)>", filepath.Base(s.Path), s.MimeType)
+}
+
+// NewSlip creates the opaque handle
+func NewSlip(path, mime string) Value {
+	return Value{
+		Type: ValObject,
+		Obj:  &Slip{Path: path, MimeType: mime},
+	}
+}
+
 
 // TupleKind
 type TupleKind uint8

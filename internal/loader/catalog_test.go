@@ -27,7 +27,7 @@ func TestLoadCatalog(t *testing.T) {
 0.1.0:
   core: 1.0.0
   math: 2.0.0!
-  assets: true
+  assets: [1.0.0]
 `
 	if err := os.WriteFile(catalogPath, []byte(content), 0644); err != nil {
 		t.Fatalf("failed to write catalog file: %v", err)
@@ -63,14 +63,15 @@ func TestLoadCatalog(t *testing.T) {
 	if !ok {
 		t.Fatal("version 0.1.0 not found")
 	}
-	if v010.Dependencies["core"] != "1.0.0" {
-		t.Errorf("expected core dependency '1.0.0', got '%s'", v010.Dependencies["core"])
+	if spec, ok := v010.Dependencies["core"]; !ok || spec.Version != "1.0.0" {
+		t.Errorf("expected core dependency '1.0.0', got '%v'", spec)
 	}
-	if !v010.IsResource {
-		t.Error("expected IsResource to be true for 'assets: true' (parsed logic in LoadCatalog needs verification)")
-	}
+    // Check Resource Dependency
+    if spec, ok := v010.Dependencies["assets"]; !ok || !spec.IsResource {
+        t.Errorf("expected assets to be a resource dependency")
+    }
 
-	// Check "-"
+	// Check "-" (Flattening)
 	vDash, ok := catalog.Versions["-"]
 	if !ok {
 		t.Fatal("version - not found")
@@ -78,4 +79,8 @@ func TestLoadCatalog(t *testing.T) {
 	if vDash.Alias != "0.1.0" {
 		t.Errorf("expected alias '0.1.0', got '%s'", vDash.Alias)
 	}
+    // Verify Inheritance
+    if spec, ok := vDash.Dependencies["core"]; !ok || spec.Version != "1.0.0" {
+        t.Errorf("expected inherited core dependency '1.0.0' in tip, got '%v'", spec)
+    }
 }

@@ -30,10 +30,14 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 		fmt.Printf("[Loader] Request: {%s | %s | %s}\n", resolver, logicalPath, constraint.Canonical())
 	}
 
+	if resolver == "=" {
+		return l.LoadResource(logicalPath, constraint)
+	}
+
 	// 1. Resolve Path
 	//    If resolver == "-", look in ProjectRoot/src (or configured root).
 	//    If resolver == "!", look in StdLib.
-	//    Handle Version Matching (finding the right folder /0.1.0/ or /-/)
+	//    Handle Version Matching (finding the right folder /0.1.0/ or /-/ 
 
 	physicalPath, err := l.resolvePath(resolver, logicalPath, constraint)
 	if err != nil {
@@ -92,17 +96,148 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 	return result, nil
 }
 
+func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.Value, error) {
+	// 1. Split: "icons/logo.png" -> shelf="icons", file="logo.png"
+	logicalShelf, filename := filepath.Split(path)
+	logicalShelf = filepath.Clean(logicalShelf)
+
+	// 2. Lookup in Root Catalog
+	var spec DependencySpec
+	found := false
+	if l.RootCatalog != nil {
+		// Assume resolving from Root Tip ("-")
+		if rootVer, ok := l.RootCatalog.Versions["-"]; ok {
+			spec, found = rootVer.Dependencies[logicalShelf]
+		}
+	}
+
+	if !found {
+		return mapval.NewEmpty(), fmt.Errorf("shelf '%s' not found in dependencies", logicalShelf)
+	}
+	if !spec.IsResource {
+		return mapval.NewEmpty(), fmt.Errorf("'%s' is not a resource shelf (must use [] in catalog)", logicalShelf)
+	}
+
+	// 3. Resolve Physical Path
+	// Convention: Logical "icons" -> Physical "[icons]"
+	physicalName := fmt.Sprintf("[%s]", logicalShelf)
+
+	// Use Catalog's Version (pinned), ignore user's 'version' constraint usually
+	// (Or verify they match if strictness is required)
+	// We need to parse spec.Version string into mapval.Value constraint.
+	// For simplicity, we assume spec.Version is exact version string or "-"
+	// We reuse resolvePath logic but pointing to physical path.
+	// We construct a constraint manually?
+	// resolvePath expects mapval.Value.
+	// Let's implement parseConstraint helper.
+	
+	catConstraint := l.parseConstraint(spec.Version)
+	shelfPath, err := l.resolvePath("-", physicalName, catConstraint)
+	if err != nil {
+		return mapval.NewEmpty(), err
+	}
+
+	// 4. Determine Metadata
+	var meta ResourceMeta
+	var exists bool
+
+	if len(spec.InlineCatalog) > 0 {
+		meta, exists = spec.InlineCatalog[filename]
+	} else {
+		// Load Inner Catalog: [icons] @tests/fixtures/project_alpha/project_alpha@.rhy
+		// Assuming standard naming convention: [icons] @.rhy inside the folder?
+		// Or maybe the main catalog has it in Resources block?
+		// The `resolvePath` returns `.../src/[icons]/1.0.0`.
+		// The catalog file should be `.../src/[icons]/[icons]@.rhy`.
+		// But wait, `LoadCatalog` supports `Resources` map in `VersionConfig`.
+		
+		// If we load the catalog OF THE SHELF.
+		resolvedVer := filepath.Base(shelfPath) // "1.0.0" or "-"
+		// We need to find the catalog file.
+		// It's usually `[shelfname]@.rhy` in the shelf root? No, parent of version folder.
+		shelfRoot := filepath.Dir(shelfPath)
+		catPath := filepath.Join(shelfRoot, fmt.Sprintf("%s@.rhy", physicalName))
+		
+		// If not found, maybe just try `LoadCatalog` on shelfRoot?
+		// Actually, `LoadCatalog` logic expects `Resources` to be populated if filename has brackets.
+		
+		cat, err := LoadCatalog(catPath)
+		if err == nil {
+			if vc, ok := cat.Versions[resolvedVer]; ok {
+				meta, exists = vc.Resources[filename]
+			}
+		}
+	}
+
+	if !exists {
+		return mapval.NewEmpty(), fmt.Errorf("resource '%s' not declared in catalog", filename)
+	}
+
+	// 5. Read & Verify
+	fullPath := filepath.Join(shelfPath, filename)
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		return mapval.NewEmpty(), err
+	}
+
+	// TODO: Verify meta.Checksum here
+
+	// 6. Return Value Strategy
+    // A. Base64
+    for _, opt := range meta.Options {
+        if opt == "base64" {
+            // return NewText(base64...)
+        }
+    }
+
+    // B. Infer MIME
+    mime := meta.Mime
+    if mime == "" {
+        ext := filepath.Ext(filename)
+        switch ext {
+        case ".json": mime = "application/json"
+        case ".txt", ".md": mime = "text/plain"
+        case ".png", ".jpg": mime = "image/png"
+        default: mime = "application/octet-stream"
+        }
+    }
+
+    // C. Dispatch
+    if mime == "application/json" {
+        // return l.parseJSON(data)
+    }
+    if strings.HasPrefix(mime, "text/") {
+        return mapval.NewText(string(data)), nil
+    }
+
+    // D. Default: Slip
+	return mapval.NewSlip(fullPath, mime), nil
+}
+
+func (l *LibraryLoader) parseConstraint(s string) mapval.Value {
+	// Simple parser for "1.0.0" or "-"
+	if s == "-" {
+		return mapval.NewVersion(0, 0, 0, true) // Wildcard
+	}
+	parts := strings.Split(s, ".")
+	if len(parts) == 3 {
+		maj, _ := strconv.Atoi(parts[0])
+		min, _ := strconv.Atoi(parts[1])
+		pat, _ := strconv.Atoi(parts[2])
+		return mapval.NewVersion(uint16(maj), uint16(min), uint32(pat), false)
+	}
+	// Fallback/TODO: Better parsing
+	return mapval.NewVersion(0, 0, 0, true)
+}
+
 func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint mapval.Value) (string, error) {
 	// 1. Check Catalog Aliases (The "Package Manager" layer)
 	if l.RootCatalog != nil {
 		if rootVer, ok := l.RootCatalog.Versions["-"]; ok {
-			if depPath, ok := rootVer.Dependencies[logicalPath]; ok {
-				// logicalPath is an alias (e.g. "calc_alias" -> "libs/calc")
-				// We replace logicalPath with the resolved alias.
-				// Note: Ideally we should handle version constraints on the dependency too,
-				// but for now we assume the catalog points to a path and we apply the constraint
-				// to that path.
-				logicalPath = depPath
+			if spec, ok := rootVer.Dependencies[logicalPath]; ok {
+				if !spec.IsResource { // Aliases for code dependencies
+					logicalPath = spec.Version
+				}
 			}
 		}
 	}
@@ -113,6 +248,9 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 			return "", fmt.Errorf("project root not set for local import")
 		}
 		basePath = l.ProjectRoot
+		if l.RootCatalog != nil && l.RootCatalog.SourceRoot != "" {
+			basePath = filepath.Join(basePath, l.RootCatalog.SourceRoot)
+		}
 	} else if resolver == "!" {
 		// Use environment variable or default relative path
 		libPath := os.Getenv("RHUMB_LIB")
@@ -216,8 +354,8 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 			}
 			// If we have "1.2.-", how do we know we must enforce Minor?
 			// The Value format is lossy if we don't use sentinels.
-			// `NewVersion` comment: "0xFFFFFFFF is Sentinel for 'Any Patch'".
-			// "0xFFFF is Sentinel for 'Any Minor'".
+			// `NewVersion` comment: "0xFFFFFFFF is Sentinel for 'Any Patch'வுகளை."
+			// "0xFFFF is Sentinel for 'Any Minor'வுகளை."
 			// BUT `resolveVersionValue` in expr.go passed `c.Major, c.Minor, c.Patch` directly!
 			// And `c` uses 0 for unset fields?
 			// `ast.VersionConstraint` fields are 0 if unset?

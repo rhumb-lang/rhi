@@ -3,10 +3,26 @@ package loader
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+// ResourceMeta holds the parsed symbolic options for a file
+type ResourceMeta struct {
+	Mime     string
+	Charset  string
+	Checksum string   // "sha256:..."
+	Options  []string // Raw options like "base64", "text/plain"
+}
+
+// DependencySpec handles both Code (String) and Resource (Array) deps
+type DependencySpec struct {
+	Version       string
+	IsResource    bool
+	InlineCatalog map[string]ResourceMeta // For inline definitions: [{ "file": "meta" }]
+}
 
 type Catalog struct {
 	Author      string   `yaml:"👤"`
@@ -23,9 +39,10 @@ type Catalog struct {
 }
 
 type VersionConfig struct {
-	Dependencies map[string]string // "math": "1.0.0"
-	Alias        string            // For "<-: 0.1.0"
-	IsResource   bool              // For "assets: true"
+	Dependencies map[string]DependencySpec
+	Alias        string
+	// Resources is populated ONLY if the catalog file itself is bracketed [name] @tests/fixtures/project_alpha/project_alpha@.rhy
+	Resources map[string]ResourceMeta
 }
 
 func LoadCatalog(path string) (*Catalog, error) {
@@ -63,6 +80,10 @@ func LoadCatalog(path string) (*Catalog, error) {
 		}
 	}
 
+	// Detect Resource Catalog
+	filename := filepath.Base(path)
+	isResourceCatalog := strings.Contains(filename, "[") && strings.Contains(filename, "]")
+
 	// 2. Scan for Nested Metadata (if not flat) & Versions
 	for key, val := range raw {
 		if knownKeys[key] {
@@ -70,9 +91,6 @@ func LoadCatalog(path string) (*Catalog, error) {
 		}
 
 		// Check if it's a Metadata Block (Project Name)
-		// Heuristic: Not a version number, and value is a map containing metadata keys
-		// Or assume any non-version key is metadata?
-		// Version keys: "-", "0.1.0", "1.0"
 		isVersion := key == "-" || strings.Contains(key, ".") || (len(key) > 0 && key[0] >= '0' && key[0] <= '9')
 
 		if !isVersion {
@@ -98,7 +116,8 @@ func LoadCatalog(path string) (*Catalog, error) {
 
 		// It's a version (or treated as one)!
 		vc := VersionConfig{
-			Dependencies: make(map[string]string),
+			Dependencies: make(map[string]DependencySpec),
+			Resources:    make(map[string]ResourceMeta),
 		}
 
 		if vMap, ok := val.(map[string]interface{}); ok {
@@ -110,19 +129,155 @@ func LoadCatalog(path string) (*Catalog, error) {
 					continue
 				}
 
-				switch val := v.(type) {
+				valStr := fmt.Sprintf("%v", v)
+
+				// MODE A: Resource Catalog
+				if isResourceCatalog {
+					vc.Resources[parseFilename(k)] = parseResourceMeta(k, valStr)
+					continue
+				}
+
+				// MODE B: Standard Catalog
+				spec := DependencySpec{}
+
+				switch typedVal := v.(type) {
 				case string:
-					vc.Dependencies[k] = val
-				case bool:
-					vc.Dependencies[k] = fmt.Sprintf("%v", val)
-					if val {
-						vc.IsResource = true
+					// Code Dependency: "math": "1.0.0"
+					spec.Version = typedVal
+					spec.IsResource = false
+
+				case []interface{}:
+					// Resource Dependency: "assets": ["1.0.0"]
+					spec.IsResource = true
+					spec.Version = "-" // Default
+
+					if len(typedVal) > 0 {
+						// Check first item to determine type
+						first := typedVal[0]
+						if verStr, ok := first.(string); ok {
+							spec.Version = verStr
+						} else {
+							// Inline Catalog
+							spec.InlineCatalog = make(map[string]ResourceMeta)
+							for _, item := range typedVal {
+								if mapDef, ok := item.(map[string]interface{}); ok {
+									for fKey, fVal := range mapDef {
+										fMeta := parseResourceMeta(fKey, fmt.Sprintf("%v", fVal))
+										spec.InlineCatalog[parseFilename(fKey)] = fMeta
+									}
+								}
+							}
+						}
 					}
 				}
+				vc.Dependencies[k] = spec
 			}
 		}
 
 		m.Versions[key] = vc
 	}
+
+	// 3. Validation & Flattening
+	flattened := make(map[string]bool)
+	checking := make(map[string]bool)
+
+	var flatten func(ver string) error
+	flatten = func(ver string) error {
+		if flattened[ver] {
+			return nil
+		}
+		if checking[ver] {
+			return fmt.Errorf("cycle detected in version aliases: %s", ver)
+		}
+
+		vc, exists := m.Versions[ver]
+		if !exists {
+			return nil
+		}
+
+		checking[ver] = true
+		defer func() { delete(checking, ver) }()
+
+		if vc.Alias != "" {
+			baseVer := vc.Alias
+			if _, ok := m.Versions[baseVer]; !ok {
+				return fmt.Errorf("version %s points to missing base version %s", ver, baseVer)
+			}
+
+			if err := flatten(baseVer); err != nil {
+				return err
+			}
+
+			baseVC := m.Versions[baseVer]
+
+			// Validate Shadowing
+			for key := range vc.Dependencies {
+				if _, exists := baseVC.Dependencies[key]; exists {
+					return fmt.Errorf("Pointer Invalid: Shadowing Detected in %s overriding %s from %s", ver, key, baseVer)
+				}
+			}
+			for key := range vc.Resources {
+				if _, exists := baseVC.Resources[key]; exists {
+					return fmt.Errorf("Pointer Invalid: Resource Shadowing Detected in %s overriding %s", ver, key)
+				}
+			}
+
+			// Merge (Copy base dependencies to current)
+			for k, v := range baseVC.Dependencies {
+				vc.Dependencies[k] = v
+			}
+			for k, v := range baseVC.Resources {
+				vc.Resources[k] = v
+			}
+		}
+
+		flattened[ver] = true
+		return nil
+	}
+
+	for v := range m.Versions {
+		if err := flatten(v); err != nil {
+			return nil, err
+		}
+	}
+
+	if _, ok := m.Versions["-"]; !ok {
+		return nil, fmt.Errorf("invalid catalog: missing tip version ('-')")
+	}
+
 	return m, nil
+}
+
+// Helper: "config.json;utf-8" -> "config.json"
+func parseFilename(k string) string {
+	if idx := strings.Index(k, ";"); idx != -1 {
+		return k[:idx]
+	}
+	return k
+}
+
+// Helper: Parses key options and value checksums
+func parseResourceMeta(k, v string) ResourceMeta {
+	meta := ResourceMeta{}
+
+	// Key Options
+	if idx := strings.Index(k, ";"); idx != -1 {
+		meta.Options = strings.Split(k[idx+1:], ";")
+	}
+
+	// Value Checksum
+	if strings.HasPrefix(v, "sha256:") {
+		meta.Checksum = v
+	}
+
+	// Process Options
+	for _, opt := range meta.Options {
+		if strings.Contains(opt, "/") {
+			meta.Mime = opt
+		}
+		if opt == "utf-8" || opt == "iso-8859-1" {
+			meta.Charset = opt
+		}
+	}
+	return meta
 }

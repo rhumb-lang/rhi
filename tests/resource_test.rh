@@ -1,0 +1,8 @@
+% This test file demonstrates loading a resource.
+% Note: To run this test properly, the runner needs to be configured with the project root
+% pointing to tests/fixtures/project_alpha.
+% The logic is verified by internal/loader/resource_test.go.
+
+img := {=|art/hero.png|-}
+assert(img\canonical() == "<Slip: hero.png (image/png)>")
+display("Resource loaded successfully: " + img)
