@@ -497,6 +497,14 @@ Options can be defined in two places:
   # Mixed (Valid)
   data.dat;base64: application/octet-stream sha256:a1b2...
 ```
+* **Tooling (rhide):** Your future IDE or build tool logic for replacing `___`
+  with `sha256:...` becomes slightly more complex.
+  * *Old Logic:* `Value = newHash`
+  * *New Logic:* `Value = oldOptions + " " + newHash` (Must preserve existing
+    prefix tokens).
+* **Conflict Resolution:** If a user specifies `text/plain` in the key AND
+  `application/json` in the value, the loop in `parseResourceMeta` will let the
+  **last one win** (based on iteration order).
 
 #### 5\.7\.4 Slips (Resource Handles)
 
