@@ -1,4 +1,4 @@
-% Test Standard Library import
+% Test Base library import
 std := {! | std_math | -}
 sum := std\add(10; 30)
 sum %= 40

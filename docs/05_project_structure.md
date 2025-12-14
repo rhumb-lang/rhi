@@ -456,7 +456,7 @@ content into the VM stack is inefficient. In these cases, the Resolver returns a
   * **Fields:**
       * `\path`: The absolute path to the verified file on disk.
       * `\mime`: The resolved MIME type.
-  * **Usage:** Standard Library functions accept slips directly.
+  * **Usage:** Base library functions accept slips directly.
     ```rhumb
     db_res := {=|database/users.db|0.1.0}  % Returns Slip
     conn := sql\open(db_res)      % Opens the path defined in the slip
@@ -466,12 +466,12 @@ content into the VM stack is inefficient. In these cases, the Resolver returns a
 **Semantics:** A Slip represents **Verified Permission** to access a specific
 asset. It does not load the asset into memory.
 
-**Streaming:** Standard library functions (like `io\open(slip)`) use the Slip to
+**Streaming:** Base library functions (like `io\open(slip)`) use the Slip to
 open a file descriptor, allowing for random access and streaming of large assets
 (video/databases) without memory pressure.
 
 **Security:** Slips are **Opaque Handles**. They cannot be constructed manually
-via Map literals. This ensures that all Slips passed to standard library
+via Map literals. This ensures that all Slips passed to base library
 functions have originated from the verified Resolver logic and point to
 sandboxed, checksummed assets.
 
@@ -588,7 +588,7 @@ my_project:
         0.1.0:
             # the triple underscore ____ means that the user has not yet added an achor for these shelves
             core_mechanics: 0.3.2 ___ # this means that physics@0.1.0 depends on core_mechanics@0.3.2
-            math: 0.1.0! ___ # the ! means standard library (all standard libraries are versioned and anchored)
+            math: 0.1.0! ___ # the ! means base library (all standard libraries are versioned and anchored)
 
     # The brackets indicate this is a Resource Shelf.
     art_files: [0.1.0] ___ # Maps to: /src/[art_files]/0.1.0

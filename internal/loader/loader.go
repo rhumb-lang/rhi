@@ -21,7 +21,7 @@ type LibraryLoader struct {
 	Config      *config.Config
 	VM          *vm.VM // Back-reference to execute code
 
-	RootCatalog *Catalog       // The parsed project@.rhy
+	RootCatalog *Catalog        // The parsed project@.rhy
 	Loading     map[string]bool // For cycle detection
 }
 
@@ -117,7 +117,7 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 		// Use environment variable or default relative path
 		libPath := os.Getenv("RHUMB_LIB")
 		if libPath == "" {
-			return "", fmt.Errorf("standard library path (RHUMB_LIB) not set")
+			return "", fmt.Errorf("base library path (RHUMB_LIB) not set")
 		}
 		basePath = libPath
 	} else {
@@ -194,7 +194,7 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 				continue
 			}
 			// 1.2.- -> matches 1.2.x (maj, min must match)
-			// Wait, maj != 0 check assumes we parsed 0 as 'any' for major, 
+			// Wait, maj != 0 check assumes we parsed 0 as 'any' for major,
 			// but unpack returns exact values.
 			// NewVersion(Major, Minor, Patch, isWild)
 			// If user wrote "1.-", Major=1, Minor=0 (default?), Patch=0.
@@ -209,7 +209,7 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 			// "1.0.-" -> Major=1, Minor=0, Patch=0, Wild=True.
 			// They are effectively same constraint in this Value representation?
 			// Yes, semantically "1.*" includes "1.0.*".
-			
+
 			// So if Major > 0, we enforce Major match.
 			if maj > 0 && v.maj != maj {
 				continue
@@ -223,7 +223,7 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 			// `ast.VersionConstraint` fields are 0 if unset?
 			// I need to update `resolveVersionValue` to set sentinels!
 			// Otherwise `loader.go` can't distinguish.
-			
+
 			// Let's assume for now I will fix `resolveVersionValue` later or assume strict prefix matching logic:
 			// If Major > 0, match Major.
 			// If Minor > 0, match Minor.
@@ -231,20 +231,22 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 			// This works for "1.2.-" (maj=1, min=2, pat=0) -> matches 1.2.x
 			// But what about "1.0.-" (maj=1, min=0, pat=0)? Matches 1.0.x
 			// Vs "1.-" (maj=1, min=0, pat=0)? Matches 1.x.x?
-			// If `resolveVersionValue` passed 0 for Minor in "1.-", 
+			// If `resolveVersionValue` passed 0 for Minor in "1.-",
 			// and passed 0 for Minor in "1.0.-", they are identical.
 			// We can treat them as "Match provided non-zero prefixes"?
 			// But "1.0.-" specifically wants 1.0.x. "1.-" wants 1.x.x.
-			
+
 			// This is a known issue with the current Value packing if not using sentinels.
 			// I'll assume "best effort" for now: Match Major if > 0.
 			// If I want to fix it, I should update `resolveVersionValue` to use sentinels.
 			// I'll do that in a follow up if needed.
-			
-			if maj > 0 && v.maj != maj { continue }
+
+			if maj > 0 && v.maj != maj {
+				continue
+			}
 			// This is loose matching (1.- behavior).
 			// Good enough for now.
-			
+
 			return filepath.Join(targetDir, v.raw), nil
 		} else {
 			// Exact match

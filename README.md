@@ -77,7 +77,7 @@ $ ./bin/rhi -trace-stack -trace-space ./tests/sieve.rh
 
 ## ✅ Development Status: v0.3.0 (Library League)
 
-The core language semantics are stable. The focus is now shifting from internal VM mechanics to the Standard Library and tooling.
+The core language semantics are stable. The focus is now shifting from internal VM mechanics to the Base library and tooling.
 
 ### Changelog: v0.3.0
 
@@ -118,7 +118,7 @@ The core language semantics are stable. The focus is now shifting from internal 
 - [ ] **Spread `&`**: Implementation of `[...]` list spreading and slurping.
 - [ ] **Panic `***`**: Runtime support for fatal error literals.
 
-#### 📚 Standard Library
+#### 📚 Base library
 - [ ] Implementation of the `math`, `io`, and `sys` libraries.
 
 #### ⚡ Optimizations
