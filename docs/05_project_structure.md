@@ -413,9 +413,14 @@ Resource Shelves are denoted by surrounding the version or sub-catalog in a YAML
       * **Inline:** `[{...}]` → `src/[name]/-/` (The version is implicitly Tip-based).
       * **Block:**
       ```yaml
-      0.1.0:
+      -:
         art_files: # yaml has a dash block syntax that means []
-          - image.png: sha256:d4c3...
+        - -:
+            image.png: sha256:d4c3...
+          0.1.0:
+            image.png: sha256:fa3f...
+        # equivalent inline
+        art_files2: [{-: {image.png: sha256:d4c3...},  0.1.0: {image.png: sha256:fa3f...}}]
       ```
 **Example `art_files@.rhy`:**
 ```yaml
@@ -624,9 +629,10 @@ my_project:
     sounds: [-] # Maps to: /src/[sounds]/-
     # if you want to specify a resource sub-catalog across multiple lines, use dash - leading line to indicate []
     icons: # Maps to: /src/[icons]
-    - logo.png: sha256:a1b2...
-      favicon.ico: sha256:c12f8... # multiple preceding YAML dashes are not required
-    - spinner.gif: ___ 
+    - -: # the leading dash tells yaml that this is an array (which is how we identify resource shelves)
+        logo.png: sha256:a1b2...
+        favicon.ico: sha256:c12f8... # multiple preceding YAML dashes are not required
+        spinner.gif: ___ 
 
     # false means that this is a non-resource folder that should be excluded from any distribution
     integration_checks: false # but it could still have its own catalog (like for testing routes)
