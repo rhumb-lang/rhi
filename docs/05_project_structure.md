@@ -221,7 +221,7 @@ preventing "Left-Pad" incidents or malicious updates.
 
 ```yaml
 # project@.rhy
-0.1.0:
+-:
   # === Code Dependencies ===
   # Format: "alias: [version] [anchor]"
 
@@ -231,7 +231,9 @@ preventing "Left-Pad" incidents or malicious updates.
 
   # 2. Unsecured Dependency (Development)
   # The "___" indicates the anchor is missing.
-  # The IDE will calculate this on the next successful run and update the file.
+  # The wildcard in the version indicates that this is a new not-yet pinned dependency.
+  # the contract hear should be a match or a more restrictive contract than the one in the book's library resolver.
+  # The IDE will calculate the actual version and the anchor this on the next successful run and update the file.
   graphics: 1.0.- ___
 
   # 3. Local/Standard (Implicit Trust)
@@ -244,6 +246,13 @@ preventing "Left-Pad" incidents or malicious updates.
     - logo.png: sha256:a1b2...
     - data.json: ___
 ```
+
+1.  **Mandatory Tip (`-`):** Every catalog **must** contain a Tip version key
+    (`-`). This represents the "Working Copy" or "Dev" state of the project. It
+    cannot be null; it must contain either a dependency map or a pointer.
+2.  **Immutability:** Numbered versions (e.g., `0.1.0`) are immutable. Once
+    published/tagged, their dependency list should not change. The Tip (`-`) is
+    mutable.
 
 #### 5\.6\.2 Integrity States
 
@@ -351,7 +360,7 @@ to rename libraries or move them without changing your source code imports.
 
  ```yaml
  # project@.rhy
- 0.1.0:
+ -:
    # logical_name : [ original_name @ ] specific_version_or_path
    physics_engine: libs/physics ___
    game_math: math@0.1.0 ___ # to make an alias, prefix the version name and an "@" before the version
@@ -370,6 +379,21 @@ math := [
 ]
 n := math\game\random()
  ```
+
+#### 5\.6\.7 The Pointer Protocol (`<-`)
+
+To reduce duplication, a version can inherit dependencies from another version using the **Pointer Key (`<-`)**.
+
+**Syntax:**
+```yaml
+-:
+  <-: 0.1.0        # Base: Inherit everything from 0.1.0
+  dev_tools: 2.0.0 # Extension: Add a new tool for development
+```
+**Rules of Inheritance:**
+1.  **Extension (Allowed):** You can include the pointer `<-` alongside **New Keys**. The runtime merges the pointed version's dependencies with the new keys.
+2.  **Shadowing (Forbidden):** You **cannot** override a dependency that already exists in the pointed version. If you need to change a version of an inherited library, the pointer is considered **Invalid**.
+    * **Mechanism:** The IDE or build tool will "Hoist" (flatten) the dependencies: it removes the `<-` pointer and copies all keys from the target version up to the current version, effectively decoupling them. This ensures explicit visibility of all dependencies when they diverge.
 
 ### 5\.7 Resource Shelves & Slips
 
@@ -580,7 +604,10 @@ my_project:
 
 # all remaining values in the catalog are versions of the project
 -:
-    <-: 0.1.0 # this "<-" symbol as a key means that this version has the same dependencies as the value
+    <-: 0.1.0 # Inherit base dependencies from 0.1.0
+    debug_tools: 1.0.0 # EXTENSION: Allowed. Adds 'debug_tools' to the set.
+    # physics: 1.0.0   # SHADOWING: Forbidden. If you uncomment this, the IDE will
+                       # remove the '<-' pointer and copy all 0.1.0 deps here.
 0.1.0:
     core_mechanics: <- # this "<-" symbol as a value means that core_mechanics shelf contains its own catalog
     win_conditions: <-
