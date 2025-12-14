@@ -303,6 +303,12 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		c.emit(mapval.OP_PIPE)
 	case ast.OpForeach:
 		c.emit(mapval.OP_FOREACH)
+	case ast.OpIndex:
+		// obj[key] -> obj(key)
+		// Left and Right are already compiled (pushed to stack)
+		// Emit CALL with 1 argument
+		c.emit(mapval.OP_CALL)
+		c.Chunk().WriteByte(1, 0)
 	case ast.OpWhile:
 		loopStart := len(c.Chunk().Code)
 

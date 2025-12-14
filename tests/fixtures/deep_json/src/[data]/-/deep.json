@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "version": 1,
+    "generated": true
+  },
+  "users": [
+    {
+      "id": 101,
+      "name": "Alice",
+      "roles": ["admin", "editor"],
+      "settings": {
+        "theme": "dark",
+        "notifications": {
+          "email": true,
+          "sms": false
+        }
+      }
+    },
+    {
+      "id": 102,
+      "name": "Bob",
+      "roles": ["viewer"],
+      "settings": {
+        "theme": "light",
+        "notifications": {
+          "email": false
+        }
+      }
+    },
+    {
+      "id": 103,
+      "name": "Linda",
+      "roles": ["viewer"],
+      "settings": {
+        "theme": "dark",
+        "notifications": {
+          "email": false
+        }
+      }
+    }
+  ]
+}

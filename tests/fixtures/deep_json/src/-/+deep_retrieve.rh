@@ -1,0 +1,26 @@
+% Import the resource
+config := {=|data/deep.json|0.1.0}
+
+% 1. Top Level Access
+config\meta\version %= 1
+
+% 2. Deep Nested Object Access (Map -> Map -> String)
+alice_theme := config\users[1]\settings\theme
+alice_theme %= 'dark'
+
+% 3. Deep Nested Array Access (Map -> Map -> List -> String)
+alice_role := config\users[1]\roles[2]
+alice_role %= 'editor'
+
+% 4. Boolean Logic Deep
+email_enabled := config\users[1]\settings\notifications\email
+email_enabled %= yes
+
+% 5. Missing Data (Robustness)
+% Accessing a missing field should return Empty (___)
+missing := config\users[2]\settings\notifications\sms ?? "default"
+missing %= 'default'
+
+% 6. Missing Data (Version)
+% Only the tip has the new third user (0.1.0 does not)
+config\users[3] %= ___

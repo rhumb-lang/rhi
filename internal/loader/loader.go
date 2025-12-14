@@ -245,6 +245,10 @@ func toRhumbValue(v interface{}) mapval.Value {
 	case bool:
 		return mapval.NewBoolean(val)
 	case float64:
+		// IMPROVEMENT: Check if it is effectively an integer
+		if float64(int64(val)) == val {
+			return mapval.NewInt(int64(val))
+		}
 		return mapval.NewFloat(val)
 	case string:
 		return mapval.NewText(val)
@@ -344,7 +348,10 @@ func (l *LibraryLoader) resolvePath(resolver, logicalPath string, constraint map
 		}
 		basePath = l.ProjectRoot
 		if l.RootCatalog != nil && l.RootCatalog.SourceRoot != "" {
-			basePath = filepath.Join(basePath, l.RootCatalog.SourceRoot)
+			// Avoid double appending if ProjectRoot already points to SourceRoot
+			if filepath.Base(basePath) != l.RootCatalog.SourceRoot {
+				basePath = filepath.Join(basePath, l.RootCatalog.SourceRoot)
+			}
 		}
 	case "!":
 		// Use environment variable or default relative path

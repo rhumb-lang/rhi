@@ -766,26 +766,57 @@ func (vm *VM) opCall() error {
 		return fmt.Errorf("can only call closures")
 	}
 
-	closure, ok := calleeVal.Obj.(*mapval.Closure)
-	if !ok {
-		return fmt.Errorf("can only call closures")
+	if closure, ok := calleeVal.Obj.(*mapval.Closure); ok {
+		if argCount != closure.Fn.Arity {
+			return fmt.Errorf("arity mismatch: expected %d, got %d", closure.Fn.Arity, argCount)
+		}
+
+		// Cactus Stack: Allocate new frame on heap
+		newFrame := &CallFrame{
+			Parent:  vm.CurrentFrame,
+			Closure: closure,
+			IP:      0,
+			Base:    vm.SP - argCount,
+		}
+
+		vm.CurrentFrame = newFrame
+		return nil
 	}
 
-	if argCount != closure.Fn.Arity {
-		return fmt.Errorf("arity mismatch: expected %d, got %d", closure.Fn.Arity, argCount)
+	if m, ok := calleeVal.Obj.(*mapval.Map); ok {
+		if argCount != 1 {
+			return fmt.Errorf("map access requires exactly 1 argument")
+		}
+		keyVal := vm.peek(0)
+
+		var keyStr string
+		if keyVal.Type == mapval.ValText {
+			keyStr = keyVal.Str
+		} else if keyVal.Type == mapval.ValInteger {
+			keyStr = fmt.Sprintf("%d", keyVal.Integer)
+		} else {
+			keyStr = keyVal.Canonical()
+		}
+
+		var result mapval.Value = mapval.NewEmpty()
+
+		if m.Legend != nil {
+			for i, f := range m.Legend.Fields {
+				if f.Name == keyStr {
+					result = m.Fields[i]
+					break
+				}
+			}
+		}
+
+		// Pop arg and callee
+		vm.pop() // arg
+		vm.pop() // callee
+		vm.push(result)
+		return nil
 	}
 
-	// Cactus Stack: Allocate new frame on heap
-	newFrame := &CallFrame{
-		Parent:  vm.CurrentFrame,
-		Closure: closure,
-		IP:      0,
-		Base:    vm.SP - argCount,
-	}
-
-	vm.CurrentFrame = newFrame
-
-	return nil
+	return fmt.Errorf("can only call closures or maps")
 }
 
 func (vm *VM) opReturn() (int, error) {
@@ -802,7 +833,7 @@ func (vm *VM) opReturn() (int, error) {
 	if targetSP > 0 {
 		targetSP--
 	}
-	
+
 	vm.SP = targetSP
 	vm.push(result)
 
@@ -858,28 +889,9 @@ func (vm *VM) opAssertEq() {
 	expected := vm.pop()
 	actual := vm.pop()
 
-	// Expected is now ALWAYS a String (from the TextLiteral in builder)
-	// We want the RAW content of the expectation string (what the user typed inside quotes)
-	// Example: %= "apples" -> expected.Str is "apples"
 	expectedStr := expected.Str
-	
-	// Actual should be the CANONICAL representation of the value
-	// Example: ValText("apples") -> Canonical() is "'apples'"
-	actualStr := actual.Canonical()
 
-	// Wait, if expectedStr is "apples" and actualStr is "'apples'", they won't match!
-	// The user must write %= "'apples'" to match canonical string?
-	// OR, if expected is a STRING, we treat it as the expected CANONICAL form?
-	
-	// If expectedStr is the canonical form, it should include quotes for strings.
-	// But `expected` is a TextLiteral. `expected.Str` is the content.
-	
-	// If I change tests to use single quotes: %= "'apples'".
-	// Then `expected.Str` is "'apples'".
-	// And `actual.Canonical()` is "'apples'".
-	// MATCH!
-	
-	// So `expected.Str` IS correct if the user provides the canonical form in the assertion string.
+	actualStr := actual.Canonical()
 
 	name := ""
 	if nameVal.Type == mapval.ValText {

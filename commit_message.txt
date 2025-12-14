@@ -1,0 +1,22 @@
+fix(compiler, vm, loader): Support JSON data, indexing, and test deep retrieve
+
+This commit addresses several issues and adds comprehensive support for loading and manipulating structured JSON data within Rhumb, particularly focusing on deep retrieval and dynamic indexing.
+
+Key changes include:
+- **Compiler - `OpIndex` Support**:
+  - `internal/compiler/binary.go`: Implemented compilation for the `OpIndex` operator (`[]`), translating array/map access (e.g., `obj[key]`) into `OP_CALL` instructions. This enables dynamic lookup of elements within map and list structures.
+- **VM - Dynamic Map/List Access**:
+  - `internal/vm/primitives.go`: Extended the `opCall` instruction handler to support calling `mapval.Map` objects. When a map is called with a single argument, it performs a key lookup, treating the argument as the key. This allows `OP_CALL` to serve as the underlying mechanism for both function invocation and dynamic map/list indexing.
+  - `opAssertEq`: Restored its intended behavior to strictly compare `expected.Str` with `actual.Canonical()`, aligning with the Rhumb testing philosophy where the expectation is the raw string content and the actual is its canonical representation.
+- **Loader - JSON Number Conversion**:
+  - `internal/loader/loader.go`: Enhanced `toRhumbValue` to correctly convert `float64` values (from JSON parsing) into `mapval.NewInt` if the float represents a whole number, ensuring type fidelity for integer values.
+- **Loader - `SourceRoot` Path Resolution Fix**:
+  - `internal/loader/loader.go`: Refined `resolvePath` logic to prevent double-appending `SourceRoot` (e.g., `src/src`) when the `ProjectRoot` might already include it, improving path resolution accuracy.
+- **New Test Project - Deep JSON Retrieval**:
+  - Added `tests/fixtures/deep_json/**`: A new comprehensive test project to validate the loading and deep retrieval of complex JSON structures.
+    - Includes `deep_json@.rhy` catalog, versioned Rhumb test scripts (`+deep_retrieve.rh` for tip and 0.1.0 versions), and corresponding JSON data files.
+    - `tests/fixtures/deep_json/src/[data]/[data]@.rhy`: Created the resource catalog for the `data` resource shelf.
+    - `tests/fixtures/deep_json/src/[data]/0.1.0/deep.json` and `src/[data]/-/deep.json`: JSON data files, including version-specific content to test differential loading.
+    - The `src/data` folder in the fixture was renamed to `src/[data]` to align with the bracketed protocol for resource shelves.
+
+These changes collectively enable robust handling of structured data within Rhumb, allowing for flexible and type-safe access to JSON fields and array elements.
