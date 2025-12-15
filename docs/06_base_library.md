@@ -148,3 +148,29 @@ non-panic errors.
     *   `format(date; "Format")`: Date to String.
 *   **`🕰️\⏱️` Stopwatch:**
     *   `start()`, `stop()`: High-precision timing for benchmarks.
+
+### 10.2 Standard Error Codes
+
+All Base Libraries return errors as the signal `#***(code; msg; data)`. Rhumb adopts a hybrid coding standard:
+
+* **Universal Codes (HTTP-aligned):** Used for common logical errors across all libraries.
+* **Domain Codes (1000+):** Used for specific error conditions within a library.
+
+| Range       | Domain               | Description                                       |
+|:------------|:---------------------|:--------------------------------------------------|
+| **400-499** | **Usage Error**      | You called the function incorrectly (User Fault). |
+| **500-599** | **Runtime Error**    | The function failed to execute (System Fault).    |
+| **1000+**   | **Library Specific** | Deep errors specific to `fs`, `net`, etc.         |
+
+**Common Universal Codes:**
+
+| Code    | Name            | Meaning                        | Example                  |
+|:--------|:----------------|:-------------------------------|:-------------------------|
+| **400** | **Bad Arg**     | Invalid type, range, or arity. | `math\sin("foo")`        |
+| **401** | **Permission**  | capabilities denied by Vassal. | `fs\read` blocked        |
+| **404** | **Not Found**   | Resource/Key missing.          | `fs\read("missing.txt")` |
+| **408** | **Timeout**     | Operation took too long.       | `net\fetch`              |
+| **409** | **Conflict**    | State prevents action.         | `fs\mkdir` exists        |
+| **500** | **Native Fail** | Internal Go error / Panic.     | Memory allocation        |
+| **501** | **Not Impl**    | Feature missing on this OS.    | Windows-only syscall     |
+| **999** | **Panic**       | Unrecoverable Runtime Panic.   | `core\***`               |
