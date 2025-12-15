@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
 	"github.com/cockroachdb/apd/v3"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/grammar"
 )
 
 func (b *ASTBuilder) VisitRationalNumber(ctx *grammar.RationalNumberContext) interface{} {

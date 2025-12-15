@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	rhtesting "git.sr.ht/~madcapjake/rhi/internal/testing"
+	rhtesting "github.com/rhumb-lang/rhi/internal/testing"
 )
 
 func TestRhumbFiles(t *testing.T) {

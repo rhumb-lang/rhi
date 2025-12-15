@@ -3,7 +3,7 @@ package vm
 import (
 	"fmt"
 
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func (vm *VM) opMonitor() error {

@@ -432,12 +432,36 @@ func (c *Closure) Canonical() string {
 	return fmt.Sprintf("<%s>", c.Fn.Name)
 }
 
+// NativeOp represents a Go function callable from Rhumb.
+// It returns a Value (which could be a Result or a Signal #***).
+type NativeOp func(args []Value) Value
+
 // NativeFunction represents a native Go function callable from Rhumb
 type NativeFunction struct {
-	Fn func(args []Value) Value
+	Name string
+	Fn   NativeOp
 }
 
 func (n *NativeFunction) Type() ObjectType { return ObjTypeNative }
+func (n *NativeFunction) Canonical() string { return fmt.Sprintf("<native:%s>", n.Name) }
+
+// Helper Constructor
+func NewNativeFunc(name string, fn NativeOp) Value {
+	return Value{
+		Type: ValObject,
+		Obj:  &NativeFunction{Name: name, Fn: fn},
+	}
+}
+
+// Helper to create the standard error signal #***(code; msg; data)
+func NewErrorSignal(code int64, msg string, data Value) Value {
+	// Topic: "***"
+	return NewSignal("***", nil, []Value{
+		NewInt(code),
+		NewText(msg),
+		data,
+	})
+}
 
 // ---------------------------------------------------------
 // 4. "Code is Data" Definitions

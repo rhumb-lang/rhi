@@ -3,16 +3,16 @@ package compiler_test
 import (
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 func TestCompiler_Adder(t *testing.T) {
 	// add := [a; b] -> a ++ b
 	// res := add(10; 20)
-	
+
 	// Params [a; b]
 	params := &ast.MapExpression{
 		Fields: []ast.Field{
@@ -20,7 +20,7 @@ func TestCompiler_Adder(t *testing.T) {
 			&ast.FieldElement{Value: &ast.LabelLiteral{Value: "b"}},
 		},
 	}
-	
+
 	// Body: a ++ b
 	body := &ast.RoutineExpression{
 		Expressions: []ast.Expression{
@@ -31,19 +31,19 @@ func TestCompiler_Adder(t *testing.T) {
 			},
 		},
 	}
-	
+
 	defAdd := &ast.BinaryExpression{
-		Left: params,
-		Op:   ast.OpMakeFn,
+		Left:  params,
+		Op:    ast.OpMakeFn,
 		Right: body,
 	}
-	
+
 	assignAdd := &ast.BinaryExpression{
 		Left:  &ast.LabelLiteral{Value: "add"},
 		Op:    ast.OpAssignMut,
 		Right: defAdd,
 	}
-	
+
 	// call
 	callAdd := &ast.CallExpression{
 		Callee: &ast.LabelLiteral{Value: "add"},
@@ -52,13 +52,13 @@ func TestCompiler_Adder(t *testing.T) {
 			&ast.IntegerLiteral{Value: 20},
 		},
 	}
-	
+
 	assignRes := &ast.BinaryExpression{
 		Left:  &ast.LabelLiteral{Value: "res"},
 		Op:    ast.OpAssignMut,
 		Right: callAdd,
 	}
-	
+
 	doc := &ast.Document{
 		Expressions: []ast.Expression{
 			assignAdd,
@@ -71,7 +71,7 @@ func TestCompiler_Adder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
-	
+
 	machine := vm.NewVM()
 	res, err := machine.Interpret(chunk)
 	if err != nil {
@@ -80,7 +80,7 @@ func TestCompiler_Adder(t *testing.T) {
 	if res != vm.Ok {
 		t.Errorf("Expected Ok result, got %v", res)
 	}
-	
+
 	// Stack: [add, res, res_val]
 	if machine.SP != 3 {
 		t.Errorf("Expected 3 values on stack, got %d", machine.SP)

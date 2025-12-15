@@ -2,7 +2,8 @@ package vm
 
 import (
 	"fmt"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func (vm *VM) opMakeMap() {
@@ -13,17 +14,17 @@ func (vm *VM) opMakeMap() {
 func (vm *VM) opSend() error {
 	frame := vm.currentFrame()
 	chunk := frame.Closure.Fn.Chunk
-	
+
 	idx := chunk.Code[frame.IP]
 	frame.IP++
 	keyVal := chunk.Constants[idx]
 	key := keyVal.Str
-	
+
 	receiver := vm.pop()
 	if receiver.Type != mapval.ValObject {
 		return fmt.Errorf("receiver is not an object")
 	}
-	
+
 	m, ok := receiver.Obj.(*mapval.Map)
 	if ok {
 		val, found := m.Get(key)
@@ -34,7 +35,7 @@ func (vm *VM) opSend() error {
 		vm.push(val)
 		return nil
 	}
-	
+
 	// Handle Tuple (as List)
 	t, ok := receiver.Obj.(*mapval.Tuple)
 	if ok {
@@ -56,8 +57,6 @@ func (vm *VM) opSetField() error {
 
 	chunk := frame.Closure.Fn.Chunk
 
-	
-
 	idx := chunk.Code[frame.IP]
 
 	frame.IP++
@@ -66,27 +65,19 @@ func (vm *VM) opSetField() error {
 
 	frame.IP++
 
-	
-
 	keyVal := chunk.Constants[idx]
 
 	key := keyVal.Str
 
-	
-
 	val := vm.pop()
 
 	receiver := vm.pop()
-
-	
 
 	if receiver.Type != mapval.ValObject {
 
 		return fmt.Errorf("receiver is not an object")
 
 	}
-
-	
 
 	m, ok := receiver.Obj.(*mapval.Map)
 
@@ -96,38 +87,12 @@ func (vm *VM) opSetField() error {
 
 	}
 
-	
+	mutable := (flags & 1) == 1
 
-		mutable := (flags & 1) == 1
+	m.Set(key, val, mutable)
 
-	
+	vm.push(val)
 
-	
+	return nil
 
-	
-
-		m.Set(key, val, mutable)
-
-	
-
-		
-
-	
-
-		vm.push(val)
-
-	
-
-	
-
-	
-
-		return nil
-
-	
-
-	}
-
-	
-
-	
+}

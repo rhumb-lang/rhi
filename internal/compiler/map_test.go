@@ -3,16 +3,16 @@ package compiler_test
 import (
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 func TestCompiler_Map(t *testing.T) {
 	// m := [ x: 1; y: 2 ]
 	// val := m\x
-	
+
 	mapExpr := &ast.MapExpression{
 		Fields: []ast.Field{
 			&ast.FieldDefinition{
@@ -27,13 +27,13 @@ func TestCompiler_Map(t *testing.T) {
 			},
 		},
 	}
-	
+
 	assignM := &ast.BinaryExpression{
 		Left:  &ast.LabelLiteral{Value: "m"},
 		Op:    ast.OpAssignMut,
 		Right: mapExpr,
 	}
-	
+
 	// m\x
 	accessX := &ast.ChainExpression{
 		Base: &ast.LabelLiteral{Value: "m"},
@@ -41,7 +41,7 @@ func TestCompiler_Map(t *testing.T) {
 			{Op: ast.ChainMember, Ident: "x"},
 		},
 	}
-	
+
 	doc := &ast.Document{
 		Expressions: []ast.Expression{
 			assignM,
@@ -54,7 +54,7 @@ func TestCompiler_Map(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
-	
+
 	machine := vm.NewVM()
 	res, err := machine.Interpret(chunk)
 	if err != nil {
@@ -63,7 +63,7 @@ func TestCompiler_Map(t *testing.T) {
 	if res != vm.Ok {
 		t.Errorf("Expected Ok result, got %v", res)
 	}
-	
+
 	// Stack should have `m` (Map) then result of `m\x` (1).
 	// Wait, assignM pushes m? No, assignment leaves m on stack.
 	// accessX pushes 1.

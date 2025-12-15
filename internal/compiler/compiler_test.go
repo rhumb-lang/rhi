@@ -3,9 +3,9 @@ package compiler_test
 import (
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func TestCompiler_SimpleMath(t *testing.T) {

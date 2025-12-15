@@ -3,8 +3,8 @@ package vm
 import (
 	"fmt"
 
-	"git.sr.ht/~madcapjake/rhi/internal/config"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/config"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 const StackMax = 2048
@@ -107,7 +107,7 @@ func (vm *VM) CallAndReturn(chunk *mapval.Chunk) (mapval.Value, error) {
 	if res != Ok && res != Halt {
 		return mapval.NewEmpty(), fmt.Errorf("library execution failed: %s", res)
 	}
-	
+
 	// result is on stack
 	if vm.SP == 0 {
 		return mapval.NewEmpty(), nil

@@ -1,8 +1,8 @@
 package compiler
 
 import (
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func (c *Compiler) compileRoutine(r *ast.RoutineExpression) error {

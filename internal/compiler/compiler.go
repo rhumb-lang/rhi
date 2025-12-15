@@ -1,8 +1,8 @@
 package compiler
 
 import (
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 // UpvalueDesc describes a captured variable.
@@ -56,7 +56,7 @@ func (c *Compiler) addUpvalue(isLocal bool, index int) int {
 			return i
 		}
 	}
-	
+
 	c.Upvalues = append(c.Upvalues, UpvalueDesc{IsLocal: isLocal, Index: index})
 	c.Function.UpvalueCount = len(c.Upvalues)
 	return len(c.Upvalues) - 1
@@ -112,7 +112,7 @@ func (c *Compiler) CompileIncremental(doc *ast.Document) (int, error) {
 		chunk.Code = chunk.Code[:len(chunk.Code)-1]
 	}
 	startOffset := len(chunk.Code)
-	
+
 	// Hoist locals (append to existing scope)
 	hoister := NewHoister()
 	locals := hoister.Hoist(doc)
@@ -136,7 +136,7 @@ func (c *Compiler) CompileIncremental(doc *ast.Document) (int, error) {
 		// My `Scope.addLocal` implementation (step 52) appends.
 		// I should check if it exists in current scope depth (0 for script) and reuse?
 		// Let's stick to append for simplicity (Shadowing).
-		
+
 		c.Scope.addLocal(name)
 		c.emitConstant(mapval.NewEmpty()) // Reserve slot
 	}
@@ -175,39 +175,39 @@ func (c *Compiler) emitBytes(b1, b2 byte) {
 // emitJump emits a jump instruction with a placeholder operand and returns the offset to patch.
 func (c *Compiler) emitJump(op mapval.OpCode) int {
 	c.emit(op)
-	c.emitBytes(0xFF, 0xFF) // Placeholder 2-byte operand
+	c.emitBytes(0xFF, 0xFF)        // Placeholder 2-byte operand
 	return len(c.Chunk().Code) - 2 // Return start of operand
 }
 
 // patchJump patches the operand of a jump instruction at the given offset.
 func (c *Compiler) patchJump(offset int) {
 	jump := len(c.Chunk().Code) - offset - 2 // Calculate actual jump distance
-	
+
 	if jump > 0xFFFF { // Max 2 bytes (65535)
 		panic("Jump offset too large")
 	}
-	
+
 	c.Chunk().Code[offset] = byte((jump >> 8) & 0xFF)
-		c.Chunk().Code[offset+1] = byte(jump & 0xFF)
+	c.Chunk().Code[offset+1] = byte(jump & 0xFF)
+}
+
+// emitJumpBack emits a backward jump to the target offset.
+func (c *Compiler) emitJumpBack(op mapval.OpCode, target int) {
+	// Offset = target - (current_len + 3)
+	// Because IP will be at current_len + 3 after reading this instruction
+	offset := target - (len(c.Chunk().Code) + 3)
+
+	if offset < -32768 {
+		panic("Loop body too large")
 	}
-	
-	// emitJumpBack emits a backward jump to the target offset.
-	func (c *Compiler) emitJumpBack(op mapval.OpCode, target int) {
-		// Offset = target - (current_len + 3)
-		// Because IP will be at current_len + 3 after reading this instruction
-		offset := target - (len(c.Chunk().Code) + 3)
-		
-		if offset < -32768 {
-			panic("Loop body too large")
-		}
-		
-		c.emit(op)
-		c.Chunk().WriteByte(byte((offset >> 8) & 0xFF), 0)
-		c.Chunk().WriteByte(byte(offset & 0xFF), 0)
-	}
-	
-	func (c *Compiler) makeConstant(val mapval.Value) int {
-	
+
+	c.emit(op)
+	c.Chunk().WriteByte(byte((offset>>8)&0xFF), 0)
+	c.Chunk().WriteByte(byte(offset&0xFF), 0)
+}
+
+func (c *Compiler) makeConstant(val mapval.Value) int {
+
 	return c.Chunk().AddConstant(val)
 }
 

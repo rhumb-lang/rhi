@@ -2,8 +2,9 @@ package visitor
 
 import (
 	"fmt"
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
+
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/grammar"
 )
 
 // Helper to extract literal node from fieldLiteral
@@ -49,7 +50,7 @@ func (b *ASTBuilder) VisitPrefixAssignImmSubField(ctx *grammar.PrefixAssignImmSu
 	// We check for At manually or assume distinct methods if generated.
 	// Since they share the label `prefixAssignImmSubField` in the grammar file provided earlier,
 	// we need to handle both cases here.
-	
+
 	isSub := ctx.At() != nil
 	return &ast.FieldPun{
 		Key:       b.visitFieldLiteral(ctx.FieldLiteral()),
@@ -73,14 +74,14 @@ func (b *ASTBuilder) VisitAssignMutField(ctx *grammar.AssignMutFieldContext) int
 		fmt.Println("Error: AssignMutField has nil expression context")
 		return nil
 	}
-	
+
 	valNode := b.Visit(expr)
 	if valNode == nil {
 		fmt.Println("Error: Visiting expression returned nil")
 	}
-	
+
 	val := toExpr(valNode)
-	
+
 	return &ast.FieldDefinition{
 		Key:       b.visitFieldLiteral(ctx.FieldLiteral()),
 		Value:     val,

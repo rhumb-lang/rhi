@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 func TestCompileShelf(t *testing.T) {
 	// 1. Setup Temp Shelf
 	tmpDir := t.TempDir()
-	
+
 	// File A: Defines x
 	codeA := `x := 10`
 	pathA := filepath.Join(tmpDir, "a.rh")

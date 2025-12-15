@@ -1,6 +1,6 @@
 package vm
 
-import mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+import mapval "github.com/rhumb-lang/rhi/internal/map"
 
 type CallFrame struct {
 	Parent  *CallFrame // Link to the caller (Cactus Stack)

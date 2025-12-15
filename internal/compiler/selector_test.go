@@ -3,10 +3,10 @@ package compiler_test
 import (
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 func TestCompiler_Selector(t *testing.T) {
@@ -14,7 +14,7 @@ func TestCompiler_Selector(t *testing.T) {
 	//   10 .. 100
 	//   x  .. x + 1
 	// }
-	
+
 	patterns := []ast.Pattern{
 		&ast.PatternDefinition{
 			Target:    &ast.IntegerLiteral{Value: 10},
@@ -31,9 +31,9 @@ func TestCompiler_Selector(t *testing.T) {
 			IsConsume: true,
 		},
 	}
-	
+
 	selExpr := &ast.SelectorExpression{Patterns: patterns}
-	
+
 	// 10 { ... } -> Call(sel, [10])
 	call1 := &ast.CallExpression{
 		Callee: selExpr,
@@ -44,7 +44,7 @@ func TestCompiler_Selector(t *testing.T) {
 		Op:    ast.OpAssignMut,
 		Right: call1,
 	}
-	
+
 	// 20 { ... } -> Call(sel, [20])
 	call2 := &ast.CallExpression{
 		Callee: selExpr,
@@ -55,7 +55,7 @@ func TestCompiler_Selector(t *testing.T) {
 		Op:    ast.OpAssignMut,
 		Right: call2,
 	}
-	
+
 	doc := &ast.Document{
 		Expressions: []ast.Expression{
 			assignRes1,
@@ -68,7 +68,7 @@ func TestCompiler_Selector(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
-	
+
 	machine := vm.NewVM()
 	res, err := machine.Interpret(chunk)
 	if err != nil {
@@ -77,15 +77,15 @@ func TestCompiler_Selector(t *testing.T) {
 	if res != vm.Ok {
 		t.Errorf("Expected Ok result, got %v", res)
 	}
-	
+
 	if machine.SP != 3 {
 		t.Errorf("Expected 3 values on stack, got %d", machine.SP)
 	} else {
-		r1 := machine.Stack[0] 
+		r1 := machine.Stack[0]
 		if r1.Type != mapval.ValInteger || r1.Integer != 100 {
 			t.Errorf("Expected res1=100, got %v", r1)
 		}
-		r2 := machine.Stack[1] 
+		r2 := machine.Stack[1]
 		if r2.Type != mapval.ValInteger || r2.Integer != 21 {
 			t.Errorf("Expected res2=21, got %v", r2)
 		}
@@ -98,7 +98,7 @@ func TestCompiler_Selector_Advanced(t *testing.T) {
 	//   _ >> 10  .. "Med"
 	//   _        .. "Low" (Default)
 	// }
-	
+
 	patterns := []ast.Pattern{
 		&ast.PatternDefinition{
 			Target: &ast.BinaryExpression{
@@ -122,37 +122,37 @@ func TestCompiler_Selector_Advanced(t *testing.T) {
 			Value: &ast.TextLiteral{Segments: []ast.TextSegment{&ast.StringSegment{Value: "Low"}}},
 		},
 	}
-	
+
 	selExpr := &ast.SelectorExpression{Patterns: patterns}
-	
+
 	call := &ast.CallExpression{
 		Callee: selExpr,
 		Args:   []ast.Expression{&ast.IntegerLiteral{Value: 50}},
 	}
-	
+
 	assign := &ast.BinaryExpression{
 		Left:  &ast.LabelLiteral{Value: "res"},
 		Op:    ast.OpAssignMut,
 		Right: call,
 	}
-	
+
 	doc := &ast.Document{
 		Expressions: []ast.Expression{assign},
 	}
-	
+
 	c := compiler.NewCompiler()
 	chunk, err := c.Compile(doc)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
-	
+
 	machine := vm.NewVM()
 	machine.Interpret(chunk)
-	
-		// Stack: [res, res_value]
+
+	// Stack: [res, res_value]
 	// res (local 0) -> Stack[0]
 	// res_value (expression result) -> Stack[1]
-	
+
 	if machine.SP != 2 {
 		t.Errorf("Expected 2 values on stack, got %d", machine.SP)
 	} else {
@@ -162,175 +162,141 @@ func TestCompiler_Selector_Advanced(t *testing.T) {
 		}
 	}
 }
-	
-	
-	
-	func TestCompiler_Selector_Binding(t *testing.T) {
-	
-		// Pinning not yet implemented (requires Upvalues).
-	
-		// Currently `target` in selector binds to NEW local.
-	
-		
-	
-		// target := 42
-	
-		// res := 42 {
-	
-		//   target .. "Match"
-	
-		//   _      .. "No Match"
-	
-		// }
-	
-		
-	
-		assignTarget := &ast.BinaryExpression{
-	
-			Left:  &ast.LabelLiteral{Value: "target"},
-	
-			Op:    ast.OpAssignMut,
-	
-			Right: &ast.IntegerLiteral{Value: 42},
-	
-		}
-	
-		
-	
-		patterns := []ast.Pattern{
-	
-			&ast.PatternDefinition{
-	
-				Target: &ast.LabelLiteral{Value: "target"}, // Binds new 'target'
-	
-				Action: &ast.TextLiteral{Segments: []ast.TextSegment{&ast.StringSegment{Value: "Match"}}},
-	
-				IsConsume: true,
-	
-			},
-	
-			&ast.PatternDefinition{
-	
-				Target: &ast.LabelLiteral{Value: "_"},
-	
-				Action: &ast.TextLiteral{Segments: []ast.TextSegment{&ast.StringSegment{Value: "No Match"}}},
-	
-				IsConsume: true,
-	
-			},
-	
-		}
-	
-		
-	
-		selExpr := &ast.SelectorExpression{Patterns: patterns}
-	
-		
-	
-		// 42 { ... }
-	
-		call1 := &ast.CallExpression{
-	
-			Callee: selExpr,
-	
-			Args:   []ast.Expression{&ast.IntegerLiteral{Value: 42}},
-	
-		}
-	
-		assignRes := &ast.BinaryExpression{
-	
-			Left:  &ast.LabelLiteral{Value: "res"},
-	
-			Op:    ast.OpAssignMut,
-	
-			Right: call1,
-	
-		}
-	
-		
-	
-		// 99 { ... }
-	
-		call2 := &ast.CallExpression{
-	
-			Callee: selExpr,
-	
-			Args:   []ast.Expression{&ast.IntegerLiteral{Value: 99}},
-	
-		}
-	
-		assignRes2 := &ast.BinaryExpression{
-	
-			Left:  &ast.LabelLiteral{Value: "res2"},
-	
-			Op:    ast.OpAssignMut,
-	
-			Right: call2,
-	
-		}
-	
-		
-	
-		doc := &ast.Document{
-	
-			Expressions: []ast.Expression{
-	
-				assignTarget,
-	
-				assignRes,
-	
-				assignRes2,
-	
-			},
-	
-		}
-	
-		
-	
-		c := compiler.NewCompiler()
-	
-		chunk, err := c.Compile(doc)
-	
-		if err != nil {
-	
-			t.Fatalf("Compilation failed: %v", err)
-	
-		}
-	
-		
-	
-		machine := vm.NewVM()
-	
-		machine.Interpret(chunk)
-	
-		
-	
-		if machine.SP != 4 {
-	
-			t.Errorf("Expected 4 values on stack, got %d", machine.SP)
-	
-		} else {
-	
-			res := machine.Stack[1]
-	
-			if res.Type != mapval.ValText || res.Str != "Match" {
-	
-				t.Errorf("Expected 'Match', got %v", res)
-	
-			}
-	
-			res2 := machine.Stack[2]
-	
-			// 99 matches 'target' (binding new var target=99)
-	
-			if res2.Type != mapval.ValText || res2.Str != "Match" {
-	
-				t.Errorf("Expected 'Match' (Binding), got %v", res2)
-	
-			}
-	
-		}
-	
+
+func TestCompiler_Selector_Binding(t *testing.T) {
+
+	// Pinning not yet implemented (requires Upvalues).
+
+	// Currently `target` in selector binds to NEW local.
+
+	// target := 42
+
+	// res := 42 {
+
+	//   target .. "Match"
+
+	//   _      .. "No Match"
+
+	// }
+
+	assignTarget := &ast.BinaryExpression{
+
+		Left: &ast.LabelLiteral{Value: "target"},
+
+		Op: ast.OpAssignMut,
+
+		Right: &ast.IntegerLiteral{Value: 42},
 	}
-	
-	
+
+	patterns := []ast.Pattern{
+
+		&ast.PatternDefinition{
+
+			Target: &ast.LabelLiteral{Value: "target"}, // Binds new 'target'
+
+			Action: &ast.TextLiteral{Segments: []ast.TextSegment{&ast.StringSegment{Value: "Match"}}},
+
+			IsConsume: true,
+		},
+
+		&ast.PatternDefinition{
+
+			Target: &ast.LabelLiteral{Value: "_"},
+
+			Action: &ast.TextLiteral{Segments: []ast.TextSegment{&ast.StringSegment{Value: "No Match"}}},
+
+			IsConsume: true,
+		},
+	}
+
+	selExpr := &ast.SelectorExpression{Patterns: patterns}
+
+	// 42 { ... }
+
+	call1 := &ast.CallExpression{
+
+		Callee: selExpr,
+
+		Args: []ast.Expression{&ast.IntegerLiteral{Value: 42}},
+	}
+
+	assignRes := &ast.BinaryExpression{
+
+		Left: &ast.LabelLiteral{Value: "res"},
+
+		Op: ast.OpAssignMut,
+
+		Right: call1,
+	}
+
+	// 99 { ... }
+
+	call2 := &ast.CallExpression{
+
+		Callee: selExpr,
+
+		Args: []ast.Expression{&ast.IntegerLiteral{Value: 99}},
+	}
+
+	assignRes2 := &ast.BinaryExpression{
+
+		Left: &ast.LabelLiteral{Value: "res2"},
+
+		Op: ast.OpAssignMut,
+
+		Right: call2,
+	}
+
+	doc := &ast.Document{
+
+		Expressions: []ast.Expression{
+
+			assignTarget,
+
+			assignRes,
+
+			assignRes2,
+		},
+	}
+
+	c := compiler.NewCompiler()
+
+	chunk, err := c.Compile(doc)
+
+	if err != nil {
+
+		t.Fatalf("Compilation failed: %v", err)
+
+	}
+
+	machine := vm.NewVM()
+
+	machine.Interpret(chunk)
+
+	if machine.SP != 4 {
+
+		t.Errorf("Expected 4 values on stack, got %d", machine.SP)
+
+	} else {
+
+		res := machine.Stack[1]
+
+		if res.Type != mapval.ValText || res.Str != "Match" {
+
+			t.Errorf("Expected 'Match', got %v", res)
+
+		}
+
+		res2 := machine.Stack[2]
+
+		// 99 matches 'target' (binding new var target=99)
+
+		if res2.Type != mapval.ValText || res2.Str != "Match" {
+
+			t.Errorf("Expected 'Match' (Binding), got %v", res2)
+
+		}
+
+	}
+
+}

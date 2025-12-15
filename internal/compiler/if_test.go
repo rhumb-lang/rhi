@@ -3,10 +3,10 @@ package compiler_test
 import (
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 func TestCompiler_IfStatement(t *testing.T) {
@@ -36,9 +36,9 @@ func TestCompiler_IfStatement(t *testing.T) {
 	// Expected Bytecode for `1 == 1 => 10`:
 	// The `=>` operator returns the CONDITION, not the body.
 	// So stack should have `1` (True).
-	
+
 	// ... compilation ...
-	
+
 	vmMachine := vm.NewVM()
 	res, err := vmMachine.Interpret(chunk)
 	if err != nil {
@@ -47,7 +47,7 @@ func TestCompiler_IfStatement(t *testing.T) {
 	if res != vm.Ok {
 		t.Errorf("Expected Ok result, got %v", res)
 	}
-	
+
 	if vmMachine.SP != 1 {
 		t.Errorf("Expected 1 value on stack, got %d", vmMachine.SP)
 	} else {
@@ -74,13 +74,13 @@ func TestCompiler_IfElseStatement(t *testing.T) {
 			},
 		},
 	}
-	
+
 	c := compiler.NewCompiler()
 	chunk, err := c.Compile(doc)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
-	
+
 	vmMachine := vm.NewVM()
 	res, err := vmMachine.Interpret(chunk)
 	if err != nil {
@@ -89,7 +89,7 @@ func TestCompiler_IfElseStatement(t *testing.T) {
 	if res != vm.Ok {
 		t.Errorf("Expected Ok result, got %v", res)
 	}
-	
+
 	if vmMachine.SP != 1 {
 		t.Errorf("Expected 1 value on stack, got %d", vmMachine.SP)
 	} else {

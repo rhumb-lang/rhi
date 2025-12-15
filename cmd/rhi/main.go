@@ -8,17 +8,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/config"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
-	"git.sr.ht/~madcapjake/rhi/internal/loader"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
-	"git.sr.ht/~madcapjake/rhi/internal/parser_util" // Import the new package
-	"git.sr.ht/~madcapjake/rhi/internal/tooling"
-	"git.sr.ht/~madcapjake/rhi/internal/visitor"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	"github.com/rhumb-lang/rhi/internal/config"
+	"github.com/rhumb-lang/rhi/internal/grammar"
+	"github.com/rhumb-lang/rhi/internal/loader"
+		mapval "github.com/rhumb-lang/rhi/internal/map"
+		_ "github.com/rhumb-lang/rhi/internal/natlib" // Register nat_math
+		"github.com/rhumb-lang/rhi/internal/parser_util" // Import the new package
+	"github.com/rhumb-lang/rhi/internal/tooling"
+	"github.com/rhumb-lang/rhi/internal/visitor"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 var (

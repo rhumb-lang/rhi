@@ -1,9 +1,9 @@
 package visitor
 
 import (
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/grammar"
 )
 
 // --- Chain / Member ---
@@ -15,7 +15,7 @@ func (b *ASTBuilder) VisitMember(ctx *grammar.MemberContext) interface{} {
 
 func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) interface{} {
 	// "Fold Left" Strategy: Iterate children to build expression tree
-	
+
 	children := ctx.GetChildren()
 	if len(children) == 0 {
 		return nil
@@ -51,25 +51,34 @@ func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) i
 		if opCtx, ok := child.(grammar.IChainOpContext); ok {
 			// Next is Prefix (optional) then FieldLiteral
 			i++
-			if i >= len(children) { break }
+			if i >= len(children) {
+				break
+			}
 
 			if _, isPrefix := children[i].(grammar.IPrefixOpContext); isPrefix {
 				// TODO: Handle Prefix Logic (e.g. \!field)
 				i++
 			}
 
-			if i >= len(children) { break }
+			if i >= len(children) {
+				break
+			}
 			fieldLit := children[i] // FieldLiteral
 
 			opType := ast.ChainMember
 			switch opCtx.GetText() {
-			case "\\": opType = ast.ChainMember
-			case "@": opType = ast.ChainSubfield
-			case "#": opType = ast.ChainSignal
-			case "^": opType = ast.ChainReply
-			case "$": opType = ast.ChainProclamation
+			case "\\":
+				opType = ast.ChainMember
+			case "@":
+				opType = ast.ChainSubfield
+			case "#":
+				opType = ast.ChainSignal
+			case "^":
+				opType = ast.ChainReply
+			case "$":
+				opType = ast.ChainProclamation
 			}
-			
+
 			ident := getFieldText(fieldLit.(antlr.ParseTree))
 
 			// Flatten into ChainExpression if possible, else nest
@@ -77,28 +86,34 @@ func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) i
 				c.Steps = append(c.Steps, ast.ChainStep{Op: opType, Ident: ident})
 			} else {
 				currentExpr = &ast.ChainExpression{
-					Base: currentExpr,
+					Base:  currentExpr,
 					Steps: []ast.ChainStep{{Op: opType, Ident: ident}},
 				}
 			}
 			continue
 		}
-		
+
 		// CASE B: Open Bracket [ (Index or AccessOp)
 		if token, ok := child.(*antlr.TerminalNodeImpl); ok && token.GetSymbol().GetTokenType() == grammar.RhumbParserOpenBracket {
 			i++ // Consume [
-			if i >= len(children) { break }
-			
+			if i >= len(children) {
+				break
+			}
+
 			// Skip terminators
 			for {
 				if _, ok := children[i].(grammar.ITerminatorContext); ok {
 					i++
-					if i >= len(children) { break }
+					if i >= len(children) {
+						break
+					}
 				} else {
 					break
 				}
 			}
-			if i >= len(children) { break }
+			if i >= len(children) {
+				break
+			}
 
 			if exprCtx, ok := children[i].(grammar.IExpressionContext); ok {
 				// Index: [ expr ]
@@ -132,7 +147,7 @@ func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) i
 			continue
 		}
 	}
-	
+
 	return currentExpr
 }
 
@@ -141,7 +156,7 @@ func (b *ASTBuilder) VisitChainExpression(ctx *grammar.ChainExpressionContext) i
 func (b *ASTBuilder) VisitInvocation(ctx *grammar.InvocationContext) interface{} {
 	// expression OpenParen ...
 	target := toExpr(b.Visit(ctx.Expression()))
-	
+
 	var args []ast.Expression
 	if ctx.Expressions() != nil {
 		res := b.Visit(ctx.Expressions())
@@ -149,7 +164,7 @@ func (b *ASTBuilder) VisitInvocation(ctx *grammar.InvocationContext) interface{}
 			args = as
 		}
 	}
-	
+
 	return &ast.CallExpression{
 		Callee: target,
 		Args:   args,
@@ -165,7 +180,7 @@ func (b *ASTBuilder) VisitAccess(ctx *grammar.AccessContext) interface{} {
 		op := b.Visit(ctx.AccessOp()).(ast.OpType)
 		return &ast.BinaryExpression{Left: target, Op: op, Right: nil}
 	}
-	
+
 	// Indexing
 	if ctx.Expressions() != nil {
 		res := b.Visit(ctx.Expressions())
@@ -174,7 +189,7 @@ func (b *ASTBuilder) VisitAccess(ctx *grammar.AccessContext) interface{} {
 		}
 		return &ast.BinaryExpression{Left: target, Op: ast.OpIndex, Right: &ast.EmptyLiteral{}}
 	}
-	
+
 	return target
 }
 
@@ -189,15 +204,17 @@ func (b *ASTBuilder) VisitAssignLabel(ctx *grammar.AssignLabelContext) interface
 			lhs = expr
 		}
 	}
-	
+
 	rhs := toExpr(b.Visit(ctx.Expression()))
-	
+
 	var op ast.OpType
 	switch ctx.AssignmentOp().(type) {
-	case *grammar.MutableLabelContext: op = ast.OpAssignMut
-	default: op = ast.OpAssignImm
+	case *grammar.MutableLabelContext:
+		op = ast.OpAssignMut
+	default:
+		op = ast.OpAssignImm
 	}
-	
+
 	return &ast.BinaryExpression{
 		Left:  lhs,
 		Op:    op,
@@ -207,22 +224,32 @@ func (b *ASTBuilder) VisitAssignLabel(ctx *grammar.AssignLabelContext) interface
 
 // --- AccessOp Visitors (OpType) ---
 
-func (b *ASTBuilder) VisitAppend(ctx *grammar.AppendContext) interface{} { return ast.OpAppend }
+func (b *ASTBuilder) VisitAppend(ctx *grammar.AppendContext) interface{}   { return ast.OpAppend }
 func (b *ASTBuilder) VisitUnshift(ctx *grammar.UnshiftContext) interface{} { return ast.OpUnshift }
-func (b *ASTBuilder) VisitLength(ctx *grammar.LengthContext) interface{} { return ast.OpLength }
-func (b *ASTBuilder) VisitEmpty(ctx *grammar.EmptyContext) interface{} { return ast.OpIsEmpty }
-func (b *ASTBuilder) VisitAllSubfields(ctx *grammar.AllSubfieldsContext) interface{} { return ast.OpAllSub }
+func (b *ASTBuilder) VisitLength(ctx *grammar.LengthContext) interface{}   { return ast.OpLength }
+func (b *ASTBuilder) VisitEmpty(ctx *grammar.EmptyContext) interface{}     { return ast.OpIsEmpty }
+func (b *ASTBuilder) VisitAllSubfields(ctx *grammar.AllSubfieldsContext) interface{} {
+	return ast.OpAllSub
+}
 func (b *ASTBuilder) VisitAllFields(ctx *grammar.AllFieldsContext) interface{} { return ast.OpAllFld }
-func (b *ASTBuilder) VisitElements(ctx *grammar.ElementsContext) interface{} { return ast.OpAllPos }
-func (b *ASTBuilder) VisitFreeze(ctx *grammar.FreezeContext) interface{} { return ast.OpFreeze }
-func (b *ASTBuilder) VisitCopy(ctx *grammar.CopyContext) interface{} { return ast.OpCopy }
-func (b *ASTBuilder) VisitToDate(ctx *grammar.ToDateContext) interface{} { return ast.OpToDate }
-func (b *ASTBuilder) VisitParameters(ctx *grammar.ParametersContext) interface{} { return ast.OpGetParams }
-func (b *ASTBuilder) VisitConstructor(ctx *grammar.ConstructorContext) interface{} { return ast.OpGetCtor }
-func (b *ASTBuilder) VisitBase(ctx *grammar.BaseContext) interface{} { return ast.OpGetBase }
+func (b *ASTBuilder) VisitElements(ctx *grammar.ElementsContext) interface{}   { return ast.OpAllPos }
+func (b *ASTBuilder) VisitFreeze(ctx *grammar.FreezeContext) interface{}       { return ast.OpFreeze }
+func (b *ASTBuilder) VisitCopy(ctx *grammar.CopyContext) interface{}           { return ast.OpCopy }
+func (b *ASTBuilder) VisitToDate(ctx *grammar.ToDateContext) interface{}       { return ast.OpToDate }
+func (b *ASTBuilder) VisitParameters(ctx *grammar.ParametersContext) interface{} {
+	return ast.OpGetParams
+}
+func (b *ASTBuilder) VisitConstructor(ctx *grammar.ConstructorContext) interface{} {
+	return ast.OpGetCtor
+}
+func (b *ASTBuilder) VisitBase(ctx *grammar.BaseContext) interface{}         { return ast.OpGetBase }
 func (b *ASTBuilder) VisitToNumber(ctx *grammar.ToNumberContext) interface{} { return ast.OpToNum }
-func (b *ASTBuilder) VisitNegateNumber(ctx *grammar.NegateNumberContext) interface{} { return ast.OpNegNum }
+func (b *ASTBuilder) VisitNegateNumber(ctx *grammar.NegateNumberContext) interface{} {
+	return ast.OpNegNum
+}
 func (b *ASTBuilder) VisitToTruth(ctx *grammar.ToTruthContext) interface{} { return ast.OpToBool }
-func (b *ASTBuilder) VisitNegateTruth(ctx *grammar.NegateTruthContext) interface{} { return ast.OpNegBool }
+func (b *ASTBuilder) VisitNegateTruth(ctx *grammar.NegateTruthContext) interface{} {
+	return ast.OpNegBool
+}
 func (b *ASTBuilder) VisitVariadic(ctx *grammar.VariadicContext) interface{} { return ast.OpSpread }
-func (b *ASTBuilder) VisitToKey(ctx *grammar.ToKeyContext) interface{} { return ast.OpToKey }
+func (b *ASTBuilder) VisitToKey(ctx *grammar.ToKeyContext) interface{}       { return ast.OpToKey }

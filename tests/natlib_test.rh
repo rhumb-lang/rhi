@@ -1,0 +1,22 @@
+% 1. Load the Native Libraries directly (Private context)
+_math := {_|nat_math|-}
+_core := {_|nat_core|-}
+panic := _core\***
+
+% 2. Success Case
+pi := _math\pi
+sin_val := _math\sin(pi // 2.0)
+sin_val %? 1.0
+
+% 3. Error Case (Arity Mismatch)
+% We call it incorrectly, expecting a Signal #*** in return
+res := _math\int(10) %( Missing 'max' argument %) {
+    #***(code; msg; data) .. ( % Now 'data' can be inspected too
+        code %? 400
+        msg  %? "int expects (min, max)"
+    )
+    _ .. (
+        panic("Expected error signal matching #***(400; int expects (min, max); Empty) not received.")
+        no %= yes % Force test failure if this branch is reached.
+    )
+}

@@ -5,11 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
-	"git.sr.ht/~madcapjake/rhi/internal/visitor"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/grammar"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/visitor"
 )
 
 func (c *Compiler) CompileShelf(sourceFiles []string, entryPoint string) (*mapval.Chunk, error) {

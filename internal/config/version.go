@@ -1,6 +1,6 @@
 package config
 
-import mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+import mapval "github.com/rhumb-lang/rhi/internal/map"
 
 // RuntimeVersion is the semantic version of this binary.
 // Bump this whenever you add new Native functions or change the VM opcodes.

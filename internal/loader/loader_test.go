@@ -3,7 +3,7 @@ package loader
 import (
 	"testing"
 
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func TestEngineConstraint(t *testing.T) {

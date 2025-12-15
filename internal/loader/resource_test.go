@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/config"
-	"git.sr.ht/~madcapjake/rhi/internal/loader"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
+	"github.com/rhumb-lang/rhi/internal/config"
+	"github.com/rhumb-lang/rhi/internal/loader"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 func TestLoadResource(t *testing.T) {
@@ -53,9 +53,9 @@ func TestLoadResource(t *testing.T) {
 	if res.Type != mapval.ValObject {
 		t.Errorf("Expected ValObject, got %v", res.Type)
 	}
-    if res.Obj.Type() != mapval.ObjTypeSlip {
-        t.Errorf("Expected ObjTypeSlip, got %v", res.Obj.Type())
-    }
+	if res.Obj.Type() != mapval.ObjTypeSlip {
+		t.Errorf("Expected ObjTypeSlip, got %v", res.Obj.Type())
+	}
 
 	slip := res.Obj.(*mapval.Slip)
 	if slip.MimeType != "image/png" {

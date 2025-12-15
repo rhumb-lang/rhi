@@ -12,18 +12,19 @@ import (
 	"strconv"
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/config"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	"github.com/rhumb-lang/rhi/internal/config"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/natlib"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 type LibraryLoader struct {
-	Registry    map[string]mapval.Value // Cache: AbsPath -> Result Map
-	Sitemap     map[string]string       // Cache: "math@1.0" -> "/abs/path/..."
-	ProjectRoot string                  // Root of the current project (for local imports)
-	Config      *config.Config
-	VM          *vm.VM // Back-reference to execute code
+	Registry       map[string]mapval.Value // Cache: AbsPath -> Result Map
+	Sitemap        map[string]string       // Cache: "math@1.0" -> "/abs/path/..."
+	ProjectRoot    string                  // Root of the current project (for local imports)
+	Config         *config.Config
+	VM             *vm.VM       // Back-reference to execute code
 	CurrentRuntime mapval.Value // The version of the running binary
 
 	RootCatalog *Catalog        // The parsed project@.rhy
@@ -37,6 +38,10 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 
 	if resolver == "=" {
 		return l.LoadResource(logicalPath, constraint)
+	}
+
+	if resolver == "_" {
+		return l.LoadNatLib(logicalPath)
 	}
 
 	// 1. Resolve Path
@@ -68,7 +73,7 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 	// Wait, structure is `libs/math/1.0.0`. `math` is the shelf. `1.0.0` is version.
 	// So `shelfRoot` is `libs/math`. `shelfName` is `math`.
 	// Catalog is `libs/math/math@.rhy`.
-	
+
 	catPath := filepath.Join(shelfRoot, fmt.Sprintf("%s@.rhy", shelfName))
 	if _, err := os.Stat(catPath); err == nil {
 		if cat, err := LoadCatalog(catPath); err == nil {
@@ -124,6 +129,38 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 	// 8. Cache & Return
 	l.Registry[physicalPath] = result
 	return result, nil
+}
+
+func (l *LibraryLoader) LoadNatLib(name string) (mapval.Value, error) {
+	// 1. Lookup in NatLib Registry
+	// Note: We use the user-provided package path (e.g. "internal/natlib")
+	exports, ok := natlib.Registry[name]
+	if !ok {
+		// Return a panic-level error because if a native lib is missing, 
+		// the Rhumb wrapper code is fundamentally broken.
+		return mapval.NewEmpty(), fmt.Errorf("native library '%s' is not linked in this binary", name)
+	}
+
+	// 2. Convert to Read-Only Map
+	keys := make([]string, 0, len(exports))
+	for k := range exports { keys = append(keys, k) }
+	sort.Strings(keys)
+
+	fields := make([]mapval.FieldDesc, 0, len(keys))
+	values := make([]mapval.Value, 0, len(keys))
+
+	for _, k := range keys {
+		fields = append(fields, mapval.FieldDesc{Name: k, Kind: mapval.FieldImmutable})
+		values = append(values, exports[k])
+	}
+
+	return mapval.Value{
+		Type: mapval.ValObject,
+		Obj:  &mapval.Map{
+			Legend: &mapval.Legend{Kind: mapval.LegendMap, Fields: fields},
+			Fields: values,
+		},
+	}, nil
 }
 
 func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.Value, error) {
@@ -197,7 +234,7 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 			if err := l.validateCatalog(cat, catPath); err != nil {
 				return mapval.NewEmpty(), err
 			}
-			
+
 			if vc, ok := cat.Versions[resolvedVer]; ok {
 				meta, exists = vc.Resources[filename]
 			}
@@ -265,7 +302,7 @@ func (l *LibraryLoader) validateCatalog(cat *Catalog, path string) error {
 	if req, ok := cat.Engines["rhi"]; ok {
 		// Parse the constraint (e.g. "0.1.-")
 		constraint := l.parseConstraint(req)
-		
+
 		if !l.checkVersionConstraint(l.CurrentRuntime, constraint) {
 			return fmt.Errorf(
 				"runtime version mismatch in '%s': library requires rhi %s, but running %s",

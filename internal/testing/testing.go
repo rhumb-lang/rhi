@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/config"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
-	"git.sr.ht/~madcapjake/rhi/internal/parser_util"
-	"git.sr.ht/~madcapjake/rhi/internal/visitor"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	"github.com/rhumb-lang/rhi/internal/config"
+	"github.com/rhumb-lang/rhi/internal/grammar"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/parser_util"
+	"github.com/rhumb-lang/rhi/internal/visitor"
+	"github.com/rhumb-lang/rhi/internal/vm"
 
 	"github.com/antlr4-go/antlr/v4"
 )

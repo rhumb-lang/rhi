@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 	"github.com/cockroachdb/apd/v3"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 // Precision context for Decimal operations
@@ -763,7 +763,7 @@ func (vm *VM) opCall() error {
 
 	calleeVal := vm.peek(argCount)
 	if calleeVal.Type != mapval.ValObject {
-		return fmt.Errorf("can only call closures")
+		return fmt.Errorf("can only call closures, maps, or native functions")
 	}
 
 	if closure, ok := calleeVal.Obj.(*mapval.Closure); ok {
@@ -780,6 +780,23 @@ func (vm *VM) opCall() error {
 		}
 
 		vm.CurrentFrame = newFrame
+		return nil
+	}
+
+	if native, ok := calleeVal.Obj.(*mapval.NativeFunction); ok {
+		// 1. Pop Args
+		args := make([]mapval.Value, argCount)
+		for i := argCount - 1; i >= 0; i-- {
+			args[i] = vm.pop()
+		}
+		vm.pop() // Pop function
+
+		// 2. Execute
+		// Note: No 'err' return. Native code handles its own errors via Signals.
+		result := native.Fn(args)
+
+		// 3. Push Result
+		vm.push(result)
 		return nil
 	}
 

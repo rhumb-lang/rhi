@@ -3,9 +3,9 @@ package visitor_test
 import (
 	"testing"
 
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
-	"git.sr.ht/~madcapjake/rhi/internal/visitor"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/rhumb-lang/rhi/internal/grammar"
+	"github.com/rhumb-lang/rhi/internal/visitor"
 )
 
 func TestParser_BasicExpression(t *testing.T) {

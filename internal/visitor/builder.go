@@ -3,9 +3,9 @@ package visitor
 import (
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/grammar"
 )
 
 // ASTBuilder converts the ANTLR parse tree into our internal AST.

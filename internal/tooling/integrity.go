@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/loader"
+	"github.com/rhumb-lang/rhi/internal/loader"
 	"gopkg.in/yaml.v3"
 )
 
@@ -83,7 +83,7 @@ func EnsureIntegrity(catalogPath, projectRoot string, autoFix bool) error {
 				}
 			}
 		}
-		
+
 		// Recurse
 		for _, child := range n.Content {
 			if err := walk(child); err != nil {

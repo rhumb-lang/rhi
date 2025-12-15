@@ -3,7 +3,7 @@ package compiler
 import (
 	"slices"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/ast"
 )
 
 // Hoister finds all variable declarations in a block.

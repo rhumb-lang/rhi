@@ -1,4 +1,4 @@
-module git.sr.ht/~madcapjake/rhi
+module github.com/rhumb-lang/rhi
 
 go 1.25
 

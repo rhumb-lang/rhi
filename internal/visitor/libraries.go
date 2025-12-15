@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/grammar"
 )
 
 // Grammar: OpenCurly libraryResolver Pipe libraryPath+ Pipe (Version | ...) CloseCurly

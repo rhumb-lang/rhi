@@ -3,7 +3,7 @@ package vm
 import (
 	"strconv"
 
-	"git.sr.ht/~madcapjake/rhi/internal/map"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func (vm *VM) opCoalesce() {
@@ -19,13 +19,13 @@ func (vm *VM) opCoalesce() {
 func (vm *VM) opConcat() {
 	b := vm.pop()
 	a := vm.pop()
-	
+
 	// String concat
 	if a.Type == mapval.ValText && b.Type == mapval.ValText {
 		vm.push(mapval.NewText(a.Str + b.Str))
 		return
 	}
-	
+
 	// Map concat
 	if a.Type == mapval.ValObject && b.Type == mapval.ValObject {
 		mapA, okA := a.Obj.(*mapval.Map)
@@ -72,13 +72,13 @@ func (vm *VM) opRange() {
 	// a | b
 	b := vm.pop()
 	a := vm.pop()
-	
+
 	if a.Type != mapval.ValInteger || b.Type != mapval.ValInteger {
 		// TODO: Handle non-integer ranges?
 		vm.push(mapval.NewEmpty())
 		return
 	}
-	
+
 	r := &mapval.Range{Start: a.Integer, End: b.Integer}
 	vm.push(mapval.Value{Type: mapval.ValRange, Obj: r}) // Use ValRange tag
 }
@@ -104,7 +104,7 @@ func (vm *VM) opForeach() error {
 	// a <> b
 	rhs := vm.pop()
 	lhs := vm.pop()
-	
+
 	// Case 1: Subscription (Map <> Selector)
 	if lhs.Type == mapval.ValObject {
 		if _, ok := lhs.Obj.(*mapval.Map); ok {
@@ -115,7 +115,7 @@ func (vm *VM) opForeach() error {
 			return vm.opSubscribe()
 		}
 	}
-	
+
 	// Case 2: Range Iteration (Range <> Closure)
 	if lhs.Type == mapval.ValRange && rhs.Type == mapval.ValObject {
 		rng := lhs.Obj.(*mapval.Range)
@@ -127,36 +127,36 @@ func (vm *VM) opForeach() error {
 			if start > end {
 				step = -1
 			}
-			
+
 			for i := start; ; i += step {
 				// Execute Closure(i)
-				
+
 				// Push Closure (Function)
 				vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
 				// Push Arg (i)
 				vm.push(mapval.NewInt(i))
-				
+
 				// Setup Frame
 				// We can reuse opCall logic?
 				// opCall expects args on stack.
 				// opCall sets up frame but DOES NOT RUN.
 				// So we call opCall, then RunSynchronous.
-				
+
 				// opCall checks peek(argCount).
 				// Arg count is 1.
 				// But opCall reads argCount from Bytecode stream!
 				// We are in Go code, we don't have an instruction stream for "CALL 1".
 				// So we must manually setup frame.
-				
+
 				newFrame := &CallFrame{
 					Parent:  vm.CurrentFrame,
 					Closure: closure,
 					IP:      0,
 					Base:    vm.SP - 1, // 1 Arg (i)
 				}
-				
+
 				vm.CurrentFrame = newFrame
-				
+
 				// Run
 				res, err := vm.RunSynchronous()
 				if err != nil {
@@ -167,15 +167,15 @@ func (vm *VM) opForeach() error {
 					// If Halt, stop everything.
 					return nil // Stop loop? Or return error?
 				}
-				
+
 				// Pop result of closure
 				vm.pop()
-				
+
 				if i == end {
 					break
 				}
 			}
-			
+
 			vm.push(mapval.NewEmpty())
 			return nil
 		}
@@ -199,7 +199,7 @@ func (vm *VM) opMatchStruct() {
 	// We need operands to know what to match.
 	// Assume it consumes operands or has args?
 	// Compiler emitted it with 1 arg (index).
-	
+
 	idx := vm.readByte()
 	// Get constant?
 	// This opcode was a placeholder in the compiler for Signal name match.
@@ -220,15 +220,15 @@ func (vm *VM) opSelect() {
 
 func (vm *VM) opMatchTuple() {
 	kind := mapval.TupleKind(vm.readByte())
-	
+
 	// Read Topic Index (2 bytes in new design, but readByte is 1 byte)
 	// Architecture says 2 bytes for TopicIndex.
 	// vm.readShort()
 	topicIdx := vm.readShort()
-	
+
 	// Peek Subject
 	subject := vm.peek(0)
-	
+
 	match := false
 	if subject.Type == mapval.ValObject {
 		if t, ok := subject.Obj.(*mapval.Tuple); ok {
@@ -242,6 +242,6 @@ func (vm *VM) opMatchTuple() {
 			}
 		}
 	}
-	
+
 	vm.push(mapval.NewBoolean(match))
 }

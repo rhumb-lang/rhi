@@ -3,8 +3,8 @@ package compiler
 import (
 	"fmt"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
 func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {

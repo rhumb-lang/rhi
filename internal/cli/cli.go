@@ -10,12 +10,12 @@ import (
 	"os"
 	"strings"
 
-	"git.sr.ht/~madcapjake/rhi/internal/ast"
-	"git.sr.ht/~madcapjake/rhi/internal/compiler"
-	"git.sr.ht/~madcapjake/rhi/internal/grammar"
-	"git.sr.ht/~madcapjake/rhi/internal/visitor"
-	"git.sr.ht/~madcapjake/rhi/internal/vm"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/rhumb-lang/rhi/internal/ast"
+	"github.com/rhumb-lang/rhi/internal/compiler"
+	"github.com/rhumb-lang/rhi/internal/grammar"
+	"github.com/rhumb-lang/rhi/internal/visitor"
+	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
 type disassembleContextKey int
@@ -53,9 +53,9 @@ func interpret(ctx context.Context, chars antlr.CharStream) {
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := grammar.NewRhumbParser(stream)
 	p.AddErrorListener(antlr.NewDiagnosticErrorListener(false))
-	
+
 	tree := p.Document()
-	
+
 	// 2. Build AST
 	builder := visitor.NewASTBuilder()
 	astNode := builder.Visit(tree)
