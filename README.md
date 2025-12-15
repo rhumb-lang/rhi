@@ -112,12 +112,12 @@ The core language semantics are stable. The focus is now shifting from internal 
 #### 🚧 Missing Grammar Support
 - [x] **Resolvers**:
     - [x] **Resource (`=`)**: Support for importing resources from Resource Shelves
-    - [ ] **Native (`_`)**: Support for Go function interface
+    - [x] **Native (`_`)**: Support for Go function interface
     - [ ] **Remote (`!` / `git`)**: Support for importing directly from git repositories.
 - [ ] **Vassals `<{}>`**: Compilation of security proxies.
 - [ ] **Keys `` ` ``**: Compilation of private capability keys.
 - [ ] **Spread `&`**: Implementation of `[...]` list spreading and slurping.
-- [ ] **Panic `***`**: Runtime support for fatal error literals.
+- [x] **Panic `***`**: Runtime support for fatal error literals.
 
 #### 📚 Base library
 - [ ] Implementation of the `math`, `io`, and `sys` libraries.
