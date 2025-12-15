@@ -26,3 +26,5 @@ internal/grammar/rhumbparser_visitor.go
 internal/grammar/**/*.interp
 internal/grammar/**/*.tokens
 internal/grammar/.antlr
+
+commit_message.txt
