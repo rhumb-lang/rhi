@@ -15,6 +15,7 @@ import (
 	"git.sr.ht/~madcapjake/rhi/internal/loader"
 	mapval "git.sr.ht/~madcapjake/rhi/internal/map"
 	"git.sr.ht/~madcapjake/rhi/internal/parser_util" // Import the new package
+	"git.sr.ht/~madcapjake/rhi/internal/tooling"
 	"git.sr.ht/~madcapjake/rhi/internal/visitor"
 	"git.sr.ht/~madcapjake/rhi/internal/vm"
 	"github.com/antlr4-go/antlr/v4"
@@ -28,6 +29,7 @@ var (
 	traceLoader   = flag.Bool("trace-loader", false, "Enable loader tracing")
 	lastValue     = flag.Bool("last-value", false, "Print the last value of the execution")
 	testMode      = flag.Bool("test", false, "Run in test mode (check assertions)")
+	sha256Flag    = flag.Bool("sha256", false, "Auto-fill empty anchors")
 )
 
 type Session struct {
@@ -143,6 +145,24 @@ func main() {
 		scriptPath, _ = filepath.Abs(args[0])
 	} else {
 		scriptPath, _ = os.Getwd()
+	}
+
+	// Pre-Flight Integrity Check
+	projectRoot := findProjectRoot(scriptPath)
+	entries, _ := os.ReadDir(projectRoot)
+	var catalogPath string
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".rhy") {
+			catalogPath = filepath.Join(projectRoot, e.Name())
+			break
+		}
+	}
+
+	if catalogPath != "" {
+		if err := tooling.EnsureIntegrity(catalogPath, projectRoot, *sha256Flag); err != nil {
+			fmt.Fprintf(os.Stderr, "Panic: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	session := NewSession(cfg, scriptPath)

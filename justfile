@@ -35,6 +35,32 @@ test-resolvers:
     go run ./cmd/rhi -test tests/fixtures/resolver_tests/src/-/+cycle_test.rh
     RHUMB_LIB=./tests/fixtures/stdlib go run ./cmd/rhi -test tests/resolvers/stdlib_emoji_test.rh
 
+# Run integrity check tests
+test-anchor-validation: build
+    @echo "Setting up fixture..."
+    mkdir -p tests/integrity_fixture
+    @echo 'project:' > tests/integrity_fixture/project@.rhy
+    @echo '  📂: src' >> tests/integrity_fixture/project@.rhy
+    @echo "'-':" >> tests/integrity_fixture/project@.rhy
+    @echo '  test.txt: "text/plain ___"' >> tests/integrity_fixture/project@.rhy
+    @echo "Hello World" > tests/integrity_fixture/test.txt
+    @echo '1' > tests/integrity_fixture/main.rh
+
+    @echo "Test 1: Auto-fix empty anchor (Expected: Success + File Change)"
+    ./bin/rhi -sha256 tests/integrity_fixture/main.rh
+    grep -q "sha256:" tests/integrity_fixture/project@.rhy
+
+    @echo "Test 2: Verify Correct Anchor (Expected: Success)"
+    ./bin/rhi -sha256 tests/integrity_fixture/main.rh
+
+    @echo "Test 3: Detect Invalid Anchor (Expected: Failure)"
+    sed -i 's/sha256:[a-f0-9]*/sha256:BAD/' tests/integrity_fixture/project@.rhy
+    ! ./bin/rhi -sha256 tests/integrity_fixture/main.rh
+
+    @echo "Cleanup..."
+    rm -rf tests/integrity_fixture
+    @echo "Anchor Validation Passed!"
+
 # Compile the ANTLR grammar (wraps go generate)
 grammar:
     go generate ./internal/grammar/...
