@@ -261,14 +261,31 @@ preventing "Left-Pad" incidents or malicious updates.
     published/tagged, their dependency list should not change. The Tip (`-`) is
     mutable.
 
-#### 5\.6\.2 Integrity States
+### 5.6.2 Integrity Enforcement & The `-sha256` Flag
 
-The VM treats the anchor field (`___` vs `sha256:...`) differently based on the runtime mode:
+Rhumb enforces strict supply chain security at runtime. When `rhi` starts
+(either in file mode or REPL mode), it scans the local directory for a catalog
+and recursively validates that all dependencies and resources match their
+defined anchors.
 
-  * **Dev Mode:** If `___` is found, the VM downloads the library, calculates
-    the hash, and **writes it back** to the `.rhy` file (Trust On First Use).
-  * **CI / Production Mode:** If `___` is found, the VM **Halts** immediately.
-    In production, all dependencies must be anchored.
+**The CLI Flag: `-sha256`** This flag controls the **Auto-Anchor** behavior. It
+does *not* change the execution mode (File vs. REPL); it only determines whether
+the runtime is allowed to update the catalog file.
+
+| Command                   | Behavior                                                                                                                                                                 |
+|:--------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`rhi -sha256 file.rh`** | 1. Scans catalog at file's location. <br> 2. Replaces any `___` anchors with calculated checksums. <br> 3. Validates existing anchors (Panics on mismatch). <br> 4. **Executes `file.rh`.** |
+| **`rhi file.rh`**         | 1. Scans catalog at file's location. <br> 2. **Panics** if any `___` anchors are found. <br> 3. Validates existing anchors (Panics on mismatch). <br> 4. Executes `file.rh`.                |
+| **`rhi -sha256`**         | 1. Scans catalog at current location. <br> 2. Replaces `___` with checksums. <br> 3. Validates existing anchors. <br> 4. **Starts REPL.**                                                    |
+| **`rhi`**                 | 1. Scans catalog at current location. <br> 2. **Panics** if `___` found. <br> 3. Validates anchors. <br> 4. Starts REPL.                                                                     |
+
+**Panic Conditions:**
+The runtime will halt immediately with a specific error message if integrity checks fail:
+
+* **Empty Anchor (without `-sha256`):**
+    > `anchor is not a match for dependency 'libs/math' (line 12, col 4): expected '___' actual 'sha256:e3b0c4...'`
+* **Mismatching Anchor (always):**
+    > `anchor is not a match for dependency 'libs/math' (line 12, col 4): expected 'sha256:8f4a...' actual 'sha256:e3b0c4...'`
 
 #### 5\.6\.3 Catalog Metadata (User-Defined in `.rhy`)
 
