@@ -75,10 +75,10 @@ Dependencies are imported using the **Resolver Protocol**.
 
 | Resolver     | Syntax | Use Case      | Example                             |
 |:-------------|:-------|:--------------|:------------------------------------|
-| **Standard** | `!`    | Built-in Libs | `{!\|🧮\|-}`                        |
-| **Local**    | `-`    | Internal Code | `{-\|src\utils\math \|-}`        |
+| **Base** | `!`    | Standard Libs | `{!\|🧮\|-}`                        |
+| **Local** | `-`    | Internal Code | `{-\|src\utils\math \|-}`        |
 | **Resource** | `=`    | Static Assets | `{=\|assets/icons/logo.png \|-}`  |
-| **Remote**   | `git`  | External Libs | `{git\|https://github...\|0.1.0}` |
+| **Custom** | `git`  | External Libs | `{git\|https://github...\|0.1.0}` |
 
 **Path Resolution Rules:**
 1.  **Implicit (Sibling):** Books within the same Shelf (Folder) can access each
@@ -117,7 +117,22 @@ for *declarations* (functions/classes) because of the multi-pass Hoister.
 However, circular *initialization logic* (top-level code that depends on another
 file's top-level code executing first) will trigger a **Runtime Cycle Error**.
 
-#### 5\.5\.1 Initial Library State
+#### 5\.5\.1 Custom Network Resolvers (`git` & `!`)
+
+Under the hood, both the **Remote (`git`)** and **Base (`!`)** resolvers are **Custom Resolvers** that use network protocols (Git over HTTP) to transmit libraries. They differ only in how they determine the **Target Repository** and the **Target Branch**.
+
+1.  **Git Resolver (`git`):**
+    * **Mechanism:** Connects to the **Provided URL** (e.g., a GitHub/GitLab repo).
+    * **Target:** Pulls the **HEAD Branch** of that repository.
+    * **Usage:** `{ git | https://github.com/user/repo | version }`
+
+2.  **Base Library Resolver (`!`):**
+    * **Mechanism:** Connects to a **Default URL** (The official Rhumb Library Registry).
+    * **Target:** Pulls the **Provided Branch/Tag** that matches the requested library (e.g., library "🧮").
+    * **Default URL:** `https://github.com/rhumb/libraries`
+    * **Override:** The source URL can be changed via project metadata (see below).
+
+#### 5\.5\.2 Initial Library State
 
 A resolved module is not just a bag of code; it must be explicitly granted
 capabilities to interact with the outside world through a **Vassal** (see
@@ -157,7 +172,7 @@ dlib := {-|dangerous_library|-} || <{
 }>
 ```
 
-#### 5\.5\.2 Signal Pattern Ranges
+#### 5\.5\.3 Signal Pattern Ranges
 
 Capabilities are expressed as **Signal Patterns** on the system channels.
 
@@ -261,7 +276,7 @@ preventing "Left-Pad" incidents or malicious updates.
     published/tagged, their dependency list should not change. The Tip (`-`) is
     mutable.
 
-### 5.6.2 Integrity Enforcement & The `-sha256` Flag
+#### 5.6.2 Integrity Enforcement & The `-sha256` Flag
 
 Rhumb enforces strict supply chain security at runtime. When `rhi` starts
 (either in file mode or REPL mode), it scans the local directory for a catalog
@@ -293,14 +308,15 @@ A catalog file can contain one non-version key which is the project's name (best
 practice is that this matches the folder's name). This non-version key hold's an
 object with a few metadata fields:
 
-| Emoji Key | Name | Type | Description |
-| :--- | :--- | :--- | :--- |
-| **`👤`** | **Author** | String | The maintainer or organization. |
-| **`🪪`** | **License** | String | SPDX license identifier. |
-| **`📦`** | **Repo** | URL | Source code repository. |
-| **`🏷️`** | **Tags** | List | Keywords for indexing/search. |
-| **`📝`** | **Desc** | String | Multi-line description. |
-| **`📂`** | **Root** | Path | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder. |
+| Emoji Key | Name         | Type   | Description                                                                                                                    |
+|:----------|:-------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------|
+| **`👤`**  | **Author**   | String | The maintainer or organization.                                                                                                |
+| **`🪪`**  | **License**  | String | SPDX license identifier.                                                                                                       |
+| **`📦`**  | **Repo**     | URL    | Source code repository.                                                                                                        |
+| **`🏷️`** | **Tags**     | List   | Keywords for indexing/search.                                                                                                  |
+| **`📝`**  | **Desc**     | String | Multi-line description.                                                                                                        |
+| **`📂`**  | **Root**     | Path   | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder.                                        |
+| **`❗`**   | **Base URL** | URL    | **Base Library Override.** Changes the default registry for `!` imports from `github.com/rhumb/libraries` to a custom Git URL. |
 
 
 #### 5\.6\.4 Example Library/Route Folder
@@ -661,6 +677,7 @@ my_project:
         This is a description of the project and it can span
         multiple lines using thr yaml ">" operator
     📂: src # if the libraries and desktop books are in non-root folder
+    ❗: "https://git.internal.corp/rhumb/custom-std-lib" # Override the base library source
 
 # all remaining values in the catalog are versions of the project
 -:
