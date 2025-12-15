@@ -316,7 +316,7 @@ object with a few metadata fields:
 | **`🏷️`** | **Tags**     | List   | Keywords for indexing/search.                                                                                                                                |
 | **`📝`**  | **Desc**     | String | Multi-line description.                                                                                                                                      |
 | **`📂`**  | **Root**     | Path   | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder.                                                                      |
-| **`❗`**   | **Base URL** | URL    | **Base Library Override.** Changes the default registry for `!` imports from `github.com/rhumb/libraries` to a custom Git URL.                               |
+| **`❗`**   | **Base URL** | URL    | **Base Library Override.** Changes the default registry for `!` imports from `github.com/rhumb-lang/libraries` to a custom Git URL.                               |
 | **`⚙️`**  | **Engines**  | Map    | **Runtime Requirements.** Specifies the minimum version of the runtimes (such as `rhi`) required to use this library. Used to ensure Native Functions exist. |
 
 **Engines Example:**
