@@ -308,16 +308,24 @@ A catalog file can contain one non-version key which is the project's name (best
 practice is that this matches the folder's name). This non-version key hold's an
 object with a few metadata fields:
 
-| Emoji Key | Name         | Type   | Description                                                                                                                    |
-|:----------|:-------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------|
-| **`👤`**  | **Author**   | String | The maintainer or organization.                                                                                                |
-| **`🪪`**  | **License**  | String | SPDX license identifier.                                                                                                       |
-| **`📦`**  | **Repo**     | URL    | Source code repository.                                                                                                        |
-| **`🏷️`** | **Tags**     | List   | Keywords for indexing/search.                                                                                                  |
-| **`📝`**  | **Desc**     | String | Multi-line description.                                                                                                        |
-| **`📂`**  | **Root**     | Path   | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder.                                        |
-| **`❗`**   | **Base URL** | URL    | **Base Library Override.** Changes the default registry for `!` imports from `github.com/rhumb/libraries` to a custom Git URL. |
+| Emoji Key | Name         | Type   | Description                                                                                                                                                  |
+|:----------|:-------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`👤`**  | **Author**   | String | The maintainer or organization.                                                                                                                              |
+| **`🪪`**  | **License**  | String | SPDX license identifier.                                                                                                                                     |
+| **`📦`**  | **Repo**     | URL    | Source code repository.                                                                                                                                      |
+| **`🏷️`** | **Tags**     | List   | Keywords for indexing/search.                                                                                                                                |
+| **`📝`**  | **Desc**     | String | Multi-line description.                                                                                                                                      |
+| **`📂`**  | **Root**     | Path   | **Source Root.** If set (e.g. `src`), all shelf lookups happen relative to this folder.                                                                      |
+| **`❗`**   | **Base URL** | URL    | **Base Library Override.** Changes the default registry for `!` imports from `github.com/rhumb/libraries` to a custom Git URL.                               |
+| **`⚙️`**  | **Engines**  | Map    | **Runtime Requirements.** Specifies the minimum version of the runtimes (such as `rhi`) required to use this library. Used to ensure Native Functions exist. |
 
+**Engines Example:**
+
+```yaml
+my_project:
+  ⚙️: 
+    rhi: "0.1.0" # Indicates that my_project works with the `rhi` runtime at version 0.1.0
+```
 
 #### 5\.6\.4 Example Library/Route Folder
 

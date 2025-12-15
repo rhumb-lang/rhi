@@ -24,6 +24,7 @@ type LibraryLoader struct {
 	ProjectRoot string                  // Root of the current project (for local imports)
 	Config      *config.Config
 	VM          *vm.VM // Back-reference to execute code
+	CurrentRuntime mapval.Value // The version of the running binary
 
 	RootCatalog *Catalog        // The parsed project@.rhy
 	Loading     map[string]bool // For cycle detection
@@ -50,6 +51,31 @@ func (l *LibraryLoader) Load(resolver, logicalPath string, constraint mapval.Val
 
 	if l.Config.TraceLoader {
 		fmt.Printf("[Loader] Resolved: %s\n", physicalPath)
+	}
+
+	// Check for Catalog at shelf root to validate engines
+	// The shelf is usually the parent of the version folder if resolved to version,
+	// or the folder itself if resolved to tip?
+	// resolvePath returns .../src/lib/1.0.0 or .../src/lib/-
+	// The catalog should be at .../src/lib/lib@.rhy
+	shelfRoot := filepath.Dir(physicalPath)
+	// We need the shelf name to construct [name]@.rhy or name@.rhy?
+	// Library catalogs are usually named after the folder, but here we don't know the folder name easily without parsing path.
+	// Assume convention: shelfRoot contains `shelfName@.rhy`.
+	// But `shelfName` is the name of the folder `shelfRoot`.
+	shelfName := filepath.Base(shelfRoot)
+	// If shelfName is `libs`, then we are too high.
+	// Wait, structure is `libs/math/1.0.0`. `math` is the shelf. `1.0.0` is version.
+	// So `shelfRoot` is `libs/math`. `shelfName` is `math`.
+	// Catalog is `libs/math/math@.rhy`.
+	
+	catPath := filepath.Join(shelfRoot, fmt.Sprintf("%s@.rhy", shelfName))
+	if _, err := os.Stat(catPath); err == nil {
+		if cat, err := LoadCatalog(catPath); err == nil {
+			if err := l.validateCatalog(cat, catPath); err != nil {
+				return mapval.NewEmpty(), err
+			}
+		}
 	}
 
 	// 2. Cycle Check
@@ -167,6 +193,11 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 
 		cat, err := LoadCatalog(catPath)
 		if err == nil {
+			// Validate Engines for resource shelf too
+			if err := l.validateCatalog(cat, catPath); err != nil {
+				return mapval.NewEmpty(), err
+			}
+			
 			if vc, ok := cat.Versions[resolvedVer]; ok {
 				meta, exists = vc.Resources[filename]
 			}
@@ -228,6 +259,48 @@ func (l *LibraryLoader) LoadResource(path string, version mapval.Value) (mapval.
 
 	// D. Default: Slip
 	return mapval.NewSlip(fullPath, mime), nil
+}
+
+func (l *LibraryLoader) validateCatalog(cat *Catalog, path string) error {
+	if req, ok := cat.Engines["rhi"]; ok {
+		// Parse the constraint (e.g. "0.1.-")
+		constraint := l.parseConstraint(req)
+		
+		if !l.checkVersionConstraint(l.CurrentRuntime, constraint) {
+			return fmt.Errorf(
+				"runtime version mismatch in '%s': library requires rhi %s, but running %s",
+				path, req, l.CurrentRuntime.Canonical(),
+			)
+		}
+	}
+	return nil
+}
+
+// Helper to check version constraints, integers (minor wildcards) are allowed
+func (l *LibraryLoader) checkVersionConstraint(current mapval.Value, constraint mapval.Value) bool {
+	curMaj, curMin, curPat, _ := current.VersionUnpack()
+	reqMaj, reqMin, reqPat, wild := constraint.VersionUnpack()
+
+	// If constraint is a wildcard:
+	if wild {
+		// 1.- -> Match Major
+		if reqMaj != curMaj {
+			return false
+		}
+		// 1.2.- -> Match Major and Minor (if Minor was specified)
+		// Assuming parseConstraint maps "1.2.-" correctly to reqMin != 0
+		if reqMin != 0 && reqMin != curMin {
+			return false
+		}
+		// 1.2.3.- -> Match Major, Minor, Patch (if Patch was specified)
+		if reqPat != 0 && reqPat != curPat {
+			return false
+		}
+		return true
+	}
+
+	// Exact match
+	return curMaj == reqMaj && curMin == reqMin && curPat == reqPat
 }
 
 func (l *LibraryLoader) parseJSON(data []byte) (mapval.Value, error) {
@@ -317,6 +390,22 @@ func (l *LibraryLoader) parseConstraint(s string) mapval.Value {
 	if s == "-" {
 		return mapval.NewVersion(0, 0, 0, true) // Wildcard
 	}
+	// Handle "1.-"
+	if strings.HasSuffix(s, ".-") {
+		trimmed := strings.TrimSuffix(s, ".-")
+		parts := strings.Split(trimmed, ".")
+		if len(parts) == 1 {
+			// "1.-"
+			maj, _ := strconv.Atoi(parts[0])
+			return mapval.NewVersion(uint16(maj), 0, 0, true)
+		} else if len(parts) == 2 {
+			// "1.2.-"
+			maj, _ := strconv.Atoi(parts[0])
+			min, _ := strconv.Atoi(parts[1])
+			return mapval.NewVersion(uint16(maj), uint16(min), 0, true)
+		}
+	}
+
 	parts := strings.Split(s, ".")
 	if len(parts) == 3 {
 		maj, _ := strconv.Atoi(parts[0])

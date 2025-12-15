@@ -32,6 +32,11 @@ type Catalog struct {
 	Description string   `yaml:"📝"`
 	SourceRoot  string   `yaml:"📂"`
 
+	// Engines defines the required runtime versions
+	// Key: "rhi" (or potentially others like "go" if strictly needed)
+	// Value: Version with or without a wildcard (e.g. "1.-", "0.5.-", or "0.5.1")
+	Engines map[string]string `yaml:"⚙️"`
+
 	// Versions maps "0.1.0" -> VersionConfig
 	// Note: Since YAML keys are dynamic strings, we parse into a map[string]interface{}
 	// and manually decode the version keys vs metadata keys.
@@ -62,7 +67,7 @@ func LoadCatalog(path string) (*Catalog, error) {
 	}
 
 	knownKeys := map[string]bool{
-		"👤": true, "🪪": true, "📦": true, "🏷️": true, "📝": true, "📂": true,
+		"👤": true, "🪪": true, "📦": true, "🏷️": true, "📝": true, "📂": true, "⚙️": true,
 	}
 
 	// 1. Check for Flat Metadata

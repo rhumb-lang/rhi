@@ -96,12 +96,13 @@ func NewSession(cfg *config.Config, scriptPath string) *Session {
 	}
 
 	v.Loader = &loader.LibraryLoader{
-		Registry:    make(map[string]mapval.Value),
-		Sitemap:     make(map[string]string),
-		ProjectRoot: finalRoot,
-		Config:      cfg,
-		VM:          v,
-		RootCatalog: rootCatalog, // Assign the loaded catalog
+		Registry:       make(map[string]mapval.Value),
+		Sitemap:        make(map[string]string),
+		ProjectRoot:    finalRoot,
+		Config:         cfg,
+		VM:             v,
+		RootCatalog:    rootCatalog, // Assign the loaded catalog
+		CurrentRuntime: config.RuntimeVersion,
 	}
 
 	return &Session{
@@ -186,7 +187,7 @@ func (s *Session) runFile(filename string) {
 
 func (s *Session) runREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Rhumb REPL (v0.3.0)")
+	fmt.Printf("Rhumb REPL (v%s)\n", config.RuntimeVersion.Canonical())
 	for {
 		fmt.Print("> ")
 		if !scanner.Scan() {

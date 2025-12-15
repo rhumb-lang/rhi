@@ -1,7 +1,8 @@
 # rhi Justfile
 
-# just --set version v0.3.0
-version := "v0.3.0"
+vMajor := "0"
+vMinor := "4"
+vPatch := "0"
 
 # Default recipe
 default: build
@@ -67,15 +68,19 @@ grammar:
 
 # Create release artifacts for all platforms
 release:
-    @echo "Building Release {{version}}..."
+    @echo "Building Release v{{vMajor}}.{{vMinor}}.{{vPatch}}..."
+
+    # Update internal/config/version.go
+    sed -i 's/RuntimeVersion = mapval.NewVersion(.*, false)/RuntimeVersion = mapval.NewVersion({{vMajor}}, {{vMinor}}, {{vPatch}}, false)/' internal/config/version.go
+    
     mkdir -p dist
     # Linux
-    GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o dist/rhi-{{version}}-linux-amd64     ./cmd/rhi
+    GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o dist/rhi-v{{vMajor}}.{{vMinor}}.{{vPatch}}-linux-amd64     ./cmd/rhi
     # Windows
-    GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/rhi-{{version}}-windows-amd64.exe ./cmd/rhi
+    GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/rhi-v{{vMajor}}.{{vMinor}}.{{vPatch}}-windows-amd64.exe ./cmd/rhi
     # Mac (Intel & Silicon)
-    GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o dist/rhi-{{version}}-darwin-amd64     ./cmd/rhi
-    GOOS=darwin  GOARCH=arm64 go build -ldflags="-s -w" -o dist/rhi-{{version}}-darwin-arm64      ./cmd/rhi
+    GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o dist/rhi-v{{vMajor}}.{{vMinor}}.{{vPatch}}-darwin-amd64     ./cmd/rhi
+    GOOS=darwin  GOARCH=arm64 go build -ldflags="-s -w" -o dist/rhi-v{{vMajor}}.{{vMinor}}.{{vPatch}}-darwin-arm64      ./cmd/rhi
     @echo "Done! Artifacts in ./dist"
 
 # Clean up build artifacts
