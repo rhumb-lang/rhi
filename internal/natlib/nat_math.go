@@ -23,11 +23,12 @@ func natSin(args []mapval.Value) mapval.Value {
 	// Type Coercion logic (Float/Int -> Float)
 	val := args[0]
 	f := 0.0
-	if val.Type == mapval.ValFloat {
+	switch val.Type {
+	case mapval.ValFloat:
 		f = val.Float
-	} else if val.Type == mapval.ValInteger {
+	case mapval.ValInteger:
 		f = float64(val.Integer)
-	} else {
+	default:
 		return mapval.NewErrorSignal(400, "sin expects number", val)
 	}
 
@@ -44,6 +45,10 @@ func natInt(args []mapval.Value) mapval.Value {
 
 	if !ok1 || !ok2 {
 		return mapval.NewErrorSignal(400, "int expects integers", mapval.NewEmpty())
+	}
+
+	if max <= min {
+		return mapval.NewErrorSignal(400, "int range error: max must be greater than min", mapval.NewEmpty())
 	}
 
 	return mapval.NewInt(rand.Int63n(max-min) + min)
