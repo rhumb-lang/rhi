@@ -22,5 +22,5 @@ func natPanic(args []mapval.Value) mapval.Value {
 	}
 
 	// Code 999: General panic/unhandled error
-	return mapval.NewErrorSignal(999, "Rhumb Panic: "+msg, mapval.NewEmpty())
+	return mapval.NewErrorSignal(ErrPanic, "Rhumb Panic: "+msg, mapval.NewEmpty())
 }
