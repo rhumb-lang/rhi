@@ -128,3 +128,6 @@ Stress Testing (Chaos Monkey), and the "Blessed Output" assertion syntax (%=).
 Specifications for the graphical environment, including the "Code Projector",
 the spatial "Route/Desktop" metaphor, window management, and the
 dual-persistence strategy.
+
+### 🖥️ [Frequently Asked Questions](09_faq.md)
+Various questions about the philosophy, design decisions, and semantic nuances.
