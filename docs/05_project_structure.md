@@ -73,12 +73,13 @@ Dependencies are imported using the **Resolver Protocol**.
   * **Explicit Version:** `{ ! | math | 1.0.0 }`
   * **Latest/Default Version:** `{ ! | math | - }` (Use `-` to indicate no specific version)
 
-| Resolver     | Syntax | Use Case      | Example                             |
-|:-------------|:-------|:--------------|:------------------------------------|
-| **Base** | `!`    | Standard Libs | `{!\|🧮\|-}`                        |
-| **Local** | `-`    | Internal Code | `{-\|src\utils\math \|-}`        |
+| Resolver     | Syntax | Use Case      | Example                           |
+|:-------------|:-------|:--------------|:----------------------------------|
+| **Base**     | `!`    | Standard Libs | `{!\|🧮\|-}`                      |
+| **Local**    | `-`    | Internal Code | `{-\|src\utils\math \|-}`         |
 | **Resource** | `=`    | Static Assets | `{=\|assets/icons/logo.png \|-}`  |
-| **Custom** | `git`  | External Libs | `{git\|https://github...\|0.1.0}` |
+| **Custom**   | `git`  | External Libs | `{git\|https://github...\|0.1.0}` |
+| **Native**   | `_`    | Internal FFI  | `{_\|nat_math\|-}`                |
 
 **Path Resolution Rules:**
 1.  **Implicit (Sibling):** Books within the same Shelf (Folder) can access each

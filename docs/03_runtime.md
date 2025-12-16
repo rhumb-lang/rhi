@@ -59,24 +59,26 @@ Resolves concurrency events and state.
     * **On Retraction:** If the tuple was removed, inject the **`$empty`** signal into all active threads subscribed to that topic.
 3\.  **Persist:** The state (or absence thereof) persists until the next Proclamation.
 
-### 3\.4 Control Flow & Signals
+### 3.4 Control Flow & Effects
 
-Rhumb distinguishes between **Values** (Data) and **Activities** (Control Flow).
+Rhumb uses a bi-directional signaling system involving **Signals** (Upstream) and **Replies** (Downstream).
 
-* **Values:** Numbers, Strings, Maps, Functions. These sit on the stack and can
-  be stored in variables.
-* **Activities:** Signals (`#`) and Replies. These are ephemeral events that
-  *move* through the stack. They **cannot** be stored in variables.
+#### 3.4.1 The Zombie Frame (Suspension)
 
-**The Bubbling Rule:** When a function produces a Signal (e.g., `#foo`),
-execution of that function stops immediately. The Signal "bubbles" up to the
-caller.
+When a function emits a signal (e.g., `x := #help`), execution in that frame **suspends**. The frame becomes a **"Zombie"**—it is frozen in memory, waiting for a value to resolve the assignment `x := ...`.
 
-* **Assignments are Skipped:** In `x := fn()`, if `fn` returns a signal, the
-  assignment `x := ...` never happens. The signal bubbles past `x` to the
-  enclosing scope.
-* **Trapping:** The only way to stop a signal is to attach a **Selector Block**
-  directly to the call site.
+#### 3.4.2 Bubbling & Trapping
+
+1.  **Signal (Up):** The signal bubbles up the call stack looking for a **Selector** attached to a call site.
+2.  **Trap:** When a selector matches the signal, the `..` block is executed.
+3.  **Reply (Down):** Inside the selector, you can send a Reply using `^`.
+	* **Unnamed Reply `^(val)`:** This targets the **original signaler**. It travels back down to the Zombie frame, resolves the `#signal` expression to `val`, and resumes execution.
+	* **Named Reply `^name(val)`:** This bubbles **down** through the stack of zombies, looking for a specific reply-trap attached to the signal emission itself (see *Explicit Listening*).
+
+#### 3.4.3 The Panic Protocol (`#***`)
+
+The signal `#***` is unique. If it reaches the top of the stack without being trapped, it does not just warn—it triggers a **VM Panic** and halts the program.
+
 
 **Correct Syntax:**
 
