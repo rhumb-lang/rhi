@@ -59,8 +59,47 @@ Resolves concurrency events and state.
     * **On Retraction:** If the tuple was removed, inject the **`$empty`** signal into all active threads subscribed to that topic.
 3\.  **Persist:** The state (or absence thereof) persists until the next Proclamation.
 
+### 3\.4 Control Flow & Signals
 
-### 3\.4 Bytecode Architecture
+Rhumb distinguishes between **Values** (Data) and **Activities** (Control Flow).
+
+* **Values:** Numbers, Strings, Maps, Functions. These sit on the stack and can
+  be stored in variables.
+* **Activities:** Signals (`#`) and Replies. These are ephemeral events that
+  *move* through the stack. They **cannot** be stored in variables.
+
+**The Bubbling Rule:** When a function produces a Signal (e.g., `#foo`),
+execution of that function stops immediately. The Signal "bubbles" up to the
+caller.
+
+* **Assignments are Skipped:** In `x := fn()`, if `fn` returns a signal, the
+  assignment `x := ...` never happens. The signal bubbles past `x` to the
+  enclosing scope.
+* **Trapping:** The only way to stop a signal is to attach a **Selector Block**
+  directly to the call site.
+
+**Correct Syntax:**
+
+```rhumb
+% The selector handles the output of 'int', whether it is a value OR a signal.
+result := _impl\int(10) {
+	#***(code; msg; _) .. (
+		print("Caught error: " + msg)
+		% As long as another *** isn't thrown, you have prevented the panic from bubbling up any further
+	)
+	val .. val % Pass success values through
+}
+```
+
+**Incorrect Syntax:**
+
+```rhumb
+% BAD: The signal will bubble past 'result' before this line runs.
+result := _impl\int(10) 
+result { ... } 
+```
+
+### 3\.5 Bytecode Architecture
 
 Instruction Set is divided into four banks.
 
@@ -71,7 +110,7 @@ Instruction Set is divided into four banks.
 | **Map**      | Inheritance  | `SEND`, `SELF`, `LOAD_PARENT` (`@`)                          |
 | **Space**    | Concurrency  | `POST`, `INJECT`, `WRITE`, `SUBSCRIBE`                       |
 
-### 3\.5 Native Intrinsics (Operator Mapping)
+### 3\.6 Native Intrinsics (Operator Mapping)
 
 Operators are mapped to the following Native Opcodes. If the operand is a Map,
 the VM attempts to find a matching **Hook Field** (surrounded by _).
@@ -223,7 +262,7 @@ p2 := Point(p1)
 p1 == p2 %= yes
 ```
 
-### 3\.6 Selector Semantics
+### 3\.7 Selector Semantics
 
 Selectors (`{...}`) behave differently based on the type of their Subject.
 
@@ -269,7 +308,7 @@ Rhumb cannot use a standard linear stack (like C or Java). It must use a
 This structure allows execution branches to fork, pause, and persist
 independently, which is the foundation of the concurrency model.
 
-#### 3\.6\.1 Vassals (Sub-Selectors)
+#### 3\.7\.1 Vassals (Sub-Selectors)
 
 When you surround a selector in `<...>` it becomes a vassal which is a special
 kind of stored selector that we use for managing the boundaries of signals,
@@ -280,13 +319,13 @@ as well as for managing the boundaries of libraries
 
 -----
 
-### 3\.7 Memory Model: The Cactus Stack
+### 3\.8 Memory Model: The Cactus Stack
 
 To support **Zombie Frames** and **Resumable Replies**, the VM does not use a
 contiguous block of memory for the stack. Instead, it uses a **Cactus Stack** (a
 tree of linked frames allocated on the Heap).
 
-#### 3\.7\.1 Structure
+#### 3\.8\.1 Structure
 
   * **Heap Allocation:** Every `CallFrame` is a struct allocated on the Go Heap.
   * **Parent Pointers:** Each frame holds a pointer to its **Caller** (`Parent`).
@@ -306,7 +345,7 @@ type CallFrame struct {
 }
 ```
 
-#### 3\.7\.2 Lifecycle & Zombies
+#### 3\.8\.2 Lifecycle & Zombies
 
   * **Call (`OP_CALL`):** Creates a new Frame, links `Parent = CurrentFrame`, and sets `CurrentFrame = NewFrame`.
   * **Return (`OP_RETURN`):**
@@ -315,7 +354,7 @@ type CallFrame struct {
     3.  **Crucial:** The returned frame is **not deallocated**. It remains reachable via any **Reply Traps** or **Closures** that captured it.
   * **Garbage Collection:** The Go GC handles memory. If a Zombie Frame is no longer referenced by any active Process, Listener, or Child, it is automatically swept.
 
-#### 3\.7\.3 The "Drill Down" Mechanism
+#### 3\.8\.3 The "Drill Down" Mechanism
 
 The Cactus Stack enables the **Reply (`^`)** operator to traverse "forward" into history.
 
@@ -323,7 +362,7 @@ The Cactus Stack enables the **Reply (`^`)** operator to traverse "forward" into
 2.  **Traversal:** It walks down the linked list of Zombie Frames that were "popped" to reach the current state.
 3.  **Resume:** If a matching trap is found in a Zombie, the VM creates a new branch (Green Thread) resuming execution at that Zombie's IP, effectively "forking" the history.
 
-### 3\.8 Subroutine Semantics
+### 3\.9 Subroutine Semantics
 
 Rhumb defines specific roles for Logic units, separating the executable code from its interface and invocation state.
 
@@ -339,14 +378,14 @@ Rhumb defines specific roles for Logic units, separating the executable code fro
       * It converts the RHS `()` into a Subroutine.
       * **Invocation:** `foo(1)` binds `1` to the Submap labels, then executes the Subroutine.
 
-#### 3\.8\.1 Loose Argument Policy
+#### 3\.9\.1 Loose Argument Policy
 
 When a function is called (`foo(...)`):
 
   * **Missing Args:** If fewer arguments are provided than parameters defined in the submap, the remaining parameters are bound to **`___` (Empty)**.
   * **Extra Args:** If more arguments are provided than parameters, the extra values are ignored by the named binding but remain accessible via the variadic argument operator **`$`** (e.g., `$0` for all args, or `$N` for the Nth).
 
-#### 3\.8\.2 Referencing & Currying
+#### 3\.9\.2 Referencing & Currying
 
   * **Referencing (No Call):** The **Only Way** to pass a subroutine or function without executing it is to wrap it in Angle Brackets `<...>`.
       * `foo` $\rightarrow$ Executes.
@@ -354,13 +393,13 @@ When a function is called (`foo(...)`):
   * **Partial Application (Currying):** Syntax sugar for creating a new closure.
       * `<foo>(1)` $\rightarrow$ References `foo`, applies `1`, and returns a **New Function** (Closure) waiting for the remaining arguments. It does *not* execute.
 
-### 3\.9 Dynamic Type Interactions
+### 3\.10 Dynamic Type Interactions
 
 Rhumb enforces a strict, bi-directional type promotion strategy. The order of
 operands does not change the **Result Type** (e.g., `Int ++ Float` and `Float ++
 Int` both yield `Float`).
 
-#### 3\.9\.1 The Numeric Hierarchy
+#### 3\.10\.1 The Numeric Hierarchy
 When mixing standard numeric types, the result is promoted to the type with the greatest expressivity to prevent data loss.
 
 1.  **Decimal** (Highest Precision)
@@ -369,7 +408,7 @@ When mixing standard numeric types, the result is promoted to the type with the 
 
 *Rule:* `Lower + Higher` $\rightarrow$ `Higher`.
 
-#### 3\.9\.2 The Interaction Matrix
+#### 3\.10\.2 The Interaction Matrix
 The following table defines the result type for binary arithmetic (`++`, `--`).
 * **Rows/Cols:** The input types.
 * **Cells:** The output type.
@@ -383,7 +422,7 @@ The following table defines the result type for binary arithmetic (`++`, `--`).
 | **Duration** | `Duration` | `Duration` | `Duration` | `Duration` | `DateTime` |
 | **DateTime** | `DateTime`† | `DateTime`† | `DateTime`† | `DateTime` | `Duration`‡|
 
-#### 3\.9\.3 Scalar Interpretation Rules
+#### 3\.10\.3 Scalar Interpretation Rules
 When mixing Time types with Scalars (Integer/Float/Decimal), the Scalar is implicitly converted to a **Duration** before the operation proceeds.
 
 * **Integer:** Treated as **Milliseconds**.
@@ -393,7 +432,7 @@ When mixing Time types with Scalars (Integer/Float/Decimal), the Scalar is impli
     * The fractional part is converted to Milliseconds (Truncated precision).
     * `Time + 1.5` $\rightarrow$ `Time + 1500ms`
 
-#### 3\.9\.4 Special Logic (†/‡)
+#### 3\.10\.4 Special Logic (†/‡)
 
 **†: Date/Scalar Interaction**
   * **Addition (`++`):** Commutative. Shifts the Date by the scalar amount.
@@ -405,7 +444,7 @@ When mixing Time types with Scalars (Integer/Float/Decimal), the Scalar is impli
   * **Subtraction (`--`):** `Date - Date` $\rightarrow$ **Duration** (The magnitude between two points).
   * **Addition (`++`):** `Date + Date` $\rightarrow$ **Error** (Geometrically meaningless).
 
-#### 3\.9\.5 Multiplication & Division (`**`, `//`, `+/`, `-/`)
+#### 3\.10\.5 Multiplication & Division (`**`, `//`, `+/`, `-/`)
 
 These operators strictly follow the **Numeric Hierarchy**.
 * `DateTime` cannot be multiplied or divided.

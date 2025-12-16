@@ -1,4 +1,4 @@
-## 10\. Proposed Base Library
+## 6\. Proposed Base Library
 
 Here's the current draft of our upcoming base library.
 
@@ -20,7 +20,7 @@ do so but you could choose to label them with emoji if you like:
 area .= c ** 🧮\π
 ```
 
-### 10.1 Base Library Examples
+### 6\.1 Base Library Examples
 
 Base libraries all use the signal `#***(code; msg; &data)` for bubbling up
 non-panic errors.
@@ -149,7 +149,7 @@ non-panic errors.
 *   **`🕰️\⏱️` Stopwatch:**
     *   `start()`, `stop()`: High-precision timing for benchmarks.
 
-### 10.2 Standard Error Codes
+### 6\.2 Standard Error Codes
 
 All Base Libraries return errors as the signal `#***(code; msg; data)`. Rhumb adopts a hybrid coding standard:
 
@@ -174,3 +174,11 @@ All Base Libraries return errors as the signal `#***(code; msg; data)`. Rhumb ad
 | **500** | **Native Fail** | Internal Go error / Panic.     | Memory allocation        |
 | **501** | **Not Impl**    | Feature missing on this OS.    | Windows-only syscall     |
 | **999** | **Panic**       | Unrecoverable Runtime Panic.   | `core\***`               |
+
+### 6\.3 Core Functions
+
+These functions are implicitly imported and available everywhere.
+
+| Function  | Signature  | Description                                                                                                                                                  |
+|:----------|:-----------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`***`** | `***(msg)` | **Panic.** Immediately raises the `#***` signal with code `999`. Used to mark unreachable code or fatal errors. <br>`valid ?? ***("Invalid state")` |

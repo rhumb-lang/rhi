@@ -74,6 +74,8 @@ Symbols used for object access, assignment, and function definition.
 | **`<\|>`** | Realm   | Literal      | `r .= <\|>`    | Create Detached Realm             |
 | **`<{}>`** | Vassal  | Literal      | `v .= <{...}>` | Create Vassal (Attenuation Facet) |
 
+_**Note:** Unlike Object literals, a Signal literal is an executable statement. It immediately interrupts the current flow. You cannot write `x := #signal`._
+
 ### 1\.5 Math & Logic Operators
 
 | Symbol   | Name     | Role  | Syntax   | Meaning             |
