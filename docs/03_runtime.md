@@ -59,23 +59,48 @@ Resolves concurrency events and state.
     * **On Retraction:** If the tuple was removed, inject the **`$empty`** signal into all active threads subscribed to that topic.
 3\.  **Persist:** The state (or absence thereof) persists until the next Proclamation.
 
-### 3.4 Control Flow & Effects
+### 3\.4 The Unified Activity Model
+Rhumb treats all non-linear control flow—including standard function returns—as
+**Activities** on a specific **Channel** (Topic).
 
-Rhumb uses a bi-directional signaling system involving **Signals** (Upstream) and **Replies** (Downstream).
+| Concept    | Syntax      | Channel     | Direction    | Implicit Behavior                                          |
+|------------|-------------|-------------|--------------|------------------------------------------------------------|
+| **Return** | `#(val)`    | `""` (Anon) | Up (Signal)  | Routines implicitly trap `#(val)` and resolve to `val`.    |
+| **Signal** | `#tag(val)` | `"tag"`     | Up (Signal)  | Bubbles until an explicit selector matches `#tag`.         |
+| **Reply**  | `^(val)`    | `""` (Anon) | Down (Reply) | Signals implicitly trap `^(val)` and resolve to `val`.     |
+| **Inject** | `^tag(val)` | `"tag"`     | Down (Reply) | Bubbles down until a suspended signal matches `tag`.       |
 
-#### 3.4.1 The Zombie Frame (Suspension)
 
-When a function emits a signal (e.g., `x := #help`), execution in that frame **suspends**. The frame becomes a **"Zombie"**—it is frozen in memory, waiting for a value to resolve the assignment `x := ...`.
+#### 3\.4\.1 The Implicit Selectors
+You can visualize every Routine and Signal expression as having an invisible
+Selector attached:
 
-#### 3.4.2 Bubbling & Trapping
+**1. Routines capture Returns**
+
+```rhumb
+my_func := [] -> (
+  ... code ...
+  #(early-result) % return early using the explicit #()
+  ... code ...
+  end-result % the final expression result is implicitly wrapped in #()
+) %( impliclity has: %) { #(val) .. val }
+```
+
+**2. Signals capture Replies**
+
+```rhumb
+data := #fetch(url) %( impliclity has: %) { ^(val) .. val }
+```
+
+#### 3\.4\.2 Bubbling & Trapping
 
 1.  **Signal (Up):** The signal bubbles up the call stack looking for a **Selector** attached to a call site.
-2.  **Trap:** When a selector matches the signal, the `..` block is executed.
+2.  **Trap:** When a selector matches the signal, the RHS routine of the `..`/`::` operator is executed.
 3.  **Reply (Down):** Inside the selector, you can send a Reply using `^`.
 	* **Unnamed Reply `^(val)`:** This targets the **original signaler**. It travels back down to the Zombie frame, resolves the `#signal` expression to `val`, and resumes execution.
 	* **Named Reply `^name(val)`:** This bubbles **down** through the stack of zombies, looking for a specific reply-trap attached to the signal emission itself (see *Explicit Listening*).
 
-#### 3.4.3 The Panic Protocol (`#***`)
+#### 3\.4\.3 The Panic Protocol (`#***`)
 
 The signal `#***` is unique. If it reaches the top of the stack without being trapped, it does not just warn—it triggers a **VM Panic** and halts the program.
 
@@ -100,6 +125,20 @@ result := _impl\int(10) {
 result := _impl\int(10) 
 result { ... } 
 ```
+
+### 3\.4\.4 The Unified Activity Model (Mental Model)
+
+It is helpful to view all control flow in Rhumb as a system of **Signals (Up)** and **Replies (Down)**.
+
+1.  **Maps & Routines** act as **Signal Traps**.
+    * They implicitly catch the **Anonymous Signal** (`#`) and treat it as a **Return Value**.
+    * `my_func := [] -> #(42)` is conceptually `my_func := [] -> #""(42)`.
+
+2.  **Signal Expressions** act as **Reply Traps**.
+    * They implicitly catch the **Anonymous Reply** (`^`) and treat it as their **Evaluation Result**.
+    * `x := #wait` suspends and waits for `^""(val)`.
+
+This symmetry implies that `return` and `resume` are just two sides of the same coin: resolving a pending computation.
 
 ### 3\.5 Bytecode Architecture
 

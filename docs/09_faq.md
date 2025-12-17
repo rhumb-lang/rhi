@@ -114,3 +114,13 @@ The function `get_user_content` doesn't know (and doesn't care) if `#fetch_user`
 
 1. **The "Sync" Implementation:** The handler replies immediately.
 2. **The "Async" Implementation:** The handler captures the continuation (the Zombie frame), puts it in a queue, and replies 5 seconds later.
+
+### 9\.2 Why do Signals `#` and Replies `^` look like Return statements?
+
+Because in Rhumb, they are the same mechanism! 
+
+A "Return" is just a Signal sent to the caller. 
+
+A "Function Call" is just a Signal that suspends the caller until a result is provided. 
+
+Rhumb exposes the machinery of `return` (Signals) and `function calls` (Zombies) to the developer, giving you full control over the flow of execution.

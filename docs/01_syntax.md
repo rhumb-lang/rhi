@@ -64,15 +64,17 @@ Symbols used for object access, assignment, and function definition.
 
 ### 1\.4 Concurrency Symbols
 
-| Symbol     | Name    | Role         | Syntax         | Meaning                           |
-|:-----------|:--------|:-------------|:---------------|:----------------------------------|
-| **`#`**    | Hash    | Signal       | `obj#click`    | "Emit Event (Bubble Up)"          |
-| **`^`**    | Caret   | Reply        | `worker^ack`   | "Inject Event (Drill Down)"       |
-| **`$`**    | Dollar  | Proclamation | `obj$status`   | "Set State (Persistent)"          |
-| **`<>`**   | Diamond | Subscription | `obj <> [...]` | "React to changes"                |
-| **`<$>`**  | Realm   | Literal      | `r .= <$>`     | Create Child Realm                |
-| **`<\|>`** | Realm   | Literal      | `r .= <\|>`    | Create Detached Realm             |
-| **`<{}>`** | Vassal  | Literal      | `v .= <{...}>` | Create Vassal (Attenuation Facet) |
+| Symbol     | Name        | Role             | Syntax         | Meaning                                                        |
+|:-----------|:------------|:-----------------|:---------------|:---------------------------------------------------------------|
+| **`#`**    | Hash        | Signal           | `obj#click`    | Emit Event (Bubble Up)                                         |
+| **`#()`**  | Hash-Paren  | Anonymous Signal | `#(foo)`       | Equivalent to `#""(val)`. Acts as a **Return** statement       |
+| **`^`**    | Caret       | Reply            | `worker^ack`   | Inject Event (Drill Down)                                      |
+| **`^()`**  | Caret-Paren | Anonymous Reply  | `^(bar)`       | Equivalent to `^""(val)`. Acts as a **Resume/Yield** statement |
+| **`$`**    | Dollar      | Proclamation     | `obj$status`   | Set State (Persistent)                                         |
+| **`<>`**   | Diamond     | Subscription     | `obj <> [...]` | React to changes                                               |
+| **`<$>`**  | Realm       | Literal          | `r .= <$>`     | Create Child Realm                                             |
+| **`<\|>`** | Realm       | Literal          | `r .= <\|>`    | Create Detached Realm                                          |
+| **`<{}>`** | Vassal      | Literal          | `v .= <{...}>` | Create Vassal (Attenuation Facet)                              |
 
 _**Note:** Unlike Object literals, a Signal literal is an executable statement. It immediately interrupts the current flow. You cannot write `x := #signal`._
 
