@@ -219,6 +219,11 @@ the VM attempts to find a matching **Hook Field** (surrounded by _).
 | **Match**    | `..`   | `OP_MATCH_CONS` | Select & Consume (Stop)                                     |
 | **Peek**     | `::`   | `OP_MATCH_PEEK` | Select & Continue (Fallthrough)                             |
 
+##### Immutability Rules
+1. **Once Frozen, Forever Frozen:** Once a label or field is defined using `.=` or `..`, it cannot be changed.
+2. **One-Way Ratchet:** A mutable variable (`:=`) can be redefined as immutable (`.=`). An immutable variable cannot be redefined as mutable.
+3. **Violation:** Attempting to assign to an immutable entity raises a Runtime Error: `cannot assign value to immutable X`.
+
 #### Space & Concurrency
 All Space operations consume their operands and **must push a result** to maintain stack integrity.
 
