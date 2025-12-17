@@ -26,6 +26,7 @@ var (
 	traceParser   = flag.Bool("trace-parser", false, "Enable parser tracing")
 	traceBytecode = flag.Bool("trace-bytecode", false, "Enable bytecode tracing")
 	traceStack    = flag.Bool("trace-stack", false, "Enable stack tracing")
+	traceFrame    = flag.Bool("trace-frame", false, "Enable frame tracing")
 	traceSpace    = flag.Bool("trace-space", false, "Enable space/concurrency tracing")
 	traceLoader   = flag.Bool("trace-loader", false, "Enable loader tracing")
 	lastValue     = flag.Bool("last-value", false, "Print the last value of the execution")
@@ -125,6 +126,9 @@ func main() {
 	if !*traceStack && os.Getenv("RHI_TRACE_STACK") == "1" {
 		*traceStack = true
 	}
+	if !*traceFrame && os.Getenv("RHI_TRACE_FRAME") == "1" {
+		*traceFrame = true
+	}
 	if !*traceSpace && os.Getenv("RHI_TRACE_SPACE") == "1" {
 		*traceSpace = true
 	}
@@ -136,6 +140,7 @@ func main() {
 		TraceParser:   *traceParser,
 		TraceBytecode: *traceBytecode,
 		TraceStack:    *traceStack,
+		TraceFrame:    *traceFrame,
 		TraceSpace:    *traceSpace,
 		TraceLoader:   *traceLoader,
 	}

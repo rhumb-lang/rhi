@@ -15,6 +15,13 @@ type Loader interface {
 	Load(resolver, logicalPath string, constraint mapval.Value) (mapval.Value, error)
 }
 
+type State int
+
+const (
+	StateRunning State = iota
+	StateSignaling
+)
+
 type VM struct {
 	CurrentFrame *CallFrame
 
@@ -24,6 +31,15 @@ type VM struct {
 	Config *config.Config
 
 	Loader Loader
+
+	// State of the VM (Running or Signaling)
+	state State
+
+	// The signal being bubbled up
+	signalVal mapval.Value
+
+	// Zombies: The "Parking Lot" for suspended frames.
+	zombies []*CallFrame
 }
 
 // Result code for the VM interpretation
@@ -56,6 +72,7 @@ func NewVM() *VM {
 		SP:           0,
 		CurrentFrame: nil,
 		Config:       config.DefaultConfig(),
+		state:        StateRunning,
 	}
 }
 
@@ -77,6 +94,7 @@ func (vm *VM) Interpret(chunk *mapval.Chunk) (Result, error) {
 		Base:    0,
 		Parent:  nil,
 	}
+	vm.state = StateRunning
 
 	return vm.run()
 }
@@ -170,6 +188,20 @@ func (vm *VM) RunSynchronous() (Result, error) {
 	}
 
 	for {
+		if vm.state == StateSignaling {
+			handled, err := vm.handleSignal()
+			if err != nil {
+				return RuntimeError, err
+			}
+			if handled {
+				vm.state = StateRunning
+			} else {
+				vm.state = StateRunning
+				// Drop signal
+			}
+			continue
+		}
+
 		res, err := vm.Step()
 		if err != nil {
 			return RuntimeError, err
@@ -192,25 +224,31 @@ func (vm *VM) RunSynchronous() (Result, error) {
 }
 
 func (vm *VM) run() (Result, error) {
-
 	for {
+		if vm.state == StateSignaling {
+			handled, err := vm.handleSignal()
+			if err != nil {
+				return RuntimeError, err
+			}
+			if handled {
+				vm.state = StateRunning
+			} else {
+				// Signal Unhandled.
+				// For now, we drop it.
+				// In a real system, we might want to panic or log.
+				vm.state = StateRunning
+			}
+			continue
+		}
 
 		res, err := vm.Step()
-
 		if err != nil {
-
 			return RuntimeError, err
-
 		}
-
 		if res != Ok {
-
 			return res, nil
-
 		}
-
 	}
-
 }
 
 func (vm *VM) Step() (Result, error) {
@@ -223,6 +261,17 @@ func (vm *VM) Step() (Result, error) {
 
 		return RuntimeError, fmt.Errorf("IP out of bounds")
 
+	}
+
+	if vm.Config.TraceFrame {
+		fmt.Printf("FRAME: %s IP:%04d SP:%d Base:%d", frame.Closure.Fn.Name, frame.IP, vm.SP, frame.Base)
+		if frame.Monitor != nil {
+			fmt.Print(" [Monitored]")
+		}
+		if frame.WaitingSignal != "" {
+			fmt.Printf(" [Waiting: %s]", frame.WaitingSignal)
+		}
+		fmt.Println()
 	}
 
 	if vm.Config.TraceStack {

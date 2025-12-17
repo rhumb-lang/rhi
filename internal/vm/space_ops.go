@@ -7,19 +7,43 @@ import (
 )
 
 func (vm *VM) opMonitor() error {
-	// Stack: [Target, Selector]
-	selectorVal := vm.pop()
-	targetVal := vm.peek(0) // Peek target
+	argc := int(vm.readByte())
 
+	selectorVal := vm.pop()
 	selector, ok := selectorVal.Obj.(*mapval.Closure)
 	if !ok {
 		return fmt.Errorf("monitor must be a selector closure")
 	}
 
-	// If Target is a Closure, attach as Monitor
+	if argc > 0 {
+		// Monitored Call Mode
+		// Stack: [Func, Arg1...ArgN]. Top is SP.
+		// Func is at SP - argc - 1.
+		funcVal := vm.Stack[vm.SP-argc-1]
+
+		if funcVal.Type == mapval.ValObject {
+			if closure, ok := funcVal.Obj.(*mapval.Closure); ok {
+				newFrame := &CallFrame{
+					Parent:  vm.CurrentFrame,
+					Closure: closure,
+					IP:      0,
+					Base:    vm.SP - argc,
+					Monitor: selector,
+				}
+			vm.CurrentFrame = newFrame
+			return nil
+			}
+		}
+		return fmt.Errorf("monitored target must be a closure")
+	}
+
+	// Dispatch Mode / Vassal Mode (argc == 0)
+	// Stack: [Target]. Selector popped.
+	targetVal := vm.peek(0)
+
+	// If Target is a Closure, attach as Monitor (Vassal Mode)
 	if targetVal.Type == mapval.ValObject {
 		if closure, ok := targetVal.Obj.(*mapval.Closure); ok {
-			// Create new frame for the target closure
 			newFrame := &CallFrame{
 				Parent:  vm.CurrentFrame,
 				Closure: closure,
@@ -27,32 +51,12 @@ func (vm *VM) opMonitor() error {
 				Base:    vm.SP, // Base points to first arg (or empty space if 0 args). Base-1 is Target.
 				Monitor: selector,
 			}
-
 			vm.CurrentFrame = newFrame
 			return nil
 		}
 	}
 
 	// Dispatch Mode: Selector(Target)
-	// Target is already on stack (peaked).
-	// We need to setup a call to Selector with Target as arg.
-	// But opMonitor expects [Target, Selector] on stack (before pops).
-	// We popped Selector. Target is at Top.
-	// Stack: [..., Target].
-	// We want to call Selector(Target).
-	// Calling convention: [Closure, Arg].
-	// So push Selector (Closure).
-	// Swap? [Target, Selector] -> [Selector, Target].
-	// Target is at Top.
-	// vm.push(selectorVal).
-	// Stack: [Target, Selector].
-	// Swap.
-	// But wait, `opCall` expects [Closure, Args].
-	// Stack: [Closure, Arg].
-	// Current Stack: [Target].
-	// Need: [Selector, Target].
-	// So pop Target, push Selector, push Target.
-
 	vm.pop() // Pop Target
 	vm.push(selectorVal)
 	vm.push(targetVal)
@@ -69,105 +73,11 @@ func (vm *VM) opMonitor() error {
 	return nil
 }
 
-func (vm *VM) opPost() error {
-	idx := vm.readByte()
-	argc := int(vm.readByte())
+func (vm *VM) handleSignal() (bool, error) {
+	// Bubbling Logic for Async Signals
+	// We search up the stack (vm.CurrentFrame -> Parent -> ...)
+	// for a frame with a Monitor (Selector) that can handle this signal.
 
-	args := make([]mapval.Value, argc)
-	for i := argc - 1; i >= 0; i-- {
-		args[i] = vm.pop()
-	}
-
-	receiver := vm.pop()
-
-	// Get Signal Name
-	frame := vm.currentFrame()
-	name := frame.Closure.Fn.Chunk.Constants[idx].Str
-
-	// Create Signal
-	sigVal := mapval.NewSignal(name, frame, args)
-
-	if vm.Config.TraceSpace {
-		fmt.Printf("TRACE: Signal Posted: #%s to %s\n", name, receiver)
-	}
-
-	// PHASE 1: Check Receiver Listeners (The Realm itself)
-	if receiver.Type == mapval.ValObject {
-		if m, ok := receiver.Obj.(*mapval.Map); ok {
-			for _, listenerVal := range m.Listeners {
-				if listenerVal.Type == mapval.ValObject {
-					if closure, ok := listenerVal.Obj.(*mapval.Closure); ok {
-
-						// --- Execute Listener (Level 1) ---
-						vm.push(listenerVal)
-						vm.push(sigVal)
-
-						newFrame := &CallFrame{
-							Parent:  vm.CurrentFrame,
-							Closure: closure,
-							IP:      0,
-							Base:    vm.SP - 1,
-						}
-
-						vm.CurrentFrame = newFrame
-						res, err := vm.RunSynchronous()
-						if err != nil {
-							return err
-						}
-						if res != Ok {
-							continue
-						} // Should not happen usually
-
-						// --- Check Result ---
-						result := vm.peek(0)
-
-						// CHAINING: If result is a Closure (Selector), execute it!
-						if result.Type == mapval.ValObject {
-							if nextClosure, ok := result.Obj.(*mapval.Closure); ok {
-								if vm.Config.TraceSpace {
-									fmt.Println("TRACE: Listener returned Closure -> Executing Chain")
-								}
-								vm.pop() // Pop the closure (result of L1)
-
-								// Setup Call for L2 (Selector)
-								vm.push(result) // Push Selector
-								vm.push(sigVal) // Push Signal
-
-								chainFrame := &CallFrame{
-									Parent:  vm.CurrentFrame,
-									Closure: nextClosure,
-									IP:      0,
-									Base:    vm.SP - 1,
-								}
-
-								vm.CurrentFrame = chainFrame
-								_, err = vm.RunSynchronous()
-								if err != nil {
-									return err
-								}
-
-								// Update result to the output of the chain
-								result = vm.peek(0)
-							}
-						}
-
-						// Final Decision: Consume or Bubble?
-						if result.Type != mapval.ValEmpty {
-							if vm.Config.TraceSpace {
-								fmt.Printf("TRACE: Signal Consumed by Receiver: %s\n", result)
-							}
-							return nil // Consumed
-						}
-
-						// Empty result = Peek (::) or Fallthrough -> Continue Bubbling
-						vm.pop()
-					}
-				}
-			}
-		}
-	}
-
-	// PHASE 2: Bubble Up (Check Monitors in Parent Chain)
 	curr := vm.CurrentFrame
 	for curr != nil {
 		if curr.Monitor != nil {
@@ -175,71 +85,108 @@ func (vm *VM) opPost() error {
 				fmt.Printf("TRACE: Bubbled to Monitor in Frame %p\n", curr)
 			}
 
+			// Found Monitor
 			vm.push(mapval.Value{Type: mapval.ValObject, Obj: curr.Monitor})
-			vm.push(sigVal)
+			vm.push(vm.signalVal)
 
+			// Create new Frame for Monitor
 			monitorFrame := &CallFrame{
 				Parent:  vm.CurrentFrame,
 				Closure: curr.Monitor,
 				IP:      0,
-				Base:    vm.SP - 1,
+				Base:    vm.SP - 1, // 1 Arg (Signal)
 			}
 
 			vm.CurrentFrame = monitorFrame
-			res, err := vm.RunSynchronous()
-
-			if err != nil {
-				return err
-			}
-
-			if res == Ok {
-				result := vm.peek(0)
-				if result.Type != mapval.ValEmpty {
-					if vm.Config.TraceSpace {
-						fmt.Printf("TRACE: Signal Consumed by Monitor: %s\n", result)
-					}
-					return nil
-				}
-				vm.pop()
-			}
+			return true, nil
 		}
 		curr = curr.Parent
 	}
 
-	// PHASE 3: Unhandled
-	if vm.Config.TraceSpace {
-		fmt.Println("TRACE: Signal Unhandled (Dropped)")
-	}
-	vm.push(mapval.NewEmpty())
-	return nil
+	return false, nil
 }
 
-func (vm *VM) opInject() error {
-	// opInject is called inside the listener.
-	// It should "resume" the sender.
-	// In our sync model, it just returns the value.
-
+func (vm *VM) opPost() error {
+	// Corresponds to OP_SIGNAL / Suspend
 	idx := vm.readByte()
 	argc := int(vm.readByte())
 
-	if vm.Config.TraceSpace {
-		fmt.Printf("DEBUG: opInject argc=%d SP=%d\n", argc, vm.SP)
-		for i := 0; i < vm.SP; i++ {
-			fmt.Printf("Stack[%d]: %s\n", i, vm.Stack[i])
-		}
-	}
-
+	// Pop Args
 	args := make([]mapval.Value, argc)
 	for i := argc - 1; i >= 0; i-- {
 		args[i] = vm.pop()
 	}
 
-	receiver := vm.pop() // The Signal object
+	// Pop Receiver (Implicitly pushed by compiler, ignored for now in global signal model)
+	vm.pop()
+
+	// Get Signal Name
+	frame := vm.currentFrame()
+	name := frame.Closure.Fn.Chunk.Constants[idx].Str
+
+	// Create Signal Value
+	vm.signalVal = mapval.NewSignal(name, frame, args)
 
 	if vm.Config.TraceSpace {
-		frame := vm.currentFrame()
-		name := frame.Closure.Fn.Chunk.Constants[idx].Str
-		fmt.Printf("TRACE: Reply %s Injected to %s (Type: %d)\n", name, receiver, receiver.Type)
+		fmt.Printf("TRACE: Signal Posted (Suspend): #%s\n", name)
+	}
+
+	// Suspend the Current Frame (The "Zombie" Logic)
+	currentFrame := vm.CurrentFrame
+	currentFrame.WaitingSignal = name
+
+	// Move to Zombies
+	vm.zombies = append(vm.zombies, currentFrame)
+
+	// CHECK MONITOR ON CURRENT FRAME (The one being suspended)
+	if currentFrame.Monitor != nil {
+		// Push Monitor Closure & Signal
+		vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
+		vm.push(vm.signalVal)
+		
+		// Start Monitor Frame
+		monitorFrame := &CallFrame{
+			Parent:  currentFrame.Parent, // Handler is sibling of suspended frame (child of caller)
+			Closure: currentFrame.Monitor,
+			IP:      0,
+			Base:    vm.SP - 1, // 1 Arg (Signal)
+		}
+		
+		vm.CurrentFrame = monitorFrame
+		vm.state = StateRunning // Handle immediately
+		return nil
+	}
+
+	// No Monitor on current frame, bubble up from Parent
+	// Update Stack (Remove current from active chain)
+	vm.CurrentFrame = currentFrame.Parent
+
+	// Trigger Signal Propagation
+	vm.state = StateSignaling
+
+	return nil
+}
+
+func (vm *VM) opInject() error {
+	// Corresponds to OP_INJECT / Resume / Reply
+	idx := vm.readByte()
+	argc := int(vm.readByte())
+
+	// Pop Payload (Args)
+	args := make([]mapval.Value, argc)
+	for i := argc - 1; i >= 0; i-- {
+		args[i] = vm.pop()
+	}
+
+	// Pop Receiver (The Signal we are replying to)
+	_ = vm.pop()
+
+	// Resolve Topic
+	frame := vm.currentFrame()
+	targetTopic := frame.Closure.Fn.Chunk.Constants[idx].Str
+
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: Injecting Reply ^%s\n", targetTopic)
 	}
 
 	// Determine Payload
@@ -252,29 +199,55 @@ func (vm *VM) opInject() error {
 	default:
 		// Bundle into Map (List)
 		m := mapval.NewMap()
-		// Populate Fields and Legend
 		m.Fields = args
-
-		// Map logic: Positional elements have numeric names ("1", "2", etc.)
-		// Always create a new Legend for this specific List structure
 		m.Legend = &mapval.Legend{
 			Kind:   mapval.LegendMap,
 			Fields: make([]mapval.FieldDesc, len(args)),
 		}
-
 		for i := 0; i < len(args); i++ {
-			// Name is "1"-based index string
 			name := fmt.Sprintf("%d", i+1)
 			m.Legend.Fields[i] = mapval.FieldDesc{
 				Name: name,
-				Kind: mapval.FieldMutable, // or Immutable? Args usually mutable in list?
+				Kind: mapval.FieldMutable,
 			}
 		}
-
 		payload = mapval.Value{Type: mapval.ValObject, Obj: m}
 	}
+	
+	// Hunt for Zombie
+	var zombie *CallFrame
+	zombieIdx := -1
+	for i := len(vm.zombies) - 1; i >= 0; i-- {
+		if targetTopic == "" || vm.zombies[i].WaitingSignal == targetTopic {
+			zombie = vm.zombies[i]
+			zombieIdx = i
+			break
+		}
+	}
 
+	if zombie == nil {
+		if vm.Config.TraceSpace {
+			fmt.Printf("TRACE: No zombie found for ^%s\n", targetTopic)
+		}
+		return nil // Silent ignore?
+	}
+
+	// Revive Zombie
+	vm.zombies = append(vm.zombies[:zombieIdx], vm.zombies[zombieIdx+1:]...)
+	zombie.WaitingSignal = ""
+
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: Reviving Zombie Frame %p\n", zombie)
+	}
+
+	// Push Payload to Global Stack (Where Zombie will pick it up)
 	vm.push(payload)
+
+	// Attach Zombie to Current Execution
+	// The Zombie becomes the active frame, on top of the current frame (Handler).
+	// We do NOT reparent it, so it returns to its original caller.
+	vm.CurrentFrame = zombie
+
 	return nil
 }
 
@@ -326,3 +299,4 @@ func (vm *VM) opNewRealm() {
 	// Realm is just a Map for now (with space semantics handled by operators)
 	vm.push(mapval.Value{Type: mapval.ValObject, Obj: mapval.NewMap()})
 }
+

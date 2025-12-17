@@ -33,7 +33,7 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 	case *ast.VersionLiteral:
 		val := mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard)
 		val.Str = e.Suffix
-		c.emitConstant(val)
+		c.emitConstant(mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard))
 	case *ast.DecimalLiteral:
 		c.emitConstant(mapval.Value{
 			Type: mapval.ValDecimal,
@@ -109,16 +109,38 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		// Assert (Pops Name, Expected, Actual)
 		c.emit(mapval.OP_ASSERT_EQ)
 	case *ast.EffectExpression:
-		// Compile Target (Closure)
-		if err := c.compileExpression(e.Target); err != nil {
+		// Special handling for Monitored Call: func(args) { ... }
+		if call, ok := e.Target.(*ast.CallExpression); ok {
+			// 1. Compile Callee
+			if err := c.compileExpression(call.Callee); err != nil {
+				return err
+			}
+			// 2. Compile Args
+			for _, arg := range call.Args {
+				if err := c.compileExpression(arg); err != nil {
+					return err
+				}
+			}
+			// 3. Compile Selector
+			if err := c.compileExpression(e.Selector); err != nil {
+				return err
+			}
+			// 4. Emit MONITOR with Arg Count
+			c.emit(mapval.OP_MONITOR)
+			c.Chunk().WriteByte(byte(len(call.Args)), 0)
+			return nil
+		}
+
+		// Standard handling: Wrap Target in Thunk to monitor its execution
+		// This handles `[ ... ] { ... }` or `block { ... }` by executing it under the monitor.
+		if err := c.compileThunk(e.Target); err != nil {
 			return err
 		}
-		// Compile Selector
 		if err := c.compileExpression(e.Selector); err != nil {
 			return err
 		}
-		// Emit MONITOR
 		c.emit(mapval.OP_MONITOR)
+		c.Chunk().WriteByte(0, 0)
 	case *ast.InspectionWrapper:
 		// Compile Expression
 		if err := c.compileExpression(e.Expr); err != nil {

@@ -8,4 +8,8 @@ type CallFrame struct {
 	IP      int
 	Base    int             // Stack index where this frame's locals start
 	Monitor *mapval.Closure // Attached Selector for Space ops
+
+	// WaitingSignal is the topic this frame is waiting for a reply to.
+	// Empty if running.
+	WaitingSignal string
 }

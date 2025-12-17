@@ -23,18 +23,41 @@ func (c *Compiler) compileUnary(unary *ast.UnaryExpression) error {
 			c.Chunk().WriteByte(byte(idx), 0)
 			c.Chunk().WriteByte(0, 0) // Arg count 0
 			return nil
-		} else {
-			// #expr -> Evaluate expr? Architecture says `obj#click`.
-			// The syntax `hash label` or `hash string`?
-			// `RhumbLexer.g4` has `Hash`. `prefixOp` is `Hash`.
-			// So `# expr`.
-			// If expr evaluates to a text/key, we can post it?
-			// But `OP_POST` takes a CONSTANT index for the name.
-			// It implies static names.
-			// If dynamic name, we need dynamic POST opcode?
-			// Or we assume `Expr` is static label for now.
-			return fmt.Errorf("dynamic signal names not supported yet")
 		}
+
+		// #label(args...)
+		if call, ok := unary.Expr.(*ast.CallExpression); ok {
+			if label, ok := call.Callee.(*ast.LabelLiteral); ok {
+				// Push Implicit Receiver (Empty)
+				c.emit(mapval.OP_LOAD_CONST)
+				c.Chunk().WriteByte(byte(c.makeConstant(mapval.NewEmpty())), 0)
+
+				// Compile Args
+				for _, arg := range call.Args {
+					if err := c.compileExpression(arg); err != nil {
+						return err
+					}
+				}
+
+				// Emit OP_POST
+				idx := c.makeConstant(mapval.NewText(label.Value))
+				c.emit(mapval.OP_POST)
+				c.Chunk().WriteByte(byte(idx), 0)
+				c.Chunk().WriteByte(byte(len(call.Args)), 0)
+				return nil
+			}
+		}
+
+		// #expr -> Evaluate expr? Architecture says `obj#click`.
+		// The syntax `hash label` or `hash string`?
+		// `RhumbLexer.g4` has `Hash`. `prefixOp` is `Hash`.
+		// So `# expr`.
+		// If expr evaluates to a text/key, we can post it?
+		// But `OP_POST` takes a CONSTANT index for the name.
+		// It implies static names.
+		// If dynamic name, we need dynamic POST opcode?
+		// Or we assume `Expr` is static label for now.
+		return fmt.Errorf("dynamic signal names not supported yet")
 	}
 
 	if unary.Op == ast.OpReply {
@@ -134,6 +157,23 @@ func (c *Compiler) compileUnary(unary *ast.UnaryExpression) error {
 				return nil
 			}
 		}
+
+		// Fallback: Anonymous Reply ^(expr)
+		
+		// Push Dummy Receiver (Empty)
+		c.emit(mapval.OP_LOAD_CONST)
+		c.Chunk().WriteByte(byte(c.makeConstant(mapval.NewEmpty())), 0)
+
+		// Compile Payload
+		if err := c.compileExpression(unary.Expr); err != nil {
+			return err
+		}
+
+		idx := c.makeConstant(mapval.NewText(""))
+		c.emit(mapval.OP_INJECT)
+		c.Chunk().WriteByte(byte(idx), 0)
+		c.Chunk().WriteByte(1, 0) // Arg Count 1 (Payload)
+		return nil
 	}
 
 	// Other unaries

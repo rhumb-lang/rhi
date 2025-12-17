@@ -163,6 +163,54 @@ func (c *Compiler) CompileIncremental(doc *ast.Document) (int, error) {
 	return startOffset, nil
 }
 
+// compileThunk compiles an expression into a 0-arity closure.
+func (c *Compiler) compileThunk(expr ast.Expression) error {
+	child := NewCompiler()
+	child.Enclosing = c
+	child.Function.Name = "<thunk>"
+	child.Function.Arity = 0
+
+	// Hoist locals for thunk body?
+	// If expr is a block (Routine), yes.
+	// If expr is simple, maybe not needed, but safe to check.
+	// We wrap expr in a temporary Document or reuse Hoister on Expr?
+	// Hoister works on Node.
+	hoister := NewHoister()
+	locals := hoister.Hoist(expr)
+	for _, name := range locals {
+		// Check for shadowing/capture
+		if child.Scope.resolveLocal(name) != -1 {
+			continue
+		}
+		if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
+			continue
+		}
+		child.Scope.addLocal(name)
+		child.emitConstant(mapval.NewEmpty())
+	}
+
+	if err := child.compileExpression(expr); err != nil {
+		return err
+	}
+	child.emit(mapval.OP_RETURN)
+
+	fnVal := mapval.NewFunction(child.Function)
+	idx := c.makeConstant(fnVal)
+	c.emit(mapval.OP_MAKE_FN)
+	c.Chunk().WriteByte(byte(idx), 0)
+
+	for _, up := range child.Upvalues {
+		isLocal := byte(0)
+		if up.IsLocal {
+			isLocal = 1
+		}
+		c.Chunk().WriteByte(isLocal, 0)
+		c.Chunk().WriteByte(byte(up.Index), 0)
+	}
+
+	return nil
+}
+
 func (c *Compiler) emit(op mapval.OpCode) {
 	c.Chunk().WriteOp(op, 0)
 }
