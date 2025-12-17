@@ -117,10 +117,59 @@ The function `get_user_content` doesn't know (and doesn't care) if `#fetch_user`
 
 ### 9\.2 Why do Signals `#` and Replies `^` look like Return statements?
 
-Because in Rhumb, they are the same mechanism! 
+Because in Rhumb, "Return" and "Yield" are just two different ways of using the Signal system.
 
-A "Return" is just a Signal sent to the caller. 
+Rhumb uses a **Unified Activity Model**. Unlike other languages that have separate keywords for returning values vs. yielding from generators, Rhumb handles both via Signals (`#`) and Selectors.
 
-A "Function Call" is just a Signal that suspends the caller until a result is provided. 
+#### 1. The "Return" Pattern (Signal & Stop)
+When a standard function finishes, it emits a signal. The caller traps this signal, and the *result of the trap block* becomes the result of the function call. The function frame is then discarded.
 
-Rhumb exposes the machinery of `return` (Signals) and `function calls` (Zombies) to the developer, giving you full control over the flow of execution.
+```rhumb
+% The Code
+get_data := [] -> #( "My Data" )
+
+% The Mechanics
+result := get_data() {
+    % 1. Function emits #("My Data") and suspends.
+    #(val) .. (
+        % 2. We trap it. The value of this block becomes 'result'.
+        % 3. We do NOT reply (^), so the function frame stays dead.
+        val 
+    )
+}
+result %= 'My Data'
+```
+
+#### 2. The "Yield" Pattern (Signal & Resume)
+
+If you want a Generator, you simply **Reply (`^`)** to the signal. This resurrects the "Zombie" frame, and the function continues execution from where it left off.
+
+```rhumb
+% A Generator
+count_to_three := [] -> (
+    #(1) % Yield 1
+    #(2) % Yield 2
+    #(3) % Yield 3
+    % the yield returns to the zombie frame for a fourth time only to resolve as empty value (___)
+)
+
+% The Driver
+n := count_to_three() {
+    #(num) .. (
+        "Got: " && num %?
+        ^() % RESUME execution. The #(1) expression completes, moving to #(2).
+    )
+    ___ .. "Empty pattern captures empty return value"
+}
+n %= 'Empty pattern captures empty return value'
+
+```
+
+**The Dead Return Warning** Be careful when mixing these! If you Reply (`^`) to
+a function's final expression, you might insert the reply's value into the
+zombie frame as the result of the final implicit #() expression but there is no
+additional #() signal that is triggered, the value will be lost when the frame
+is discarded.
+
+* **Rule of Thumb:** If you are treating a signal as a "Return," just handle the
+  value. If you are treating it as a "Yield," send a reply.
