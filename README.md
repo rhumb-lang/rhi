@@ -1,8 +1,8 @@
 # rhi: The Rhumb Interpreter
 
-**Version:** v0.3.0 (Library League)
-
-![Vibe Coded](https://img.shields.io/badge/Code_Style-Vibe_Coded-ff69b4?style=flat-square&logo=openai)
+![GitHub Release](https://img.shields.io/github/v/release/rhumb-lang/rhi) ![GitHub commits since latest release](https://img.shields.io/github/commits-since/rhumb-lang/rhi/latest)
+ ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/rhumb-lang/rhi/total)
+ ![Vibe Coded](https://img.shields.io/badge/Code_Style-Vibe_Coded-ff69b4?style=flat-square&logo=openai)
 
 > This programming language is a passion project built in my free time. To
 > maintain momentum and focus on high-level design, this project is primarily
