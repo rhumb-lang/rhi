@@ -1,0 +1,9 @@
+level_c := [] -> #help("deep")
+level_b := [] -> ( x := level_c(); x && "_resumed" )
+level_a := [] -> ( y := level_b(); "top_" && y )
+
+res := level_a() {
+    #help(msg) .. ^(msg)
+}
+
+res %= 'top_deep_resumed'

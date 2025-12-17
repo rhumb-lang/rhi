@@ -1,0 +1,30 @@
+% Mock "Network" calls
+fetch_user    := [id]  -> ( ^([ .id; name .. "Alice" ]) )
+fetch_profile := [uid] -> ( ^([ .uid; bio :: "Hacker" ]) )
+fetch_posts   := [pid] -> ( ^([ "Post A"; "Post B" ]) )
+
+% The Business Logic (The "Async" Function)
+get_content := [id] -> (
+    % 1. Suspend
+    user := #fetch_user(id)
+    
+    % 2. Suspend (using var from step 1)
+    profile := #fetch_profile(user\id)
+    
+    % 3. Suspend (using var from step 2)
+    posts := #fetch_posts(profile\uid)
+    
+    [ .user; .profile; .posts ]
+)
+
+% The Runtime / Handler
+result := get_content(42) {
+    #fetch_user(id)    .. fetch_user(id)
+    #fetch_profile(id) .. fetch_profile(id)
+    #fetch_posts(id)   .. fetch_posts(id)
+}
+
+% Verification
+result\user\name %= 'Alice'
+result\profile\bio %= 'Hacker'
+result\posts\1 %= 'Post A'

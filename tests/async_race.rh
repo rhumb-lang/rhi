@@ -1,0 +1,22 @@
+% A function that just waits for a signal
+worker := [id] -> (
+    val := #wait(id)
+    val
+)
+
+% Spawn two workers. They will both suspend.
+% Note: This depends on how your VM handles lists/maps of results evaluating.
+% If `[a(), b()]` evaluates left-to-right, 'a' suspends first.
+results := [
+    worker(1)
+    worker(2)
+] { % this selector is attached to the map literal construction context
+    % This handler sees signals from BOTH workers since they bubble up into the map literal construction context
+    #wait(id) .. (
+        % We reply with a modified value
+        ^(id ** 10)
+    )
+}
+
+results\1 %= 10
+results\2 %= 20
