@@ -32,7 +32,7 @@ Symbols that represent fixed data or references.
 |:------------------|:----------|:-------------------|:----------------------------------------------------|
 | **`___`**         | Empty     | `x .= ___`         | Empty/Nil value                                     |
 | **`***`**         | Panic     | `x .= ***`         | Panic/Error value                                   |
-| **`_`**           | Ignore    | `x .. _`           | Wildcard/Ignore pattern                             |
+| **`_`**           | Ignore    | `x .. _`           | Void Label                                          |
 | **`<fn>`**        | Reference | `f .= <g>`         | Subroutine Reference (Capture without executing)    |
 | **`1.0.0`**       | Version   | `v .= 1.0.0`       | Semantic Version Literal                            |
 | **`2024/01/01`**  | DateTime  | `t .= 2025/12/31`  | DateTime Literal (Absolute Point).                  |
@@ -43,6 +43,16 @@ Symbols that represent fixed data or references.
 | **`<$>`**         | Realm     | `r .= <$>`         | Child Realm Literal                                 |
 | **`<\|>`**        | Realm     | `r .= <\|>`        | Detached Realm Literal                              |
 | **`<{}>`**        | Vassal    | `v .= <{}>`        | Vassal (Proxy) Literal                              |
+
+#### 1\.2\.1 The Void Label (`_`)
+
+The underscore `_` is a reserved identifier representing **The Void**. It is used to match structure without binding data.
+
+* **Behavior:** It matches any value but stores nothing.
+* **Reading:** Evaluating `_` always returns **Empty** (it never holds a value).
+* **Assignment:** Explicit assignment to `_` (e.g., `_ := 10`) is a **Syntax Error**. It cannot be used as a storage target.
+* **Usage:** It is exclusively used in **Patterns** to ignore specific arguments or list items and in **Destructuring**.
+
 
 ### 1\.3 General Operators
 

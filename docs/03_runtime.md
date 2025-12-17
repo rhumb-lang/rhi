@@ -354,7 +354,32 @@ Rhumb cannot use a standard linear stack (like C or Java). It must use a
 This structure allows execution branches to fork, pause, and persist
 independently, which is the foundation of the concurrency model.
 
-#### 3\.7\.1 Vassals (Sub-Selectors)
+### 3\.7\.1 Pattern Matching & The Void
+
+When defining patterns, you may use `_` to represent a wildcard match.
+
+**Rules:**
+1.  **Discard:** `_` matches the existence of a value but discards the content.
+2.  **No Logic:** You cannot perform logical checks on `_` because it has no value.
+    * **Invalid:** `{ _ >= 10 .. ... }` (Cannot compare Void to Number).
+    * **Valid:** `{ x >= 10 .. ... }` (Binds value to `x`, then checks it).
+
+**Examples:**
+
+```rhumb
+% Structurally match a signal with 3 args, ignoring the first and third.
+{
+    #error(_, msg, _) .. print(msg)
+}
+
+% Invalid: Attempting to use Void in a predicate
+{
+    _ >= 10 .. "Fail" % Error! Use 'n >= 10' instead.
+}
+```
+
+
+#### 3\.7\.2 Vassals (Sub-Selectors)
 
 When you surround a selector in `<...>` it becomes a vassal which is a special
 kind of stored selector that we use for managing the boundaries of signals,
