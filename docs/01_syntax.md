@@ -48,14 +48,12 @@ Symbols that represent fixed data or references.
 
 Symbols used for object access, assignment, and function definition.
 
-| Symbol   | Name       | Role        | Syntax      | Meaning                                      |
-|:---------|:-----------|:------------|:------------|:---------------------------------------------|
+| Symbol   | Name       | Role        | Syntax      | Meaning                                     |
+|:---------|:-----------|:------------|:------------|:--------------------------------------------|
 | **`!`**  | Base       | Receiver    | `!\field`   | "My field" (Mutable/Immutable based on def) |
 | **`@`**  | Parent     | Inheritance | `f@log`     | Delegate/Parent access                      |
-| **`\`**  | Access     | Member      | `u\name`    | Field access operator                    |
+| **`\`**  | Access     | Member      | `u\name`    | Field access operator                       |
 | **`^=`** | Destruct   | Assign      | `[.a] ^= b` | Destructuring assignment                    |
-| **`..`** | Dot-Dot    | Select      | `x .. f`    | Match & Consume (Stop)                      |
-| **`::`** | Col-Col    | Select      | `x :: f`    | Match & Continue (Peek)                     |
 | **`->`** | Arrow      | Function    | `[] -> ()`  | Function definition                         |
 | **`!>`** | Bang-Arrow | Method      | `[] !> ()`  | Method definition (binds `!` to receiver)   |
 | **`+>`** | Plus-Arrow | IIFE        | `[] +> ()`  | Define and execute immediately              |
@@ -117,10 +115,19 @@ _**Note:** Unlike Object literals, a Signal literal is an executable statement. 
 
 | Symbol     | Name   | Role   | Syntax     | Meaning          |
 |:-----------|:-------|:-------|:-----------|:-----------------|
-| **`.=`**   | Dot-Eq | Assign | `x .= y`   | Immutable Assign |
-| **`:=`**   | Col-Eq | Assign | `x := y`   | Mutable Assign   |
 | **`=>`**   | Arrow  | Flow   | `x => y`   | If True Then     |
 | **`~>`**   | Squig  | Flow   | `x ~> y`   | If False Then    |
 | **`\|>`**  | Pipe   | Flow   | `x \|> y`  | While Loop       |
 | **`\|\|`** | Pipe   | Flow   | `x \|\| y` | Functional Pipe  |
 | **`??`**   | Ques   | Flow   | `x ?? y`   | Default/Coalesce |
+
+### 1\.8 Contextual Operators
+
+| Operator | Context          | Meaning                   | Behavior                                                 |
+|----------|------------------|---------------------------|----------------------------------------------------------|
+| **`.=`** | Routine / Map    | **Immutable Declaration** | Creates or updates a label/field **and freezes it**.     |
+| **`:=`** | Routine / Map    | **Mutable Declaration**   | Creates or updates a label/field. Allows future changes. |
+| **`..`** | Map Literal      | **Immutable Field**       | `[ key .. val ]`                                         |
+| **`::`** | Map Literal      | **Mutable Field**         | `[ key :: val ]`                                         |
+| **`..`** | Selector Literal | **Case & Break**          | `{ pattern .. routine }`                                 |
+| **`::`** | Selector Literal | **Case & Fallthrough**    | `{ pattern :: routine }`                                 |
