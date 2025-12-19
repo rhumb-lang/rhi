@@ -9,7 +9,7 @@ flags .= []
 % Initialize all to true (1)
 1|limit <> [i] -> flags\i := yes
 
-count .= 0
+count := 0
 2|limit <> [i] -> (
   is_prime .= flags\i
   
