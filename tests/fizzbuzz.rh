@@ -3,10 +3,10 @@ fizzbuzz := [n] -> (
   i := 1
   i <= n |> (
     val := i {
-      _ -/ 15 == 0 .. 'FizzBuzz'
-      _ -/ 5 == 0 .. 'Buzz'
-      _ -/ 3 == 0 .. 'Fizz'
-      _
+      * -/ 15 == 0 .. 'FizzBuzz'
+      * -/ 5 == 0 .. 'Buzz'
+      * -/ 3 == 0 .. 'Fizz'
+      x .. x
     }
     list := list && [val]
     i := i ++ 1

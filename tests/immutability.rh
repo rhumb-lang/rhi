@@ -7,13 +7,13 @@ x %= 20 % can transition from mutable to immutable and it doesn't affect data va
 err := [] +> (
     x := 30
 ) {
-    #***(_; msg; _) .. msg
+    #***(*; msg; *) .. msg
 } %= 'cannot assign value to immutable label'
 
 err2 := [] +> (
     x .= 30
 ) {
-    #***(_; msg; _) .. msg
+    #***(*; msg; *) .. msg
 } %= 'cannot assign value to immutable label'
 
 % 3. Map Literal Immutability
@@ -28,7 +28,7 @@ m\fixed %= 'static' % can use immutable field assign op
 % Write fails
 err3 := [] +> (
     m\fixed := "changed"
-) { #***(_; m; _) .. m } %= 'cannot assign value to immutable field 'fixed''
+) { #***(*; m; *) .. m } %= 'cannot assign value to immutable field 'fixed''
 
 % 4. Dynamic Map Freezing
 m\fluid .= "frozen now"
@@ -37,4 +37,4 @@ m\fluid %= 'frozen now'
 % Write now fails
 err4 := [] +> (
     m\fluid := "changed again"
-) { #***(_; m; _) .. m } %= 'cannot assign value to immutable field 'fluid''
+) { #***(*; m; *) .. m } %= 'cannot assign value to immutable field 'fluid''
