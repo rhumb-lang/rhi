@@ -56,9 +56,12 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 			continue
 		}
 
-		if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
-			continue
-		}
+		// Allow shadowing of enclosing variables in selectors
+		// If we don't shadow, we can't bind new values to names that exist outside.
+		// Pinning (matching against outer var) requires distinct handling not yet implemented.
+		// if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
+		// 	continue
+		// }
 
 		child.Scope.addLocal(name)
 		child.emitConstant(mapval.NewEmpty()) // Reserve slot
@@ -142,6 +145,13 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 		return c.compileExpression(t)
 
 	case *ast.LabelLiteral:
+		// Special Wildcard "_"
+		if t.Value == "_" {
+			c.emit(mapval.OP_POP)
+			c.emitConstant(mapval.NewBoolean(true))
+			return nil
+		}
+
 		// 1. Check for Boolean Literals (yes/no)
 		// TODO: Add international support
 		if t.Value == "yes" {

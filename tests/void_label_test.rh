@@ -1,0 +1,1 @@
+(_ := 10) { #***(code; msg; _) .. msg } %= 'cannot assign to void label'

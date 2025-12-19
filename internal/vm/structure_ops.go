@@ -221,9 +221,7 @@ func (vm *VM) opSelect() {
 func (vm *VM) opMatchTuple() {
 	kind := mapval.TupleKind(vm.readByte())
 
-	// Read Topic Index (2 bytes in new design, but readByte is 1 byte)
-	// Architecture says 2 bytes for TopicIndex.
-	// vm.readShort()
+	// Read Topic Index (2 bytes)
 	topicIdx := vm.readShort()
 
 	// Peek Subject

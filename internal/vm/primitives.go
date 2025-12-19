@@ -30,8 +30,53 @@ func (vm *VM) opLoadLoc() {
 func (vm *VM) opStoreLoc() {
 	idx := vm.readByte()
 	frame := vm.currentFrame()
+	index := int(idx)
+
+	// Check immutability
+	if frame.LocalsFrozen != nil {
+		if frozen, ok := frame.LocalsFrozen[index]; ok && *frozen {
+			// Emit #*** signal
+			msg := fmt.Sprintf("cannot assign value to immutable label (local %d)", index)
+			sig := mapval.NewErrorSignal(0, msg, mapval.NewEmpty())
+			vm.raiseSignal("***", sig)
+			return
+		}
+	}
+
 	val := vm.peek(0)
-	vm.Stack[frame.Base+int(idx)] = val
+	vm.Stack[frame.Base+index] = val
+}
+
+func (vm *VM) opStoreLocImmut() {
+	idx := vm.readByte()
+	frame := vm.currentFrame()
+	index := int(idx)
+
+	if frame.LocalsFrozen == nil {
+		frame.LocalsFrozen = make(map[int]*bool)
+	}
+
+	// Check immutability (cannot re-assign even with .= if already frozen)
+	frozen, ok := frame.LocalsFrozen[index]
+	if ok && *frozen {
+		msg := fmt.Sprintf("cannot assign value to immutable label (local %d)", index)
+		sig := mapval.NewErrorSignal(0, msg, mapval.NewEmpty())
+		vm.signalVal = sig
+		vm.state = StateSignaling
+		return
+	}
+
+	if !ok {
+		// Allocate new bool on heap
+		heapBool := new(bool)
+		*heapBool = true
+		frame.LocalsFrozen[index] = heapBool
+	} else {
+		*frozen = true
+	}
+
+	val := vm.peek(0)
+	vm.Stack[frame.Base+index] = val
 }
 
 func (vm *VM) opDup() {
@@ -69,8 +114,24 @@ func (vm *VM) opStoreUpvalue() {
 		panic(fmt.Sprintf("upvalue index %d out of bounds (len %d)", idx, len(closure.Upvalues)))
 	}
 
-	val := vm.peek(0)
 	upvalue := closure.Upvalues[idx]
+
+	fmt.Printf("DEBUG: StoreUpvalue idx %d Frozen ptr: %p\n", idx, upvalue.Frozen)
+	fmt.Printf("DEBUG: Frame Base: %d, SP: %d\n", frame.Base, vm.SP)
+	if upvalue.Frozen != nil {
+		fmt.Printf("DEBUG: ... Value is: %v\n", *upvalue.Frozen)
+	}
+
+	// Check immutability
+	if upvalue.Frozen != nil && *upvalue.Frozen {
+		// Emit #*** signal instead of panic
+		msg := "cannot assign value to immutable label"
+		sig := mapval.NewErrorSignal(0, msg, mapval.NewEmpty())
+		vm.raiseSignal("***", sig)
+		return
+	}
+
+	val := vm.peek(0)
 
 	if upvalue.Location != nil {
 		*upvalue.Location = val
@@ -741,10 +802,24 @@ func (vm *VM) opMakeFn() {
 	closure.Upvalues = make([]*mapval.Upvalue, fn.UpvalueCount)
 	for i := 0; i < fn.UpvalueCount; i++ {
 		isLocal := vm.readByte()
-		index := vm.readByte()
+		index := int(vm.readByte())
 
 		if isLocal == 1 {
-			closure.Upvalues[i] = vm.captureUpvalue(frame.Base + int(index))
+			// Ensure we have a frozen pointer for this local
+			if frame.LocalsFrozen == nil {
+				frame.LocalsFrozen = make(map[int]*bool)
+			}
+			
+			frozenPtr, ok := frame.LocalsFrozen[index]
+			if !ok {
+				// Allocate new bool on heap (default false/mutable)
+				b := new(bool)
+				*b = false
+				frame.LocalsFrozen[index] = b
+				frozenPtr = b
+			}
+
+			closure.Upvalues[i] = vm.captureUpvalue(frame.Base+index, frozenPtr)
 		} else {
 			closure.Upvalues[i] = frame.Closure.Upvalues[index]
 		}
@@ -753,9 +828,13 @@ func (vm *VM) opMakeFn() {
 	vm.push(mapval.Value{Type: mapval.ValObject, Obj: closure})
 }
 
-func (vm *VM) captureUpvalue(location int) *mapval.Upvalue {
+func (vm *VM) captureUpvalue(location int, frozen *bool) *mapval.Upvalue {
 	val := &vm.Stack[location]
-	return &mapval.Upvalue{Location: val}
+	// Note: Rhumb VM currently doesn't share open upvalues (cache).
+	// This means multiple closures capturing the same var get different Upvalue structs.
+	// But they point to the same Stack location and the same Frozen bool pointer.
+	// So they share state correctly.
+	return &mapval.Upvalue{Location: val, Frozen: frozen}
 }
 
 func (vm *VM) opCall() error {

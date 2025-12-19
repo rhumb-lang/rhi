@@ -2,9 +2,55 @@ package vm
 
 import (
 	"fmt"
+	"os"
 
 	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
+
+func (vm *VM) raiseSignal(topic string, signalVal mapval.Value) {
+	// Logic matches opPost: Suspend current frame, check monitor, or bubble.
+	
+	currentFrame := vm.CurrentFrame
+	currentFrame.WaitingSignal = topic
+	
+	// Move to Zombies
+	vm.zombies = append(vm.zombies, currentFrame)
+	
+	// CHECK MONITOR ON CURRENT FRAME
+	if currentFrame.Monitor != nil {
+		// Push Monitor Closure & Signal
+		vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
+		vm.push(signalVal)
+		
+		// Debug
+		fmt.Fprintf(os.Stderr, "Raising Signal to Monitor: %s (Type %d)\n", signalVal, signalVal.Type)
+		fmt.Fprintf(os.Stderr, "Stack at Raise: %v\n", vm.Stack[:vm.SP])
+
+		// Start Monitor Frame
+		monitorFrame := &CallFrame{
+			Parent:  currentFrame.Parent,
+			Closure: currentFrame.Monitor,
+			IP:      0,
+			Base:    vm.SP - 1, // 1 Arg (Signal)
+		}
+		
+		vm.CurrentFrame = monitorFrame
+		vm.state = StateRunning // Handle immediately
+		return
+	}
+	
+	// No Monitor on current frame, bubble up from Parent
+    // STACK UNWINDING: Restore SP to discard locals/args of the suspended frame
+    targetSP := currentFrame.Base
+    if targetSP > 0 {
+        targetSP-- // Pop the Closure at Base-1
+    }
+    vm.SP = targetSP
+
+	vm.CurrentFrame = currentFrame.Parent
+	vm.signalVal = signalVal
+	vm.state = StateSignaling
+}
 
 func (vm *VM) opMonitor() error {
 	argc := int(vm.readByte())

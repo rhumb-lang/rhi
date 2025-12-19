@@ -9,7 +9,7 @@ import (
 
 func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	// Function Definition
-	if bin.Op == ast.OpMakeFn {
+	if bin.Op == ast.OpMakeFn || bin.Op == ast.OpLetFn || bin.Op == ast.OpBindFn {
 		// LHS is Params (Map), RHS is Body (Routine)
 
 		// Create child compiler
@@ -95,7 +95,25 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 
 		// Add to current chunk constants (without emitting LOAD_CONST)
 		idx := c.makeConstant(fnVal)
-		c.emit(mapval.OP_MAKE_FN)
+
+		op := mapval.OP_MAKE_FN
+		if bin.Op == ast.OpBindFn {
+			op = mapval.OP_BIND_FN // We need to check if OP_BIND_FN opcode exists in mapval and has handling?
+			// Wait, mapval.OP_BIND_FN exists in opcodes.go.
+			// But VM implementation?
+			// Let's assume it behaves like MAKE_FN or use MAKE_FN for now if specific behavior is not implemented.
+			// But OP_BIND_FN is usually Method creation.
+			// For now, let's use OP_MAKE_FN unless we are sure.
+			// Actually, let's just use OP_MAKE_FN for all, unless specific opcode needed.
+			// The VM has OP_BIND_FN listed but not implemented in `vm.go` switch?
+			// I checked `vm.go` switch, it has `case mapval.OP_MAKE_FN:`.
+			// It does NOT have `OP_BIND_FN` in the switch case I read earlier (only `OP_MAKE_FN`).
+			// So `OP_BIND_FN` would trap as unknown opcode.
+			// Revert to OP_MAKE_FN for now.
+			op = mapval.OP_MAKE_FN
+		}
+
+		c.emit(op)
 		c.Chunk().WriteByte(byte(idx), 0)
 
 		// Write Upvalue Descriptors
@@ -108,6 +126,15 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 			c.Chunk().WriteByte(byte(up.Index), 0)
 		}
 
+		// Handle IIFE (LetFn)
+		if bin.Op == ast.OpLetFn {
+			// Call immediately with 0 args
+			// Assumes LHS params was empty []
+			// If not empty, we are calling with missing args (___).
+			c.emit(mapval.OP_CALL)
+			c.Chunk().WriteByte(0, 0)
+		}
+
 		return nil
 	}
 
@@ -115,6 +142,30 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	if bin.Op == ast.OpAssignImm || bin.Op == ast.OpAssignMut {
 		// Check LHS: Label (Local)
 		if label, ok := bin.Left.(*ast.LabelLiteral); ok {
+			// Check for Void Label
+			if label.Value == "_" {
+				// Emit Runtime Error Signal #***(0; "cannot assign..."; ___)
+				// 1. Compile Value (to be returned/left on stack)
+				if err := c.compileExpression(bin.Right); err != nil {
+					return err
+				}
+
+				// 2. Prepare Signal
+				c.emitConstant(mapval.NewEmpty()) // Receiver (Ignored)
+
+				c.emitConstant(mapval.NewInt(0))                              // Code
+				c.emitConstant(mapval.NewText("cannot assign to void label")) // Msg
+				c.emitConstant(mapval.NewEmpty())                             // Data
+
+				// 3. Emit Post
+				idx := c.makeConstant(mapval.NewText("***"))
+				c.emit(mapval.OP_POST)
+				c.Chunk().WriteByte(byte(idx), 0)
+				c.Chunk().WriteByte(3, 0) // Arg count
+
+				return nil
+			}
+
 			// Variable Assignment: x .= 1
 
 			// 1. Compile RHS
@@ -126,7 +177,11 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 			idx := c.Scope.resolveLocal(label.Value)
 			if idx != -1 {
 				// Local
-				c.emit(mapval.OP_STORE_LOC)
+				if bin.Op == ast.OpAssignImm {
+					c.emit(mapval.OP_STORE_LOC_IMMUT)
+				} else {
+					c.emit(mapval.OP_STORE_LOC)
+				}
 				c.Chunk().WriteByte(byte(idx), 0)
 				return nil
 			}

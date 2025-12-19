@@ -312,6 +312,9 @@ func (vm *VM) Step() (Result, error) {
 	case mapval.OP_STORE_LOC:
 		vm.opStoreLoc()
 
+	case mapval.OP_STORE_LOC_IMMUT:
+		vm.opStoreLocImmut()
+
 	case mapval.OP_LOAD_UPVALUE:
 		vm.opLoadUpvalue()
 
@@ -520,4 +523,8 @@ func (vm *VM) Step() (Result, error) {
 
 	return Ok, nil
 
+}
+
+func (vm *VM) DumpStack() {
+	fmt.Printf("STACK (SP=%d): %v\n", vm.SP, vm.Stack[:vm.SP])
 }

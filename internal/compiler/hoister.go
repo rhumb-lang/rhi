@@ -43,6 +43,21 @@ func (h *Hoister) visit(node ast.Node) {
 		for _, expr := range n.Expressions {
 			h.visit(expr)
 		}
+	case *ast.AssertionWrapper:
+		h.visit(n.Actual)
+		h.visit(n.Expected)
+	case *ast.InspectionWrapper:
+		h.visit(n.Expr)
+	case *ast.UnaryExpression:
+		h.visit(n.Expr)
+	case *ast.EffectExpression:
+		h.visit(n.Target)
+		// Selector has its own scope?
+		// Selector patterns bind new variables, they don't declare in outer scope.
+		// h.visit(n.Selector) // No.
+	case *ast.ChainExpression:
+		h.visit(n.Base)
+		// Steps are just identifiers.
 	case *ast.BinaryExpression:
 		// 1. Handle Assignments (Hoist the LHS)
 		if n.Op == ast.OpAssignImm || n.Op == ast.OpAssignMut || n.Op == ast.OpDestruct {

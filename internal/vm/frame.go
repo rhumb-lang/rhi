@@ -12,4 +12,9 @@ type CallFrame struct {
 	// WaitingSignal is the topic this frame is waiting for a reply to.
 	// Empty if running.
 	WaitingSignal string
+
+	// LocalsFrozen tracks which locals are immutable.
+	// Uses map of pointers to allow stable addressing for Upvalues.
+	// Index i corresponds to Base + i.
+	LocalsFrozen map[int]*bool
 }
