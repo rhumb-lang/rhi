@@ -21,7 +21,9 @@ func (vm *VM) opSend() error {
 	key := keyVal.Str
 
 	receiver := vm.pop()
-	fmt.Printf("DEBUG: opSend receiver: %s (Type %s)\n", receiver, receiver.Type)
+	if vm.Config.TraceSpace {
+		fmt.Printf("DEBUG: opSend receiver: %s (Type %s)\n", receiver, receiver.Type)
+	}
 
 	if receiver.Type != mapval.ValObject {
 		return fmt.Errorf("receiver is not an object (got %s)", receiver.Type)

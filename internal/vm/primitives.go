@@ -116,12 +116,6 @@ func (vm *VM) opStoreUpvalue() {
 
 	upvalue := closure.Upvalues[idx]
 
-	fmt.Printf("DEBUG: StoreUpvalue idx %d Frozen ptr: %p\n", idx, upvalue.Frozen)
-	fmt.Printf("DEBUG: Frame Base: %d, SP: %d\n", frame.Base, vm.SP)
-	if upvalue.Frozen != nil {
-		fmt.Printf("DEBUG: ... Value is: %v\n", *upvalue.Frozen)
-	}
-
 	// Check immutability
 	if upvalue.Frozen != nil && *upvalue.Frozen {
 		// Emit #*** signal instead of panic

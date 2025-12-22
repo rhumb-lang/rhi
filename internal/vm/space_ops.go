@@ -18,15 +18,18 @@ func (vm *VM) raiseSignal(topic string, signalVal mapval.Value) {
 	
 	// CHECK MONITOR ON CURRENT FRAME
 	if currentFrame.Monitor != nil {
-		// Push Monitor Closure & Signal
-		vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
-		vm.push(signalVal)
+			// Push Monitor Closure & Signal
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
+			vm.push(signalVal)
 		
-		// Debug
-		fmt.Fprintf(os.Stderr, "Raising Signal to Monitor: %s (Type %d)\n", signalVal, signalVal.Type)
-		fmt.Fprintf(os.Stderr, "Stack at Raise: %v\n", vm.Stack[:vm.SP])
-
-		// Start Monitor Frame
+			// Debug
+			if vm.Config.TraceSpace {
+				fmt.Fprintf(os.Stderr, "Raising Signal to Monitor: %s (Type %d)\n", signalVal, signalVal.Type)
+				fmt.Fprintf(os.Stderr, "Stack at Raise: %v\n", vm.Stack[:vm.SP])
+			}
+		
+			// Start Monitor Frame
+		
 		monitorFrame := &CallFrame{
 			Parent:  currentFrame.Parent,
 			Closure: currentFrame.Monitor,
