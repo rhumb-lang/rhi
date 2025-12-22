@@ -12,28 +12,19 @@
             "processId": 0
         },
         {
-            "name": "Launch rhumb",
+            "name": "Launch rhumb test",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "cmd/rhi/main.go",
+            "program": "cmd/rhi",
             "args": [
-                "line",
-                "--disassemble",
-                "--last-value",
-
-                // "foo := 1; bar .= 2; foo ++ bar",
-
-                "foo .= [a] -> (a ** a); foo(10)"
-                // "foo .= 10",
-                // "bar .= 3",
-                // "foo ++ 5"
+                "-test",
+                "${workspaceFolder}/tests/repro_star_v2.rh",
             ],
             "env": {
-                "GOEXPERIMENT": "arenas",
-                "RHUMB_VISITOR_DEBUG": "1",
-                "RHUMB_CODE_ARRAY_DEBUG": "1",
-                "RHUMB_VM_DEBUG": "1"
+                // "RHUMB_VISITOR_DEBUG": "1",
+                // "RHUMB_CODE_ARRAY_DEBUG": "1",
+                // "RHUMB_VM_DEBUG": "1"
             }
         },
         {
