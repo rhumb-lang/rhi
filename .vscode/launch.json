@@ -25,7 +25,8 @@
                 // "RHUMB_VISITOR_DEBUG": "1",
                 // "RHUMB_CODE_ARRAY_DEBUG": "1",
                 // "RHUMB_VM_DEBUG": "1"
-            }
+            },
+            "output": "${workspaceFolder}/bin/debug"
         },
         {
             "name": "Launch rhumb REPL",
