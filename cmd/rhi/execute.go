@@ -12,7 +12,7 @@ import (
 	"github.com/rhumb-lang/rhi/internal/vm"
 )
 
-func (s *Session) execute(input string) {
+func (s *Session) execute(input string) bool {
 	// 1. Parse
 	is := antlr.NewInputStream(input)
 	lexer := grammar.NewRhumbLexer(is)
@@ -30,7 +30,7 @@ func (s *Session) execute(input string) {
 		for _, msg := range errorListener.Errors {
 			fmt.Println("  " + msg)
 		}
-		return
+		return false
 	}
 
 	if s.VM.Config.TraceParser {
@@ -42,19 +42,19 @@ func (s *Session) execute(input string) {
 	builder := visitor.NewASTBuilder(stream, *testMode)
 	astNode := builder.Visit(tree)
 	if astNode == nil {
-		return
+		return false
 	}
 
 	doc, ok := astNode.(*ast.Document)
 	if !ok {
-		return
+		return false
 	}
 
 	// 3. Compile Incremental
 	startOffset, err := s.Compiler.CompileIncremental(doc)
 	if err != nil {
 		fmt.Printf("Compilation failed: %v\n", err)
-		return
+		return false
 	}
 
 	if s.VM.Config.TraceBytecode {
@@ -133,12 +133,12 @@ func (s *Session) execute(input string) {
 
 	if runtimeErr != nil {
 		fmt.Printf("Runtime error: %v\n", runtimeErr)
-		return
+		return false
 	}
 
 	if res != vm.Ok && res != vm.Halt {
 		fmt.Printf("VM exited with status: %s\n", res)
-		return
+		return false
 	}
 
 	// 5. Print Result and Reset Stack (keep locals)
@@ -157,6 +157,7 @@ func (s *Session) execute(input string) {
 			s.VM.SP = numLocals
 		}
 	}
+	return true
 }
 
 func formatValue(val mapval.Value) string {

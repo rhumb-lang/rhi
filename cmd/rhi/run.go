@@ -18,13 +18,13 @@ import (
 	"github.com/rhumb-lang/rhi/internal/config"
 )
 
-func (s *Session) runFile(filename string) {
+func (s *Session) runFile(filename string) bool {
 	input, err := os.ReadFile(filename)
 	if err != nil {
 		fmt.Printf("Error reading file: %v\n", err)
-		os.Exit(1)
+		return false
 	}
-	s.execute(string(input))
+	return s.execute(string(input))
 }
 
 func (s *Session) runREPL() {
@@ -47,7 +47,7 @@ func (s *Session) runREPL() {
 		}
 		joinedLines := strings.Join(lines, "\n")
 		fmt.Println("-----")
-		s.execute(joinedLines)
+		_ = s.execute(joinedLines)
 		fmt.Println("-----")
 		history.Add(joinedLines)
 	}
