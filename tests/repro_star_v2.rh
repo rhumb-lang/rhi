@@ -6,6 +6,18 @@ f := [n] -> n {
 }
 
 f(7) %= 'LARGE' % first expression-based (pinned label) selector pattern
-f(3) %= 'SMALL' % second expression-based (new label) selector pattern
-f(4) %= 4       % pinned pabel argumented-based selector pattern
+f(3) %= 'SMALL' % second expression-based (subject label) selector pattern
+f(4) %= 4       % pinned label argument-based selector pattern
 f() %= 'FIVE'  % void label argument-based seelector pattern
+
+g := [n] -> n {
+	n >> 5 .. 'LARGE'
+	x << 4 .. 'SMALL'
+	x .. x
+	* .. 'FIVE'
+}
+
+g(7) %= 'LARGE' % first expression-based (pinned label) selector pattern
+g(3) %= 'SMALL' % second expression-based (subject label) selector pattern
+g(4) %= 4       % subject label argument-based selector pattern
+g() %= 'FIVE'  % void label argument-based seelector pattern
