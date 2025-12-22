@@ -1,4 +1,4 @@
-f := [n] -> n {
+f := [n] -> {
 	n >> 5 .. 'LARGE'
 	x << 4 .. 'SMALL'
 	n .. n
@@ -10,7 +10,7 @@ f(3) %= 'SMALL' % second expression-based (subject label) selector pattern
 f(4) %= 4       % pinned label argument-based selector pattern
 f() %= 'FIVE'  % void label argument-based seelector pattern
 
-g := [n] -> n {
+g := [n] -> {
 	n >> 5 .. 'LARGE'
 	x << 4 .. 'SMALL'
 	x .. x
