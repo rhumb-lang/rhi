@@ -268,8 +268,8 @@ Here is an example showing some of the operators and a hook field:
 
 ```rhumb
 Point .= <(
-  arg1 .= $1
-  arg2 .= $2
+  arg1 .= ?1
+  arg2 .= ?2
 
   % this
   x := ___
@@ -463,7 +463,7 @@ Rhumb defines specific roles for Logic units, separating the executable code fro
 
 1.  **Subroutine `<(...)>`**: The **Fundamental Unit of Code Execution**.
       * It is a **Reference** to logic (Bytecode Chunk).
-      * It is **Anonymous** and has no inherent parameter names (uses positional `$1`, `$2`).
+      * It is **Anonymous** and has no inherent parameter names (uses positional `?1`, `?2`).
       * **Invocation:** Accessing a label bound to a subroutine *executes* it immediately.
           * `foo` executes `foo`.
           * `foo()` executes `foo` with empty arguments (if any were missing).
@@ -473,20 +473,84 @@ Rhumb defines specific roles for Logic units, separating the executable code fro
       * It converts the RHS `()` into a Subroutine.
       * **Invocation:** `foo(1)` binds `1` to the Submap labels, then executes the Subroutine.
 
-#### 3\.9\.1 Loose Argument Policy
+#### 3\.9\.1 The Argument Engine (`?`)
 
-When a function is called (`foo(...)`):
+Every subroutine automatically receives an **Argument Map**. You can access these values directly using the `?` prefix operator.
 
-  * **Missing Args:** If fewer arguments are provided than parameters defined in the submap, the remaining parameters are bound to **`___` (Empty)**.
-  * **Extra Args:** If more arguments are provided than parameters, the extra values are ignored by the named binding but remain accessible via the variadic argument operator **`$`** (e.g., `$0` for all args, or `$N` for the Nth).
+* `?1` is the first argument.
+* `?2` is the second argument.
+* `?0` contains all arguments.
 
-#### 3\.9\.2 Referencing & Currying
+This effectively makes **every function variadic** by default. Rhumb does not throw errors for "Too many arguments" or "Too few arguments."
+* **Too Few:** Accessing `?5` when only 3 arguments were passed returns `___`.
+* **Too Many:** Extra arguments are simply available via higher indices (e.g., `?4`).
+
+#### 3\.9\.2 Functions are Bindings
+
+The function operator `->` is not a separate construct; it is a **Binding Operator**. It wraps a Reference Routine and prepends logic to bind the input arguments to specific labels.
+
+**The De-sugaring Model:**
+```rhumb
+% This high-level code:
+add := [a; b] -> ( a + b )
+
+% Is conceptually equivalent to this raw subroutine:
+add := <
+    a := ?1
+    b := ?2
+    ( a + b )
+>
+
+```
+
+#### 3\.9\.3 Hybrid Access (The "Overflow" Pattern)
+
+Because parameters are just bindings, you can mix named parameters with raw argument access. This is useful for creating interfaces that handle specific known arguments while remaining open to variable extra arguments.
+
+```rhumb
+% Define 3 named parameters
+foo := [a; b; c] -> (
+  print(a)   % 'Lions'
+  print(b)   % 'Tigers'
+  print(c)   % 'Bears'
+  
+  % Access the "Overflow" arguments directly
+  print(?4)  % 'Oh My!'
+  print(?5)  % ___ (Empty)
+)
+
+foo('Lions'; 'Tigers'; 'Bears'; 'Oh My!')
+
+```
+
+#### 3\.9\.4 Referencing & Currying
 
   * **Referencing (No Call):** The **Only Way** to pass a subroutine or function without executing it is to wrap it in Angle Brackets `<...>`.
       * `foo` $\rightarrow$ Executes.
       * `<foo>` $\rightarrow$ Pushes the Function Object onto the stack.
   * **Partial Application (Currying):** Syntax sugar for creating a new closure.
       * `<foo>(1)` $\rightarrow$ References `foo`, applies `1`, and returns a **New Function** (Closure) waiting for the remaining arguments. It does *not* execute.
+
+#### 3\.9\.5 Implementation Check (Compiler)
+
+To ensure this works as described, the Compiler needs to handle `->` correctly.
+
+**In `internal/compiler/routine.go` (or wherever `->` is handled):**
+
+When compiling a **Function Node** `[p1, p2] -> body`:
+1.  Begin a new Routine Compilation.
+2.  **Implicit Preamble:** Iterate through the parameter list.
+    * For parameter `p1` (index 0): Emit `OP_LOAD_ARG 1`, `OP_STORE_LOC "p1"`.
+    * For parameter `p2` (index 1): Emit `OP_LOAD_ARG 2`, `OP_STORE_LOC "p2"`.
+3.  Compile the `body`.
+4.  End Routine.
+
+**In `internal/visitor/unary.go`:**
+
+* Handle `ast.OpArg` (or whatever the `?` prefix maps to).
+* Emit `OP_LOAD_ARG (value)`.
+
+This implementation guarantees that `a` and `?1` are separate but contain the same data at the start of the function, and that `?4` is accessible even if the parameter list stopped at `c`.
 
 ### 3\.10 Dynamic Type Interactions
 
