@@ -1,0 +1,11 @@
+f := [n] -> n {
+	n >> 5 .. 'LARGE'
+	x << 4 .. 'SMALL'
+	n .. n
+	* .. 'FIVE'
+}
+
+f(7) %= 'LARGE' % first expression-based (pinned label) selector pattern
+f(3) %= 'SMALL' % second expression-based (new label) selector pattern
+f(4) %= 4       % pinned pabel argumented-based selector pattern
+f() %= 'FIVE'  % void label argument-based seelector pattern
