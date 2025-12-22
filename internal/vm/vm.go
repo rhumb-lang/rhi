@@ -196,10 +196,27 @@ func (vm *VM) RunSynchronous() (Result, error) {
 			if handled {
 				vm.state = StateRunning
 			} else {
+				// Check for Panic Signal (#***)
+				if vm.signalVal.Type == mapval.ValObject {
+					if t, ok := vm.signalVal.Obj.(*mapval.Tuple); ok {
+						if t.Kind == mapval.TupleSignal && t.Topic == "***" {
+							msg := "Unknown Panic"
+							if len(t.Payload) > 1 {
+								msg = t.Payload[1].Content()
+							}
+							panic(fmt.Sprintf("VM Panic: %s", msg))
+						}
+					}
+				}
+
 				vm.state = StateRunning
 				// Drop signal
 			}
 			continue
+		}
+
+		if vm.CurrentFrame == nil {
+			return Ok, nil
 		}
 
 		res, err := vm.Step()
@@ -233,12 +250,29 @@ func (vm *VM) run() (Result, error) {
 			if handled {
 				vm.state = StateRunning
 			} else {
+				// Check for Panic Signal (#***)
+				if vm.signalVal.Type == mapval.ValObject {
+					if t, ok := vm.signalVal.Obj.(*mapval.Tuple); ok {
+						if t.Kind == mapval.TupleSignal && t.Topic == "***" {
+							msg := "Unknown Panic"
+							if len(t.Payload) > 1 {
+								msg = t.Payload[1].Content()
+							}
+							panic(fmt.Sprintf("VM Panic: %s", msg))
+						}
+					}
+				}
+
 				// Signal Unhandled.
 				// For now, we drop it.
 				// In a real system, we might want to panic or log.
 				vm.state = StateRunning
 			}
 			continue
+		}
+
+		if vm.CurrentFrame == nil {
+			return Ok, nil
 		}
 
 		res, err := vm.Step()
