@@ -58,67 +58,8 @@ func (s *Session) execute(input string) bool {
 	}
 
 	if s.VM.Config.TraceBytecode {
-		fmt.Println("=== Bytecode Chunk ===")
-		chunk := s.Compiler.Chunk()
-		fmt.Printf("Constants: %v\n", chunk.Constants)
-
-		fmt.Println("Disassembly:")
-		for i := 0; i < len(chunk.Code); {
-			fmt.Printf("%04d ", i)
-
-			op := mapval.OpCode(chunk.Code[i])
-			i++
-
-			// Simple check for operands (assume most are 0 or constant index)
-			// This is a basic disassembler, might not cover all variable-length ops perfectly
-			// without full instruction set knowledge here, but helpful for debugging.
-			// Reusing logic similar to VM's read would be best but for now just print OpName.
-
-			fmt.Printf("%s", op)
-
-			// Heuristic: If it's a known opcode taking an operand, print it.
-			// Bank 0
-			switch op {
-			case mapval.OP_JUMP, mapval.OP_CALL, mapval.OP_MAKE_FN:
-				if i+1 < len(chunk.Code) {
-					// 2 byte operand usually for jump? Or 1 for const?
-					// OP_MAKE_FN takes 1 byte const index.
-					// OP_JUMP takes 2 bytes.
-					if op == mapval.OP_JUMP || op == mapval.OP_JUMP_IF_FALSE || op == mapval.OP_JUMP_IF_TRUE || op == mapval.OP_WHILE {
-						// 2 byte
-						val := uint16(chunk.Code[i])<<8 | uint16(chunk.Code[i+1])
-						fmt.Printf(" %d", val)
-						i += 2
-					} else {
-						// 1 byte
-						fmt.Printf(" %d", chunk.Code[i])
-						i++
-					}
-				}
-			case mapval.OP_LOAD_CONST, mapval.OP_LOAD_LOC, mapval.OP_STORE_LOC, mapval.OP_SEND, mapval.OP_SET_FIELD:
-				// 1 byte operand
-				if i < len(chunk.Code) {
-					fmt.Printf(" %d", chunk.Code[i])
-					// For Constants, maybe print the value?
-					if op == mapval.OP_LOAD_CONST || op == mapval.OP_SEND || op == mapval.OP_SET_FIELD {
-						idx := chunk.Code[i]
-						if int(idx) < len(chunk.Constants) {
-							fmt.Printf(" (%s)", chunk.Constants[idx])
-						}
-					}
-					i++
-				}
-				if op == mapval.OP_SET_FIELD {
-					// Takes another byte for flags?
-					if i < len(chunk.Code) {
-						fmt.Printf(" flags:%d", chunk.Code[i])
-						i++
-					}
-				}
-			}
-
-			fmt.Println()
-		}
+		fmt.Println("=== Bytecode Trace ===")
+		printChunk(s.Compiler.Chunk(), "Main")
 	}
 
 	// 4. Execute
@@ -158,6 +99,77 @@ func (s *Session) execute(input string) bool {
 		}
 	}
 	return true
+}
+
+func printChunk(chunk *mapval.Chunk, name string) {
+	fmt.Printf("--- Chunk: %s ---\n", name)
+	fmt.Printf("Constants: %v\n", chunk.Constants)
+	fmt.Println("Disassembly:")
+	for i := 0; i < len(chunk.Code); {
+		fmt.Printf("%04d ", i)
+
+		op := mapval.OpCode(chunk.Code[i])
+		i++
+
+		fmt.Printf("%s", op)
+
+		switch op {
+		case mapval.OP_JUMP, mapval.OP_CALL, mapval.OP_MAKE_FN, mapval.OP_JUMP_IF_FALSE, mapval.OP_JUMP_IF_TRUE, mapval.OP_WHILE:
+			if op == mapval.OP_MAKE_FN {
+				if i < len(chunk.Code) {
+					idx := chunk.Code[i]
+					fmt.Printf(" %d", idx)
+					i++
+					// Recurse!
+					if int(idx) < len(chunk.Constants) {
+						cVal := chunk.Constants[idx]
+						if cVal.Type == mapval.ValObject {
+							if fn, ok := cVal.Obj.(*mapval.Function); ok {
+								fmt.Printf(" (<Function %s>)", fn.Name)
+								// Recursively print function chunk
+								fmt.Println()
+								printChunk(fn.Chunk, fn.Name)
+								fmt.Printf("--- End %s ---\n", fn.Name)
+								
+								// Skip Upvalue Descriptors
+								i += fn.UpvalueCount * 2
+							}
+						}
+					}
+				}
+			} else if op == mapval.OP_CALL {
+				if i < len(chunk.Code) {
+					fmt.Printf(" %d", chunk.Code[i])
+					i++
+				}
+			} else {
+				// Jump ops (2 bytes)
+				if i+1 < len(chunk.Code) {
+					val := uint16(chunk.Code[i])<<8 | uint16(chunk.Code[i+1])
+					fmt.Printf(" %d", val)
+					i += 2
+				}
+			}
+		case mapval.OP_LOAD_CONST, mapval.OP_LOAD_LOC, mapval.OP_STORE_LOC, mapval.OP_SEND, mapval.OP_SET_FIELD, mapval.OP_LOAD_UPVALUE:
+			if i < len(chunk.Code) {
+				fmt.Printf(" %d", chunk.Code[i])
+				if op == mapval.OP_LOAD_CONST {
+					idx := chunk.Code[i]
+					if int(idx) < len(chunk.Constants) {
+						fmt.Printf(" (%s)", chunk.Constants[idx])
+					}
+				}
+				i++
+			}
+			if op == mapval.OP_SET_FIELD {
+				if i < len(chunk.Code) {
+					fmt.Printf(" flags:%d", chunk.Code[i])
+					i++
+				}
+			}
+		}
+		fmt.Println()
+	}
 }
 
 func formatValue(val mapval.Value) string {
