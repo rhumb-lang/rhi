@@ -354,14 +354,14 @@ Rhumb cannot use a standard linear stack (like C or Java). It must use a
 This structure allows execution branches to fork, pause, and persist
 independently, which is the foundation of the concurrency model.
 
-### 3\.7\.1 Pattern Matching & The Void
+#### 3\.7\.1 Pattern Matching & The Void
 
-When defining patterns, you may use `_` to represent a wildcard match.
+When defining patterns, you may use `*` to represent a wildcard match.
 
 **Rules:**
-1.  **Discard:** `_` matches the existence of a value but discards the content.
-2.  **No Logic:** You cannot perform logical checks on `_` because it has no value.
-    * **Invalid:** `{ _ >= 10 .. ... }` (Cannot compare Void to Number).
+1.  **Discard:** `*` matches everything but discards all contents.
+2.  **No Logic:** You cannot perform logical checks on `*` because it is empty.
+    * **Invalid:** `{ * >= 10 .. ... }` (Cannot compare Void to Number).
     * **Valid:** `{ x >= 10 .. ... }` (Binds value to `x`, then checks it).
 
 **Examples:**
@@ -369,14 +369,38 @@ When defining patterns, you may use `_` to represent a wildcard match.
 ```rhumb
 % Structurally match a signal with 3 args, ignoring the first and third.
 {
-    #error(_, msg, _) .. print(msg)
+    #error(*, msg, *) .. print(msg)
 }
 
 % Invalid: Attempting to use Void in a predicate
 {
-    _ >= 10 .. "Fail" % Error! Use 'n >= 10' instead.
+    * >= 10 .. "Fail" % Error! Use 'n >= 10' instead.
 }
 ```
+
+#### 3\.7\.2 Default Semantics & Fallthrough
+
+Selectors evaluate patterns from top to bottom.
+
+**1. Explicit Default (The Wildcard `*`)**
+To define a default behavior, use the **Wildcard (`*`)** as the final pattern.
+* **Match:** It matches *any* value.
+* **Binding:** It discards the value (does not create a variable).
+
+```rhumb
+result := input {
+    10 .. "Ten"
+    20 .. "Twenty"
+    * .. "Unknown"  % The Catch-All
+}
+```
+
+#### 3\.7\.3 Exhausted Selectors
+
+If a selector is exhausted without finding a match, and no wildcard exists, the selector expression resolves to Empty (`___`).
+
+* **Value Selection:** Fallthrough $\rightarrow$ ___.
+* **Signal Selection:** Fallthrough $\rightarrow$ Signal continues bubbling up.
 
 
 #### 3\.7\.2 Vassals (Sub-Selectors)
