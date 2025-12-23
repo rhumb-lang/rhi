@@ -28,7 +28,7 @@ m\fixed %= 'static' % can use immutable field assign op
 % Write fails
 err3 := [] +> (
     m\fixed := "changed"
-) { #***(*; m; *) .. m } %= 'cannot assign value to immutable field 'fixed''
+) { #***(*; msg; *) .. msg } %= 'cannot assign value to immutable field 'fixed''
 
 % 4. Dynamic Map Freezing
 m\fluid .= "frozen now"
@@ -37,4 +37,4 @@ m\fluid %= 'frozen now'
 % Write now fails
 err4 := [] +> (
     m\fluid := "changed again"
-) { #***(*; m; *) .. m } %= 'cannot assign value to immutable field 'fluid''
+) { #***(*; msg; *) .. msg } %= 'cannot assign value to immutable field 'fluid''
