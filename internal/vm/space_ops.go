@@ -9,46 +9,46 @@ import (
 
 func (vm *VM) raiseSignal(topic string, signalVal mapval.Value) {
 	// Logic matches opPost: Suspend current frame, check monitor, or bubble.
-	
+
 	currentFrame := vm.CurrentFrame
 	currentFrame.WaitingSignal = topic
-	
+
 	// Move to Zombies
 	vm.zombies = append(vm.zombies, currentFrame)
-	
+
 	// CHECK MONITOR ON CURRENT FRAME
 	if currentFrame.Monitor != nil {
-			// Push Monitor Closure & Signal
-			vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
-			vm.push(signalVal)
-		
-			// Debug
-			if vm.Config.TraceSpace {
-				fmt.Fprintf(os.Stderr, "Raising Signal to Monitor: %s (Type %d)\n", signalVal, signalVal.Type)
-				fmt.Fprintf(os.Stderr, "Stack at Raise: %v\n", vm.Stack[:vm.SP])
-			}
-		
-			// Start Monitor Frame
-		
+		// Push Monitor Closure & Signal
+		vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
+		vm.push(signalVal)
+
+		// Debug
+		if vm.Config.TraceSpace {
+			fmt.Fprintf(os.Stderr, "Raising Signal to Monitor: %s (Type %d)\n", signalVal, signalVal.Type)
+			fmt.Fprintf(os.Stderr, "Stack at Raise: %v\n", vm.Stack[:vm.SP])
+		}
+
+		// Start Monitor Frame
+
 		monitorFrame := &CallFrame{
 			Parent:  currentFrame.Parent,
 			Closure: currentFrame.Monitor,
 			IP:      0,
 			Base:    vm.SP - 1, // 1 Arg (Signal)
 		}
-		
+
 		vm.CurrentFrame = monitorFrame
 		vm.state = StateRunning // Handle immediately
 		return
 	}
-	
+
 	// No Monitor on current frame, bubble up from Parent
-    // STACK UNWINDING: Restore SP to discard locals/args of the suspended frame
-    targetSP := currentFrame.Base
-    if targetSP > 0 {
-        targetSP-- // Pop the Closure at Base-1
-    }
-    vm.SP = targetSP
+	// STACK UNWINDING: Restore SP to discard locals/args of the suspended frame
+	targetSP := currentFrame.Base
+	if targetSP > 0 {
+		targetSP-- // Pop the Closure at Base-1
+	}
+	vm.SP = targetSP
 
 	vm.CurrentFrame = currentFrame.Parent
 	vm.signalVal = signalVal
@@ -79,8 +79,8 @@ func (vm *VM) opMonitor() error {
 					Base:    vm.SP - argc,
 					Monitor: selector,
 				}
-			vm.CurrentFrame = newFrame
-			return nil
+				vm.CurrentFrame = newFrame
+				return nil
 			}
 		}
 		return fmt.Errorf("monitored target must be a closure")
@@ -192,7 +192,7 @@ func (vm *VM) opPost() error {
 		// Push Monitor Closure & Signal
 		vm.push(mapval.Value{Type: mapval.ValObject, Obj: currentFrame.Monitor})
 		vm.push(vm.signalVal)
-		
+
 		// Start Monitor Frame
 		monitorFrame := &CallFrame{
 			Parent:  currentFrame.Parent, // Handler is sibling of suspended frame (child of caller)
@@ -200,7 +200,7 @@ func (vm *VM) opPost() error {
 			IP:      0,
 			Base:    vm.SP - 1, // 1 Arg (Signal)
 		}
-		
+
 		vm.CurrentFrame = monitorFrame
 		vm.state = StateRunning // Handle immediately
 		return nil
@@ -228,7 +228,7 @@ func (vm *VM) opInject() error {
 	}
 
 	// Pop Receiver (The Signal we are replying to)
-	_ = vm.pop()
+	receiver := vm.pop()
 
 	// Resolve Topic
 	frame := vm.currentFrame()
@@ -262,15 +262,40 @@ func (vm *VM) opInject() error {
 		}
 		payload = mapval.Value{Type: mapval.ValObject, Obj: m}
 	}
-	
+
 	// Hunt for Zombie
 	var zombie *CallFrame
-	zombieIdx := -1
-	for i := len(vm.zombies) - 1; i >= 0; i-- {
-		if targetTopic == "" || vm.zombies[i].WaitingSignal == targetTopic {
-			zombie = vm.zombies[i]
-			zombieIdx = i
-			break
+
+	// Strategy 1: Direct Reply via Signal Source
+	if receiver.Type == mapval.ValObject {
+		if t, ok := receiver.Obj.(*mapval.Tuple); ok && t.Kind == mapval.TupleSignal {
+			if sourceFrame, ok := t.Source.(*CallFrame); ok {
+				// Verify this frame is actually a zombie (in the list)
+				// This is O(N) but safe. Optimization: Flag frames as zombies?
+				for i, z := range vm.zombies {
+					if z == sourceFrame {
+						zombie = z
+						// Remove from list
+						vm.zombies = append(vm.zombies[:i], vm.zombies[i+1:]...)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// Strategy 2: Topic Scan (Fallback/Legacy)
+	if zombie == nil {
+		zombieIdx := -1
+		for i := len(vm.zombies) - 1; i >= 0; i-- {
+			if targetTopic == "" || vm.zombies[i].WaitingSignal == targetTopic {
+				zombie = vm.zombies[i]
+				zombieIdx = i
+				break
+			}
+		}
+		if zombie != nil {
+			vm.zombies = append(vm.zombies[:zombieIdx], vm.zombies[zombieIdx+1:]...)
 		}
 	}
 
@@ -281,9 +306,28 @@ func (vm *VM) opInject() error {
 		return nil // Silent ignore?
 	}
 
-	// Revive Zombie
-	vm.zombies = append(vm.zombies[:zombieIdx], vm.zombies[zombieIdx+1:]...)
 	zombie.WaitingSignal = ""
+
+	// Clear the Monitor that handled the signal so it doesn't intercept
+	// the eventual return of the revived frame.
+	// We walk up the chain because the monitor might be on a parent frame (e.g. recursion).
+	curr := zombie
+	foundMonitor := false
+	for curr != nil {
+		if curr.Monitor != nil {
+			if vm.Config.TraceSpace {
+				fmt.Printf("TRACE: Clearing Monitor on Frame %p (Closure: %s)\n", curr, curr.Closure.Fn.Name)
+			}
+			curr.Monitor = nil
+			foundMonitor = true
+			break
+		}
+		curr = curr.Parent
+	}
+
+	if !foundMonitor && vm.Config.TraceSpace {
+		fmt.Printf("TRACE: WARNING: No Monitor found to clear starting from zombie %p\n", zombie)
+	}
 
 	if vm.Config.TraceSpace {
 		fmt.Printf("TRACE: Reviving Zombie Frame %p\n", zombie)
@@ -348,4 +392,3 @@ func (vm *VM) opNewRealm() {
 	// Realm is just a Map for now (with space semantics handled by operators)
 	vm.push(mapval.Value{Type: mapval.ValObject, Obj: mapval.NewMap()})
 }
-
