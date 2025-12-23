@@ -410,10 +410,11 @@ type Legend struct {
 
 // Function represents compiled bytecode (Prototype Activation Record)
 type Function struct {
-	Name         string
-	Arity        int
-	UpvalueCount int
-	Chunk        *Chunk
+	Name             string
+	Arity            int
+	UpvalueCount     int
+	Chunk            *Chunk
+	HasValuePatterns bool // Set if any selector pattern is not a signal
 }
 
 func (f *Function) Type() ObjectType { return ObjTypeFunction }
