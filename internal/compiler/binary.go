@@ -83,14 +83,46 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 			child.emitConstant(mapval.NewEmpty())
 		}
 
-		// Compile Body (RHS)
-		if err := child.compileExpression(bin.Right); err != nil {
-			return err
-		}
-
-		child.emit(mapval.OP_RETURN)
-
-		// Create Function Constant
+		        // Compile Body (RHS)
+		        // CHECK FOR IMPLICIT SELECTOR
+		        var sel *ast.SelectorExpression
+		        if s, ok := bin.Right.(*ast.SelectorExpression); ok {
+		            sel = s
+		        } else if block, ok := bin.Right.(*ast.RoutineExpression); ok && len(block.Expressions) == 1 {
+		            if s, ok := block.Expressions[0].(*ast.SelectorExpression); ok {
+		                sel = s
+		            }
+		        }
+		
+		        if sel != nil {
+		            // Special Case: Function body is a Selector (Implicit or Explicit).
+		            // We compile the selector (which pushes a Closure), then immediately call it
+		            // using the first parameter (or Empty) as the Subject.
+		            if err := child.compileSelector(sel); err != nil {
+		                return err
+		            }
+		
+		            // Load Subject
+		            if child.Function.Arity > 0 {
+		                child.emit(mapval.OP_LOAD_LOC)
+		                child.Chunk().WriteByte(0, 0)
+		            } else {
+		                child.emitConstant(mapval.NewEmpty())
+		            }
+		
+		            // Call Selector (1 Arg)
+		            child.emit(mapval.OP_CALL)
+		            child.Chunk().WriteByte(1, 0)
+		
+		            // Return Result
+		            child.emit(mapval.OP_RETURN)
+		        } else {
+		            if err := child.compileExpression(bin.Right); err != nil {
+		                return err
+		            }
+		            child.emit(mapval.OP_RETURN)
+		        }
+				// Create Function Constant
 		fnVal := mapval.NewFunction(child.Function)
 
 		// Add to current chunk constants (without emitting LOAD_CONST)
