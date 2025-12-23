@@ -4,7 +4,7 @@
 % then the main loop drills down to resume the bottom frame.
 
 % 1. Define the recursive function that pauses at the bottom
-dive .= [depth] -> depth == 0 {
+dive .= [depth] -> (depth == 0) {
   yes .. (
     % At the bottom! Send a signal to pause execution.
     % We wait for a reply value to be injected here.
@@ -22,4 +22,4 @@ result .= dive(1000) {
   #hit-bottom .. ^("Resurrected!") 
 }
 
-result %= "Resurrected!"
+result %= 'Resurrected!'
