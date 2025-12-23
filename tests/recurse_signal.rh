@@ -1,0 +1,20 @@
+% reproduce_issue.rh
+% Simplified recursion and signal test
+
+dive .= [depth] -> (
+    depth %?    
+    (depth == 0) {
+        yes .. (
+            #hit-bottom
+            "Resurrected!"
+        )
+        no .. (
+            dive(depth -- 1)
+        )
+    }
+)
+
+res := dive(1) {
+    #hit-bottom .. ^()
+}
+res %= 'Resurrected!'
