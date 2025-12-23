@@ -538,7 +538,11 @@ func (vm *VM) opEq() {
 	b := vm.pop()
 	a := vm.pop()
 	// Use Equality (Wildcard aware for versions) for ==
-	vm.push(mapval.NewBoolean(isEqual(a, b)))
+	eq := isEqual(a, b)
+	if vm.Config.TraceSpace { // Reuse TraceSpace for now or add new flag
+		fmt.Printf("TRACE: opEq %s == %s -> %v\n", a, b, eq)
+	}
+	vm.push(mapval.NewBoolean(eq))
 }
 
 func (vm *VM) opNeq() {
@@ -639,9 +643,13 @@ func (vm *VM) opLte() error {
 		return nil
 	}
 
-	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
-		cmp := compareVersions(a, b)
-		vm.push(mapval.NewBoolean(cmp == -1 || cmp == 0))
+	if !isNumeric(a) || !isNumeric(b) {
+		if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+			cmp := compareVersions(a, b)
+			vm.push(mapval.NewBoolean(cmp == -1 || cmp == 0))
+			return nil
+		}
+		vm.push(mapval.NewBoolean(false))
 		return nil
 	}
 
@@ -886,7 +894,7 @@ func (vm *VM) opMakeFn() {
 			if frame.LocalsFrozen == nil {
 				frame.LocalsFrozen = make(map[int]*bool)
 			}
-			
+
 			frozenPtr, ok := frame.LocalsFrozen[index]
 			if !ok {
 				// Allocate new bool on heap (default false/mutable)
@@ -1009,7 +1017,7 @@ func (vm *VM) opReturn() (int, error) {
 		// Intercept Return!
 		// The Selector acts as a continuation/transformer for the return value.
 		// We effectively replace the current frame with the Monitor frame.
-		
+
 		// 1. Unwind Stack (discard locals of current frame)
 		// We want SP to be at Base (where args started)
 		// And we put Result there.
@@ -1024,7 +1032,7 @@ func (vm *VM) opReturn() (int, error) {
 			IP:      0,
 			Base:    vm.SP - 1, // Result is the 1 argument
 		}
-		
+
 		return 0, nil // Continue execution
 	}
 
