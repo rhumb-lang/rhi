@@ -1,0 +1,41 @@
+f := [n] -> {
+	n >> 5 .. 'LARGE'
+	x << 4 .. 'SMALL'
+	n .. n
+	* .. 'FIVE'
+}
+
+f(7) %= 'LARGE' % first expression-based (pinned label) selector pattern
+f(3) %= 'SMALL' % second expression-based (subject label) selector pattern
+f(4) %= 4       % pinned label argument-based selector pattern
+f() %= 'FIVE'  % argument-based (void label) selector pattern after pinned label pattern
+
+g := [n] -> {
+	n >> 5 .. 'LARGE'
+	x << 4 .. 'SMALL'
+	x .. x
+	* .. 'FIVE'
+}
+
+g(7) %= 'LARGE' % first expression-based (pinned label) selector pattern
+g(3) %= 'SMALL' % second expression-based (subject label) selector pattern
+g(4) %= 4       % subject label argument-based selector pattern
+g() %= 'FIVE'  % argument-based (void label) selector pattern after subject label pattern
+
+h := [x; y] -> {
+	x >> 10 && y >> 10 .. 'TOP-RIGHT'
+	x << 10 && y >> 10 .. 'TOP-LEFT'
+	z >> 10 && a << 10 .. 'BOTTOM-RIGHT'
+	z << 10 && a << 10 .. 'BOTTOM-LEFT'
+	[x; y]             .. 'CENTER'
+	n                  .. 'INVALID POSITION: ONLY ONE VALUE PROVIDED'
+	*                  .. 'INVALID POSITION: NO VALUES PROVIDED'
+}
+
+h(11; 12) %= 'TOP-RIGHT'                                 % first expression-based (dual pinned labels) selector pattern
+h(8;  20) %= 'TOP-LEFT'                                  % second expression-based (dual pinned labels) selector pattern
+h(20; 5)  %= 'BOTTOM-RIGHT'                              % third expression-based (dual subject labels) selector pattern
+h(1; 5)   %= 'BOTTOM-LEFT'                               % fourth expression-based (dual subject labels) selector pattern
+h(10; 10) %= 'BOTTOM-LEFT'                               % first argument-based (dual pinned labels) selector pattern
+h(0)      %= 'INVALID POSITION: ONLY ONE VALUE PROVIDED' % second argument-based (single subject label) selector pattern
+h()       %= 'INVALID POSITION: NO VALUES PROVIDED'      % third argument-based (void label) selector pattern after multiple argument patterns
