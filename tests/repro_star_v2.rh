@@ -24,7 +24,6 @@ g := [n] -> {
 g(7) %= 'LARGE' % first expression-based (pinned label) selector pattern
 g(3) %= 'SMALL' % second expression-based (subject label) selector pattern
 g(4) %= 4       % subject label argument-based selector pattern
-<<<<<<< HEAD
 g() %= 'FIVE'  % argument-based (void label) selector pattern after subject label pattern
 
 h := [x; y] -> {
@@ -44,6 +43,3 @@ h(1; 5)   %= 'BOTTOM-LEFT'                               % fourth expression-bas
 h(10; 10) %= 'BOTTOM-LEFT'                               % first argument-based (dual pinned labels) selector pattern
 h(0)      %= 'INVALID POSITION: ONLY ONE VALUE PROVIDED' % second argument-based (single subject label) selector pattern
 h()       %= 'INVALID POSITION: NO VALUES PROVIDED'      % third argument-based (void label) selector pattern after multiple argument patterns
-=======
-g() %= 'FIVE'  % void label argument-based seelector pattern
->>>>>>> 5ed06c639033da1e3dfbcef6be956664a12450dc
