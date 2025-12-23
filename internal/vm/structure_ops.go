@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"fmt"
 	"strconv"
 
 	mapval "github.com/rhumb-lang/rhi/internal/map"
@@ -227,6 +228,10 @@ func (vm *VM) opMatchTuple() {
 	// Peek Subject
 	subject := vm.peek(0)
 
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: opMatchTuple Subject=%s Kind=%d\n", subject, kind)
+	}
+
 	match := false
 	if subject.Type == mapval.ValObject {
 		if t, ok := subject.Obj.(*mapval.Tuple); ok {
@@ -234,10 +239,25 @@ func (vm *VM) opMatchTuple() {
 				// Check Topic
 				frame := vm.currentFrame()
 				expectedTopic := frame.Closure.Fn.Chunk.Constants[topicIdx].Str
+				if vm.Config.TraceSpace {
+					fmt.Printf("TRACE: opMatchTuple Topic=%s Expected=%s\n", t.Topic, expectedTopic)
+				}
 				if t.Topic == expectedTopic {
 					match = true
 				}
+			} else {
+				if vm.Config.TraceSpace {
+					fmt.Printf("TRACE: opMatchTuple Kind Mismatch Got=%d Expected=%d\n", t.Kind, kind)
+				}
 			}
+		} else {
+			if vm.Config.TraceSpace {
+				fmt.Printf("TRACE: opMatchTuple Subject Not Tuple (is %T)\n", subject.Obj)
+			}
+		}
+	} else {
+		if vm.Config.TraceSpace {
+			fmt.Printf("TRACE: opMatchTuple Subject Not Object (is %s)\n", subject.Type)
 		}
 	}
 
