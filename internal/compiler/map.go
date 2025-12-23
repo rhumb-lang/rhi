@@ -109,8 +109,8 @@ func (c *Compiler) compileMap(m *ast.MapExpression) error {
 				return err
 			}
 
-			// Emit Set (Immutable default)
-			flags := byte(0)
+			// Emit Set (Mutable default for list elements)
+			flags := byte(1)
 
 			keyIdx := c.makeConstant(mapval.NewText(keyName))
 			c.emit(mapval.OP_SET_FIELD)

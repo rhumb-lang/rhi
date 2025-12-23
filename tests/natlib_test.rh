@@ -15,7 +15,7 @@ res := _math\int(10) %( Missing 'max' argument %) {
         code %? 400
         msg  %? "int: expects (min, max)"
     )
-    _ .. (
+    * .. (
         panic("Expected error signal matching #***(400; int: expects (min, max); Empty) not received.")
         no %= yes % Force test failure if this branch is reached.
     )

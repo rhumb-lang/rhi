@@ -506,6 +506,7 @@ type Upvalue struct {
 	Location *Value
 	Closed   Value
 	Next     *Upvalue
+	Frozen   *bool // Pointer to the frozen status (heap allocated)
 }
 
 // ---------------------------------------------------------
