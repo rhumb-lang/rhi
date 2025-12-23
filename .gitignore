@@ -28,3 +28,4 @@ internal/grammar/**/*.tokens
 internal/grammar/.antlr
 
 commit_message.txt
+*.log
