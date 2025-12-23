@@ -474,6 +474,9 @@ func (vm *VM) Step() (Result, error) {
 
 	// Structure
 
+	case mapval.OP_IS_EMPTY:
+		vm.opIsEmpty()
+
 	case mapval.OP_COALESCE:
 		vm.opCoalesce()
 
