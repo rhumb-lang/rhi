@@ -33,7 +33,7 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 	case *ast.VersionLiteral:
 		val := mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard)
 		val.Str = e.Suffix
-		c.emitConstant(mapval.NewVersion(e.Major, e.Minor, e.Patch, e.IsWildcard))
+		c.emitConstant(val)
 	case *ast.DecimalLiteral:
 		c.emitConstant(mapval.Value{
 			Type: mapval.ValDecimal,
