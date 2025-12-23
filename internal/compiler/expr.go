@@ -131,11 +131,19 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 			return nil
 		}
 
-		// Standard handling: Wrap Target in Thunk to monitor its execution
-		// This handles `[ ... ] { ... }` or `block { ... }` by executing it under the monitor.
-		if err := c.compileThunk(e.Target); err != nil {
-			return err
+		// Standard handling:
+		// Only wrap in Thunk if it's a RoutineExpression (multi-statement block).
+		// Otherwise, Vassal Mode or Dispatch Mode is preferred for better closure handling.
+		if routine, ok := e.Target.(*ast.RoutineExpression); ok {
+			if err := c.compileThunk(routine); err != nil {
+				return err
+			}
+		} else {
+			if err := c.compileExpression(e.Target); err != nil {
+				return err
+			}
 		}
+
 		if err := c.compileExpression(e.Selector); err != nil {
 			return err
 		}
