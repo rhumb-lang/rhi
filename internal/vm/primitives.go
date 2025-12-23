@@ -552,6 +552,11 @@ func (vm *VM) opGt() error {
 	b := vm.pop()
 	a := vm.pop()
 
+	if a.Type == mapval.ValEmpty || b.Type == mapval.ValEmpty {
+		vm.push(mapval.NewBoolean(false))
+		return nil
+	}
+
 	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
 		cmp := compareVersions(a, b)
 		vm.push(mapval.NewBoolean(cmp == 1))
@@ -569,6 +574,11 @@ func (vm *VM) opGt() error {
 func (vm *VM) opLt() error {
 	b := vm.pop()
 	a := vm.pop()
+
+	if a.Type == mapval.ValEmpty || b.Type == mapval.ValEmpty {
+		vm.push(mapval.NewBoolean(false))
+		return nil
+	}
 
 	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
 		cmp := compareVersions(a, b)
@@ -588,6 +598,11 @@ func (vm *VM) opGte() error {
 	b := vm.pop()
 	a := vm.pop()
 
+	if a.Type == mapval.ValEmpty || b.Type == mapval.ValEmpty {
+		vm.push(mapval.NewBoolean(false))
+		return nil
+	}
+
 	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
 		cmp := compareVersions(a, b)
 		vm.push(mapval.NewBoolean(cmp == 1 || cmp == 0))
@@ -606,6 +621,11 @@ func (vm *VM) opLte() error {
 	b := vm.pop()
 	a := vm.pop()
 
+	if a.Type == mapval.ValEmpty || b.Type == mapval.ValEmpty {
+		vm.push(mapval.NewBoolean(false))
+		return nil
+	}
+
 	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
 		cmp := compareVersions(a, b)
 		vm.push(mapval.NewBoolean(cmp == -1 || cmp == 0))
@@ -618,6 +638,23 @@ func (vm *VM) opLte() error {
 	}
 	vm.push(mapval.NewBoolean(res <= 0))
 	return nil
+}
+
+func (vm *VM) opIsEmpty() {
+	val := vm.pop()
+	res := false
+	if val.Type == mapval.ValEmpty {
+		res = true
+	} else if val.Type == mapval.ValText && val.Str == "" {
+		res = true
+	} else if val.Type == mapval.ValObject {
+		if m, ok := val.Obj.(*mapval.Map); ok {
+			if len(m.Fields) == 0 {
+				res = true
+			}
+		}
+	}
+	vm.push(mapval.NewBoolean(res))
 }
 
 func asFloat(v mapval.Value) float64 {
@@ -769,6 +806,7 @@ func (vm *VM) opJump() {
 func (vm *VM) opIfTrue() {
 	offset := vm.readShort()
 	val := vm.pop()
+	// fmt.Printf("DEBUG: opIfTrue (JUMP_IF_FALSE) checking val: %s, isFalsy: %v\n", val.Canonical(), vm.isFalsy(val))
 	if vm.isFalsy(val) {
 		frame := vm.currentFrame()
 		frame.IP += offset
@@ -840,16 +878,24 @@ func (vm *VM) opCall() error {
 	}
 
 	if closure, ok := calleeVal.Obj.(*mapval.Closure); ok {
-		if argCount != closure.Fn.Arity {
-			return fmt.Errorf("arity mismatch: expected %d, got %d", closure.Fn.Arity, argCount)
+		// Rhumb Loose Argument Policy: missing args are bound to Empty
+		for i := argCount; i < closure.Fn.Arity; i++ {
+			vm.push(mapval.NewEmpty())
 		}
 
 		// Cactus Stack: Allocate new frame on heap
+		// Base is start of arguments. If more args than arity, Base includes extras.
+		actualCount := argCount
+		if closure.Fn.Arity > actualCount {
+			actualCount = closure.Fn.Arity
+		}
+
 		newFrame := &CallFrame{
-			Parent:  vm.CurrentFrame,
-			Closure: closure,
-			IP:      0,
-			Base:    vm.SP - argCount,
+			Parent:   vm.CurrentFrame,
+			Closure:  closure,
+			IP:       0,
+			Base:     vm.SP - actualCount,
+			ArgCount: argCount,
 		}
 
 		vm.CurrentFrame = newFrame
@@ -912,6 +958,30 @@ func (vm *VM) opCall() error {
 func (vm *VM) opReturn() (int, error) {
 	result := vm.pop()
 	frame := vm.currentFrame() // Frame returning FROM
+
+	// Check for Monitor (Selector attached to block)
+	if frame.Monitor != nil {
+		// Intercept Return!
+		// The Selector acts as a continuation/transformer for the return value.
+		// We effectively replace the current frame with the Monitor frame.
+		
+		// 1. Unwind Stack (discard locals of current frame)
+		// We want SP to be at Base (where args started)
+		// And we put Result there.
+		targetSP := frame.Base
+		vm.SP = targetSP
+		vm.push(result) // Push Result as Argument 0
+
+		// 2. Switch to Monitor Frame
+		vm.CurrentFrame = &CallFrame{
+			Parent:  frame.Parent,
+			Closure: frame.Monitor,
+			IP:      0,
+			Base:    vm.SP - 1, // Result is the 1 argument
+		}
+		
+		return 0, nil // Continue execution
+	}
 
 	vm.CurrentFrame = frame.Parent // Pop frame
 
