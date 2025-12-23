@@ -557,9 +557,14 @@ func (vm *VM) opGt() error {
 		return nil
 	}
 
-	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
-		cmp := compareVersions(a, b)
-		vm.push(mapval.NewBoolean(cmp == 1))
+	if !isNumeric(a) || !isNumeric(b) {
+		// Version comparison is an exception to numeric rule
+		if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+			cmp := compareVersions(a, b)
+			vm.push(mapval.NewBoolean(cmp == 1))
+			return nil
+		}
+		vm.push(mapval.NewBoolean(false))
 		return nil
 	}
 
@@ -580,9 +585,13 @@ func (vm *VM) opLt() error {
 		return nil
 	}
 
-	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
-		cmp := compareVersions(a, b)
-		vm.push(mapval.NewBoolean(cmp == -1))
+	if !isNumeric(a) || !isNumeric(b) {
+		if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+			cmp := compareVersions(a, b)
+			vm.push(mapval.NewBoolean(cmp == -1))
+			return nil
+		}
+		vm.push(mapval.NewBoolean(false))
 		return nil
 	}
 
@@ -603,9 +612,13 @@ func (vm *VM) opGte() error {
 		return nil
 	}
 
-	if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
-		cmp := compareVersions(a, b)
-		vm.push(mapval.NewBoolean(cmp == 1 || cmp == 0))
+	if !isNumeric(a) || !isNumeric(b) {
+		if a.Type == mapval.ValVersion && b.Type == mapval.ValVersion {
+			cmp := compareVersions(a, b)
+			vm.push(mapval.NewBoolean(cmp == 1 || cmp == 0))
+			return nil
+		}
+		vm.push(mapval.NewBoolean(false))
 		return nil
 	}
 
@@ -1054,6 +1067,7 @@ func (vm *VM) isTruthy(val mapval.Value) bool {
 
 func numericCompare(a, b mapval.Value) (int, error) {
 	if (a.Type != mapval.ValInteger && a.Type != mapval.ValFloat) || (b.Type != mapval.ValInteger && b.Type != mapval.ValFloat) {
+		fmt.Printf("DEBUG: numericCompare types mismatch: a=%s(%d) b=%s(%d)\n", a.Canonical(), a.Type, b.Canonical(), b.Type)
 		return 0, fmt.Errorf("operands must be numbers for comparison")
 	}
 
