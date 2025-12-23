@@ -7,7 +7,7 @@ import (
 	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
-const StackMax = 2048
+const StackMax = 8192 // Increased for deep recursion tests (zombie.rh uses 1000 frames)
 const MaxFrames = 64 // Kept for legacy limits if needed, but not used for storage
 
 // Loader defines the interface for loading libraries.
