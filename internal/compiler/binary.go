@@ -83,41 +83,41 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 			child.emitConstant(mapval.NewEmpty())
 		}
 
-		        // Compile Body (RHS)
-		        // CHECK FOR IMPLICIT SELECTOR
-		        var sel *ast.SelectorExpression
-		        if s, ok := bin.Right.(*ast.SelectorExpression); ok {
-		            sel = s
-		        } else if block, ok := bin.Right.(*ast.RoutineExpression); ok && len(block.Expressions) == 1 {
-		            if s, ok := block.Expressions[0].(*ast.SelectorExpression); ok {
-		                sel = s
-		            }
-		        }
-		
-		        if sel != nil {
-		            // Special Case: Function body is a Selector (Implicit or Explicit).
-		            // We compile the selector (which pushes a Closure), then immediately call it
+		// Compile Body (RHS)
+		// CHECK FOR IMPLICIT SELECTOR
+		var sel *ast.SelectorExpression
+		if s, ok := bin.Right.(*ast.SelectorExpression); ok {
+			sel = s
+		} else if block, ok := bin.Right.(*ast.RoutineExpression); ok && len(block.Expressions) == 1 {
+			if s, ok := block.Expressions[0].(*ast.SelectorExpression); ok {
+				sel = s
+			}
+		}
+
+		if sel != nil {
+			// Special Case: Function body is a Selector (Implicit or Explicit).
+			// We compile the selector (which pushes a Closure), then immediately call it
 			// using the dynamic argument subject.
-		            if err := child.compileSelector(sel); err != nil {
-		                return err
-		            }
-		
+			if err := child.compileSelector(sel); err != nil {
+				return err
+			}
+
 			// Load Subject dynamically based on ArgCount
 			child.emit(mapval.OP_GET_PARAMS)
-		
-		            // Call Selector (1 Arg)
-		            child.emit(mapval.OP_CALL)
-		            child.Chunk().WriteByte(1, 0)
-		
-		            // Return Result
-		            child.emit(mapval.OP_RETURN)
-		        } else {
-		            if err := child.compileExpression(bin.Right); err != nil {
-		                return err
-		            }
-		            child.emit(mapval.OP_RETURN)
-		        }
-				// Create Function Constant
+
+			// Call Selector (1 Arg)
+			child.emit(mapval.OP_CALL)
+			child.Chunk().WriteByte(1, 0)
+
+			// Return Result
+			child.emit(mapval.OP_RETURN)
+		} else {
+			if err := child.compileExpression(bin.Right); err != nil {
+				return err
+			}
+			child.emit(mapval.OP_RETURN)
+		}
+		// Create Function Constant
 		fnVal := mapval.NewFunction(child.Function)
 
 		// Add to current chunk constants (without emitting LOAD_CONST)
@@ -170,7 +170,7 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		// Check LHS: Label (Local)
 		if label, ok := bin.Left.(*ast.LabelLiteral); ok {
 			// Check for Void Label
-			if label.Value == "_" {
+			if label.Value == "*" {
 				// Emit Runtime Error Signal #***(0; "cannot assign..."; ___)
 				// 1. Compile Value (to be returned/left on stack)
 				if err := c.compileExpression(bin.Right); err != nil {
