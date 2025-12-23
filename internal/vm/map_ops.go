@@ -21,8 +21,12 @@ func (vm *VM) opSend() error {
 	key := keyVal.Str
 
 	receiver := vm.pop()
+	if vm.Config.TraceSpace {
+		fmt.Printf("DEBUG: opSend receiver: %s (Type %s)\n", receiver, receiver.Type)
+	}
+
 	if receiver.Type != mapval.ValObject {
-		return fmt.Errorf("receiver is not an object")
+		return fmt.Errorf("receiver is not an object (got %s)", receiver.Type)
 	}
 
 	m, ok := receiver.Obj.(*mapval.Map)
@@ -89,7 +93,12 @@ func (vm *VM) opSetField() error {
 
 	mutable := (flags & 1) == 1
 
-	m.Set(key, val, mutable)
+	if err := m.Set(key, val, mutable); err != nil {
+		// Emit #*** signal
+		sig := mapval.NewErrorSignal(0, err.Error(), mapval.NewEmpty())
+		vm.raiseSignal("***", sig)
+		return nil
+	}
 
 	vm.push(val)
 

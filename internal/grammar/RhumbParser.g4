@@ -44,8 +44,7 @@ literal
     | Key            # keySymbol
     | text           # textSymbol
     | reference      # referenceLiteral
-    | Bang           # labelSymbol
-    | Label          # labelSymbol
+    | (Bang | Star | Label)           # labelSymbol
     | TripleUnderscore # emptyValue
     ;
 
@@ -60,6 +59,7 @@ fieldLiteral
     | text
     | reference
     | Bang
+    | Star
     | Label
     | TripleUnderscore
     | HookLabel

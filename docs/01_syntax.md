@@ -28,38 +28,69 @@ run the assertions.
 
 Symbols that represent fixed data or references.
 
-| Symbol            | Name      | Syntax             | Meaning                                             |
-|:------------------|:----------|:-------------------|:----------------------------------------------------|
-| **`___`**         | Empty     | `x .= ___`         | Empty/Nil value                                     |
-| **`***`**         | Panic     | `x .= ***`         | Panic/Error value                                   |
-| **`_`**           | Ignore    | `x .. _`           | Wildcard/Ignore pattern                             |
-| **`<fn>`**        | Reference | `f .= <g>`         | Subroutine Reference (Capture without executing)    |
-| **`1.0.0`**       | Version   | `v .= 1.0.0`       | Semantic Version Literal                            |
-| **`2024/01/01`**  | DateTime  | `t .= 2025/12/31`  | DateTime Literal (Absolute Point).                  |
-| **`+00:00:00`**   | Duration  | `d .= +00:00:01`   | Time Duration (1 Second).                           |
-| **`+0000/00/00`** | Duration  | `d .= +0001/00/00` | Calendar Duration (1 Year).                         |
-| **`01.0`**        | Decimal   | `d .= 01.0`        | Arbitrary Precision Decimal (Requires leading zero) |
-| **`.-`**          | DotDash   | `1.-`              | Wildcard Suffix (for Versions and Decimals)         |
-| **`<$>`**         | Realm     | `r .= <$>`         | Child Realm Literal                                 |
-| **`<\|>`**        | Realm     | `r .= <\|>`        | Detached Realm Literal                              |
-| **`<{}>`**        | Vassal    | `v .= <{}>`        | Vassal (Proxy) Literal                              |
+| Symbol            | Name       | Syntax             | Meaning                                             |
+|:------------------|:-----------|:-------------------|:----------------------------------------------------|
+| **`___`**         | Empty      | `x .= ___`         | Empty/Nil value                                     |
+| **`***`**         | Panic      | `x .= ***`         | Panic/Error value                                   |
+| **`*`**           | Ignore     | `x .. *`           | Void Label                                          |
+| **`<fn>`**        | Reference  | `f .= <g>`         | Subroutine Reference (Capture without executing)    |
+| **`1.0.0`**       | Version    | `v .= 1.0.0`       | Semantic Version Literal                            |
+| **`2024/01/01`**  | DateTime   | `t .= 2025/12/31`  | DateTime Literal (Absolute Point).                  |
+| **`+00:00:00`**   | Duration   | `d .= +00:00:01`   | Time Duration (1 Second).                           |
+| **`+0000/00/00`** | Duration   | `d .= +0001/00/00` | Calendar Duration (1 Year).                         |
+| **`01.0`**        | Decimal    | `d .= 01.0`        | Arbitrary Precision Decimal (Requires leading zero) |
+| **`.-`**          | DotDash    | `1.-`              | Wildcard Suffix (for Versions and Decimals)         |
+| **`<$>`**         | Realm      | `r .= <$>`         | Child Realm Literal                                 |
+| **`<\|>`**        | Realm      | `r .= <\|>`        | Detached Realm Literal                              |
+| **`<()>`**        | Subroutine | `s .= <()>`        | Subroutine Literal                                  |
+| **`<{}>`**        | Vassal     | `v .= <{}>`        | Vassal (Proxy) Literal                              |
+
+#### 1\.2\.1 The Void Label (`*`)
+
+The asterisk `*` is a reserved identifier representing **The Void**. It is used to match structure without binding data.
+
+* **Behavior:** It matches any value but stores nothing.
+* **Reading:** Evaluating `*` always returns **Empty** (it never holds a value).
+* **Assignment:** Explicit assignment to `*` (e.g., `* := 10`) is a **Syntax
+  Error**. It cannot be used as a storage target.
+* **Usage:** It is exclusively used in **Patterns** and **Destructuring** to
+  ignore specific arguments/elements or as the default pattern for
+  **Selectors**.
+
+#### 1\.2\.2 The Reference Routine (`<(...)>`)
+The fundamental unit of execution in Rhumb is the Subroutine, denoted by angle brackets.
+
+```rhumb
+my_sub := <(foo(?1); bar(?2))>
+my_sub('a'; 12)
+```
+
+Most users will use the Function operator `->`, Method operator `!>`, or
+Immediate operator `+>` to create subroutines, but `<(...)>` represents the raw
+code block without parameter binding.
 
 ### 1\.3 General Operators
 
 Symbols used for object access, assignment, and function definition.
 
-| Symbol   | Name       | Role        | Syntax      | Meaning                                      |
-|:---------|:-----------|:------------|:------------|:---------------------------------------------|
+| Symbol   | Name       | Role        | Syntax      | Meaning                                     |
+|:---------|:-----------|:------------|:------------|:--------------------------------------------|
 | **`!`**  | Base       | Receiver    | `!\field`   | "My field" (Mutable/Immutable based on def) |
 | **`@`**  | Parent     | Inheritance | `f@log`     | Delegate/Parent access                      |
-| **`\`**  | Access     | Member      | `u\name`    | Field access operator                    |
+| **`?`**  | Question   | Argument    | `?1`        | Raw subroutine argument access              |
+| **`\`**  | Access     | Member      | `u\name`    | Field access operator                       |
 | **`^=`** | Destruct   | Assign      | `[.a] ^= b` | Destructuring assignment                    |
-| **`..`** | Dot-Dot    | Select      | `x .. f`    | Match & Consume (Stop)                      |
-| **`::`** | Col-Col    | Select      | `x :: f`    | Match & Continue (Peek)                     |
 | **`->`** | Arrow      | Function    | `[] -> ()`  | Function definition                         |
 | **`!>`** | Bang-Arrow | Method      | `[] !> ()`  | Method definition (binds `!` to receiver)   |
 | **`+>`** | Plus-Arrow | IIFE        | `[] +> ()`  | Define and execute immediately              |
 | **`!!`** | Bang-Bang  | Bind        | `f !! obj`  | Rebind function to new object               |
+
+#### 1\.2\.2 The Argument Accessor (`?`)
+The prefix operator `?` is used to access the raw arguments passed to the current subroutine.
+
+* **`?1` ... `?N`**: Accesses the Nth argument (1-based index).
+* **`?0`**: Accesses the full list of arguments as a Map/Tuple.
+* **Behavior**: Accessing an index that was not passed evaluates to `___` (Empty).
 
 
 ### 1\.4 Concurrency Symbols
@@ -117,10 +148,19 @@ _**Note:** Unlike Object literals, a Signal literal is an executable statement. 
 
 | Symbol     | Name   | Role   | Syntax     | Meaning          |
 |:-----------|:-------|:-------|:-----------|:-----------------|
-| **`.=`**   | Dot-Eq | Assign | `x .= y`   | Immutable Assign |
-| **`:=`**   | Col-Eq | Assign | `x := y`   | Mutable Assign   |
 | **`=>`**   | Arrow  | Flow   | `x => y`   | If True Then     |
 | **`~>`**   | Squig  | Flow   | `x ~> y`   | If False Then    |
 | **`\|>`**  | Pipe   | Flow   | `x \|> y`  | While Loop       |
 | **`\|\|`** | Pipe   | Flow   | `x \|\| y` | Functional Pipe  |
 | **`??`**   | Ques   | Flow   | `x ?? y`   | Default/Coalesce |
+
+### 1\.8 Contextual Operators
+
+| Operator | Context          | Meaning                   | Behavior                                                 |
+|----------|------------------|---------------------------|----------------------------------------------------------|
+| **`.=`** | Routine / Map    | **Immutable Declaration** | Creates or updates a label/field **and freezes it**.     |
+| **`:=`** | Routine / Map    | **Mutable Declaration**   | Creates or updates a label/field. Allows future changes. |
+| **`..`** | Map Literal      | **Immutable Field**       | `[ key .. val ]`                                         |
+| **`::`** | Map Literal      | **Mutable Field**         | `[ key :: val ]`                                         |
+| **`..`** | Selector Literal | **Case & Break**          | `{ pattern .. routine }`                                 |
+| **`::`** | Selector Literal | **Case & Fallthrough**    | `{ pattern :: routine }`                                 |

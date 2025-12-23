@@ -4,6 +4,6 @@
 % Stress test the Value struct, string allocation, and GC pressure.
 
 s := ""
-1|100000 <> [] -> s := s ++ "a"
+1|100000 <> [] -> s := s && "a"
 
 s[#] %= 100000

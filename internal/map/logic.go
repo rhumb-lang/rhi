@@ -1,5 +1,7 @@
 package mapval
 
+import "fmt"
+
 // NewMap creates an empty map.
 func NewMap() *Map {
 	return &Map{
@@ -46,39 +48,37 @@ func (m *Map) Get(key string) (Value, bool) {
 
 // Set sets a value in the map.
 // It triggers a Legend transition if the field is new.
-func (m *Map) Set(key string, val Value, mutable bool) {
+func (m *Map) Set(key string, val Value, mutable bool) error {
 	idx := m.Legend.FindIndex(key)
-	
+
 	if idx != -1 {
 		// Update existing
 		// Check mutability constraint
-		desc := m.Legend.Fields[idx]
-		if desc.Kind == FieldImmutable && !mutable {
-			// Immutable field cannot be updated unless we are forcing (e.g. construction)
-			// For now, allow update if we are defining?
-			// Architecture: "If Immutable: Throw WriteViolation".
-			// But initialization?
-			// Let's assume strict check.
-			// For MVP, panic or error? Return error?
-			// Set returns nothing. Panic for now.
-			// panic("WriteViolation: " + key)
+		desc := &m.Legend.Fields[idx]
+		if desc.Kind == FieldImmutable {
+			return fmt.Errorf("cannot assign value to immutable field '%s'", key)
 		}
+		
+		// If the setter is immutable (.=), and field was mutable, freeze it.
+		if !mutable {
+			desc.Kind = FieldImmutable
+		}
+
 		m.Fields[idx] = val
-		return
+		return nil
 	}
-	
+
 	// New Field -> Transition Legend
 	// For MVP, we just append to the current Legend (modifying it in place if it's unique, or COW).
-	// Correct Hidden Class approach: Look for transition in Transition Table. If not found, create new Legend.
-	// Simplifying for MVP: Just append to current Legend struct (Single Owner assumption or inefficient sharing).
 	
 	kind := FieldImmutable
 	if mutable {
 		kind = FieldMutable
 	}
-	
+
 	m.Legend.Fields = append(m.Legend.Fields, FieldDesc{Name: key, Kind: kind})
 	m.Fields = append(m.Fields, val)
+	return nil
 }
 
 // FindIndex finds the index of a field in the legend.

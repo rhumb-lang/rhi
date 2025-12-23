@@ -142,37 +142,63 @@ func main() {
 
 	args := flag.Args()
 
-	var scriptPath string
-	if len(args) > 0 {
-		scriptPath, _ = filepath.Abs(args[0])
-	} else {
-		scriptPath, _ = os.Getwd()
-	}
-
-	// Pre-Flight Integrity Check
-	projectRoot := findProjectRoot(scriptPath)
-	entries, _ := os.ReadDir(projectRoot)
-	var catalogPath string
-	for _, e := range entries {
-		if strings.HasSuffix(e.Name(), ".rhy") {
-			catalogPath = filepath.Join(projectRoot, e.Name())
-			break
-		}
-	}
-
-	if catalogPath != "" {
-		if err := tooling.EnsureIntegrity(catalogPath, projectRoot, *sha256Flag); err != nil {
-			fmt.Fprintf(os.Stderr, "Panic: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	session := NewSession(cfg, scriptPath)
-
 	if len(args) == 0 {
+		scriptPath, _ := os.Getwd()
+		// Pre-Flight Integrity Check for REPL (using CWD)
+		projectRoot := findProjectRoot(scriptPath)
+		entries, _ := os.ReadDir(projectRoot)
+		var catalogPath string
+		for _, e := range entries {
+			if strings.HasSuffix(e.Name(), ".rhy") {
+				catalogPath = filepath.Join(projectRoot, e.Name())
+				break
+			}
+		}
+
+		if catalogPath != "" {
+			if err := tooling.EnsureIntegrity(catalogPath, projectRoot, *sha256Flag); err != nil {
+				fmt.Fprintf(os.Stderr, "Panic: %v\n", err)
+				os.Exit(1)
+			}
+		}
+
+		session := NewSession(cfg, scriptPath)
 		session.IsRepl = true
 		session.runREPL()
 	} else {
-		session.runFile(args[0])
+		failed := false
+		for _, arg := range args {
+			scriptPath, _ := filepath.Abs(arg)
+
+			// Pre-Flight Integrity Check
+			projectRoot := findProjectRoot(scriptPath)
+			entries, _ := os.ReadDir(projectRoot)
+			var catalogPath string
+			for _, e := range entries {
+				if strings.HasSuffix(e.Name(), ".rhy") {
+					catalogPath = filepath.Join(projectRoot, e.Name())
+					break
+				}
+			}
+
+			if catalogPath != "" {
+				if err := tooling.EnsureIntegrity(catalogPath, projectRoot, *sha256Flag); err != nil {
+					fmt.Fprintf(os.Stderr, "Panic: %v\n", err)
+					os.Exit(1)
+				}
+			}
+
+			session := NewSession(cfg, scriptPath)
+			if *testMode {
+				fmt.Printf("Checking assertions in file '%s'...\n", filepath.Base(scriptPath))
+			}
+			if !session.runFile(arg) {
+				failed = true
+			}
+		}
+
+		if failed {
+			os.Exit(1)
+		}
 	}
 }

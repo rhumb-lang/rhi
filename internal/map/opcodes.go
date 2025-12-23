@@ -20,6 +20,7 @@ const (
 	OP_LOAD_CONST    // LOAD_CONST <index>
 	OP_LOAD_LOC      // LOAD_LOC <slot>
 	OP_STORE_LOC     // STORE_LOC <slot>
+	OP_STORE_LOC_IMMUT // STORE_LOC_IMMUT <slot> (Freeze)
 	OP_LOAD_UPVALUE  // LOAD_UPVALUE <index>
 	OP_STORE_UPVALUE // STORE_UPVALUE <index>
 	OP_LOAD_STATIC   // LOAD_STATIC <index> (Module level)
