@@ -160,9 +160,9 @@ func (c *Compiler) compileUnary(unary *ast.UnaryExpression) error {
 
 		// Fallback: Anonymous Reply ^(expr)
 		
-		// Push Dummy Receiver (Empty)
-		c.emit(mapval.OP_LOAD_CONST)
-		c.Chunk().WriteByte(byte(c.makeConstant(mapval.NewEmpty())), 0)
+		// Push Signal (Receiver) from Local 0
+		c.emit(mapval.OP_LOAD_LOC)
+		c.Chunk().WriteByte(0, 0)
 
 		// Compile Payload
 		if err := c.compileExpression(unary.Expr); err != nil {
