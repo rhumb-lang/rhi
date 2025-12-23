@@ -14,10 +14,10 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 	child.Function.Name = "<selector>"
 	child.Function.Arity = 1
 
-	// Arg 0 is Subject. Name it "_" so patterns can reference it.
+	// Arg 0 is Subject. Name it "*" so patterns can reference it.
 	// Since it's an argument, it's already on the stack (Slot 0).
 	// We do NOT emitConstant for it.
-	child.Scope.addLocal("_")
+	child.Scope.addLocal("*")
 
 	// Hoist locals
 	hoister := NewHoister()
@@ -25,15 +25,29 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 		if p, ok := pat.(*ast.PatternDefinition); ok {
 			// Binding in Target
 			if label, ok := p.Target.(*ast.LabelLiteral); ok {
-				hoister.add(label.Value)
+				// Only hoist if NOT declared in parent (Binding)
+				// If declared, it is a Pinned Match (Comparison)
+				if !c.isDeclared(label.Value) && label.Value != "*" {
+					hoister.add(label.Value)
+				}
 			}
+			// Recursive Binding search in Expressions (e.g. x -/ 15 == 0)
+			binds := collectBindingLabels(p.Target)
+			for _, name := range binds {
+				if !c.isDeclared(name) && name != "*" {
+					hoister.add(name)
+				}
+			}
+
 			// Binding in Signal Pattern #topic(arg)
 			if unary, ok := p.Target.(*ast.UnaryExpression); ok {
 				if unary.Op == ast.OpSignal {
 					if call, ok := unary.Expr.(*ast.CallExpression); ok {
 						for _, arg := range call.Args {
 							if label, ok := arg.(*ast.LabelLiteral); ok {
-								hoister.add(label.Value)
+								if !c.isDeclared(label.Value) && label.Value != "*" {
+									hoister.add(label.Value)
+								}
 							}
 						}
 					}
@@ -48,7 +62,7 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 
 	locals := hoister.Locals
 	for _, name := range locals {
-		if name == "_" {
+		if name == "*" {
 			continue
 		} // Already added
 
@@ -56,21 +70,12 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 			continue
 		}
 
-		// Allow shadowing of enclosing variables in selectors
-		// If we don't shadow, we can't bind new values to names that exist outside.
-		// Pinning (matching against outer var) requires distinct handling not yet implemented.
-		// if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
-		// 	continue
-		// }
-
 		child.Scope.addLocal(name)
 		child.emitConstant(mapval.NewEmpty()) // Reserve slot
 	}
 
 	for _, pat := range s.Patterns {
 		// Load Subject for matching
-		// Note: We load from local "_" (Slot 0) to put on stack for matchers that expect it (like Literals)
-		// Matchers that use "_" explicit variable will resolve LOAD_LOC 0 themselves.
 		child.emit(mapval.OP_LOAD_LOC)
 		child.Chunk().WriteByte(0, 0) // Load Subject
 
@@ -79,9 +84,7 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 			if err := child.compilePattern(p.Target); err != nil {
 				return err
 			}
-
 			// Jump if False (No Match) -> Next Pattern
-			// OP_IF_TRUE jumps if Falsy (Branch If False) -> Renamed to OP_JUMP_IF_FALSE
 			nextJump := child.emitJump(mapval.OP_JUMP_IF_FALSE)
 
 			// Match! Execute Action.
@@ -137,23 +140,32 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 
 	switch t := target.(type) {
 	case *ast.BinaryExpression:
-		// Condition Match (e.g. _ > 0)
-		// The expression uses variables (like _) to check condition.
+		// Condition Match (e.g. x -/ 15 == 0)
+		// We must bind Subject to any new variables found in expression.
+		binds := collectBindingLabels(t)
+		for _, name := range binds {
+			idx := c.Scope.resolveLocal(name)
+			if idx != -1 {
+				c.emit(mapval.OP_STORE_LOC) // Peeks subject, stores
+				c.Chunk().WriteByte(byte(idx), 0)
+			}
+		}
+
+		// The expression uses variables (like x or *) to check condition.
 		// It does NOT consume the Subject on stack implicitly.
 		// So we must POP the Subject provided by the loop.
 		c.emit(mapval.OP_POP)
 		return c.compileExpression(t)
 
 	case *ast.LabelLiteral:
-		// Special Wildcard "_"
-		if t.Value == "_" {
+		// Special Wildcard "*"
+		if t.Value == "*" {
 			c.emit(mapval.OP_POP)
 			c.emitConstant(mapval.NewBoolean(true))
 			return nil
 		}
 
 		// 1. Check for Boolean Literals (yes/no)
-		// TODO: Add international support
 		if t.Value == "yes" {
 			c.emitConstant(mapval.NewBoolean(true))
 			c.emit(mapval.OP_EQ)
@@ -165,21 +177,57 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 			return nil
 		}
 
-		// 2. Bind variable
+		// 2. Bind variable (Local)
 		idx := c.Scope.resolveLocal(t.Value)
 		if idx != -1 {
-			// Store Subject to Local
-			c.emit(mapval.OP_STORE_LOC)
-			c.Chunk().WriteByte(byte(idx), 0)
+			// Check if Subject is Empty (Bind fails on Empty)
+			c.emit(mapval.OP_DUP)           // [Subject, Subject]
+			c.emit(mapval.OP_IS_EMPTY)      // [Subject, IsEmpty]
+			failJump := c.emitJump(mapval.OP_JUMP_IF_TRUE) // Jumps if Empty
 
-			// Push True (Match Successful)
-			// STORE_LOC leaves the value on stack (peek), but we need 'True' for the match result.
-			// Stack: [Subject] -> OP_POP -> [] -> Push True
-			c.emit(mapval.OP_POP)
-			c.emitConstant(mapval.NewBoolean(true))
+			// Not Empty: Bind
+			c.emit(mapval.OP_STORE_LOC)     // [Subject] (stored)
+			c.Chunk().WriteByte(byte(idx), 0)
+			c.emit(mapval.OP_POP)           // []
+			c.emitConstant(mapval.NewBoolean(true)) // [True]
+			endJump := c.emitJump(mapval.OP_JUMP)
+
+			// Fail Label
+			c.patchJump(failJump)
+			c.emit(mapval.OP_POP)           // [Subject] -> []
+			c.emitConstant(mapval.NewBoolean(false)) // [False]
+
+			c.patchJump(endJump)
 			return nil
 		}
-		// Should not happen if hoisted
+
+		// 3. Pinned Match (Upvalue)
+		up := c.resolveUpvalue(t.Value)
+		if up != -1 {
+			// Load Upvalue
+			c.emit(mapval.OP_LOAD_UPVALUE)
+			c.Chunk().WriteByte(byte(up), 0) // [Subject, Upvalue]
+
+			// Check if Upvalue is Empty (Pinned fails on Empty)
+			c.emit(mapval.OP_DUP)            // [Subject, Upvalue, Upvalue]
+			c.emit(mapval.OP_IS_EMPTY)       // [Subject, Upvalue, IsEmpty]
+			failJump := c.emitJump(mapval.OP_JUMP_IF_TRUE)
+
+			// Not Empty: Check Equality
+			c.emit(mapval.OP_EQ)             // [Bool]
+			endJump := c.emitJump(mapval.OP_JUMP)
+
+			// Fail Label
+			c.patchJump(failJump)
+			c.emit(mapval.OP_POP)            // [Subject, Upvalue] -> [Subject]
+			c.emit(mapval.OP_POP)            // [Subject] -> []
+			c.emitConstant(mapval.NewBoolean(false))
+
+			c.patchJump(endJump)
+			return nil
+		}
+
+		// Should not happen if hoisted correctly
 		return fmt.Errorf("undeclared binding variable: %s", t.Value)
 
 	case *ast.IntegerLiteral, *ast.RationalLiteral, *ast.TextLiteral, *ast.EmptyLiteral:
@@ -216,6 +264,36 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 	default:
 		return fmt.Errorf("unsupported pattern match target: %T", target)
 	}
+}
+
+// collectBindingLabels recursively finds labels in an expression that should be bound
+func collectBindingLabels(expr ast.Expression) []string {
+	var labels []string
+	switch e := expr.(type) {
+	case *ast.LabelLiteral:
+		if e.Value != "*" && e.Value != "yes" && e.Value != "no" {
+			labels = append(labels, e.Value)
+		}
+	case *ast.BinaryExpression:
+		labels = append(labels, collectBindingLabels(e.Left)...)
+		labels = append(labels, collectBindingLabels(e.Right)...)
+	case *ast.UnaryExpression:
+		labels = append(labels, collectBindingLabels(e.Expr)...)
+	case *ast.CallExpression:
+		for _, arg := range e.Args {
+			labels = append(labels, collectBindingLabels(arg)...)
+		}
+	}
+	// Unique
+	seen := make(map[string]bool)
+	var uniq []string
+	for _, l := range labels {
+		if !seen[l] {
+			uniq = append(uniq, l)
+			seen[l] = true
+		}
+	}
+	return uniq
 }
 
 func (c *Compiler) compileSignalPattern(call *ast.CallExpression, topicIdx int) error {
