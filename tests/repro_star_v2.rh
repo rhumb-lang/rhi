@@ -23,10 +23,10 @@ g(4) %= 4       % subject label argument-based selector pattern
 g() %= 'FIVE'  % argument-based (void label) selector pattern after subject label pattern
 
 h := [x; y] -> {
-	x >> 10 && y >> 10 .. 'TOP-RIGHT'
-	x << 10 && y >> 10 .. 'TOP-LEFT'
-	z >> 10 && a << 10 .. 'BOTTOM-RIGHT'
-	z << 10 && a << 10 .. 'BOTTOM-LEFT'
+	[x >> 10; y >> 10] .. 'TOP-RIGHT'
+	[x << 10; y >> 10] .. 'TOP-LEFT'
+	[z >> 10; a << 10] .. 'BOTTOM-RIGHT'
+	[z << 10; a << 10] .. 'BOTTOM-LEFT'
 	[x; y]             .. 'CENTER'
 	j                  .. 'INVALID POSITION: ONLY ONE VALUE PROVIDED'
 	*                  .. 'INVALID POSITION: NO VALUES PROVIDED'
