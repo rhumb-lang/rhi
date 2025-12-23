@@ -195,33 +195,71 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 
 			// Variable Assignment: x .= 1
 
-			// 1. Compile RHS
-			if err := c.compileExpression(bin.Right); err != nil {
-				return err
-			}
-
-			// 2. Resolve Variable
-			idx := c.Scope.resolveLocal(label.Value)
-			if idx != -1 {
-				// Local
-				if bin.Op == ast.OpAssignImm {
-					c.emit(mapval.OP_STORE_LOC_IMMUT)
-				} else {
-					c.emit(mapval.OP_STORE_LOC)
+			// Check if RHS is a function definition
+			isFunc := false
+			// Check for FunctionNode or BlockNode if used for functions
+			// Currently, Function definitions come as OpMakeFn, OpLetFn, OpBindFn in BinaryExpression?
+			// Or just check if it compiles to a function?
+			// The parser produces ast.BinaryExpression for "->".
+			// Let's check bin.Right type.
+			if be, ok := bin.Right.(*ast.BinaryExpression); ok {
+				if be.Op == ast.OpMakeFn || be.Op == ast.OpLetFn || be.Op == ast.OpBindFn {
+					isFunc = true
 				}
-				c.Chunk().WriteByte(byte(idx), 0)
-				return nil
 			}
 
-			up := c.resolveUpvalue(label.Value)
-			if up != -1 {
-				// Upvalue
-				c.emit(mapval.OP_STORE_UPVALUE)
-				c.Chunk().WriteByte(byte(up), 0)
-				return nil
+			var idx int
+
+			if isFunc {
+				// --- RECURSION FIX ---
+				// 1. Define label FIRST so the function body can see it
+				idx = c.Scope.addLocal(label.Value)
+
+				// 2. Compile Body (It will now capture 'idx' as an Upvalue)
+				if err := c.compileExpression(bin.Right); err != nil {
+					return err
+				}
+			} else {
+				// --- STANDARD ORDER ---
+				// 1. Compile RHS
+				if err := c.compileExpression(bin.Right); err != nil {
+					return err
+				}
+
+				// 2. Resolve Variable
+				// Try to resolve first (maybe re-assignment)
+				idx = c.Scope.resolveLocal(label.Value)
+				if idx == -1 {
+					// Define new if not found (Shadowing or New)
+					// But wait, standard assignment := can re-assign.
+					// Immutable assignment .= usually defines new.
+					// If .= and exists -> Error (checked at runtime or compile time?)
+					// Logic below handles resolution.
+					// If we want to support shadowing, we should addLocal.
+					// If we want to support re-assignment, we resolve.
+					// Current logic:
+					// If OpAssignMut (:=), we resolve. If not found, addLocal?
+					// If OpAssignImm (.=), we addLocal?
+					// But `resolveLocal` finds in current scope.
+					// If found, and .=, it's an error (handled in VM).
+					// If found, and :=, it's update.
+					// If NOT found, it's new definition.
+
+					idx = c.Scope.resolveLocal(label.Value)
+					if idx == -1 {
+						idx = c.Scope.addLocal(label.Value)
+					}
+				}
 			}
 
-			return fmt.Errorf("undeclared variable (hoisting failed): %s", label.Value)
+			// Emit Store
+			if bin.Op == ast.OpAssignImm {
+				c.emit(mapval.OP_STORE_LOC_IMMUT)
+			} else {
+				c.emit(mapval.OP_STORE_LOC)
+			}
+			c.Chunk().WriteByte(byte(idx), 0)
+			return nil
 		}
 
 		// Check LHS: Chain (Map Field) e.g. obj\x .= 1
