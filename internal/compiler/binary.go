@@ -97,18 +97,13 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		        if sel != nil {
 		            // Special Case: Function body is a Selector (Implicit or Explicit).
 		            // We compile the selector (which pushes a Closure), then immediately call it
-		            // using the first parameter (or Empty) as the Subject.
+			// using the dynamic argument subject.
 		            if err := child.compileSelector(sel); err != nil {
 		                return err
 		            }
 		
-		            // Load Subject
-		            if child.Function.Arity > 0 {
-		                child.emit(mapval.OP_LOAD_LOC)
-		                child.Chunk().WriteByte(0, 0)
-		            } else {
-		                child.emitConstant(mapval.NewEmpty())
-		            }
+			// Load Subject dynamically based on ArgCount
+			child.emit(mapval.OP_GET_PARAMS)
 		
 		            // Call Selector (1 Arg)
 		            child.emit(mapval.OP_CALL)

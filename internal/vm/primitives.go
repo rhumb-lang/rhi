@@ -657,6 +657,38 @@ func (vm *VM) opIsEmpty() {
 	vm.push(mapval.NewBoolean(res))
 }
 
+func (vm *VM) opGetParams() {
+	frame := vm.currentFrame()
+	argc := frame.ArgCount
+	if argc == 0 {
+		vm.push(mapval.NewEmpty())
+		return
+	}
+	if argc == 1 {
+		vm.push(vm.Stack[frame.Base])
+		return
+	}
+	// Bundle positional arguments into a map
+	m := mapval.NewMap()
+	for i := 0; i < argc; i++ {
+		val := vm.Stack[frame.Base+i]
+		key := fmt.Sprintf("%d", i+1)
+		m.Set(key, val, false)
+	}
+	vm.push(mapval.Value{Type: mapval.ValObject, Obj: m})
+}
+
+func (vm *VM) opIsMap() {
+	val := vm.pop()
+	res := false
+	if val.Type == mapval.ValObject {
+		if _, ok := val.Obj.(*mapval.Map); ok {
+			res = true
+		}
+	}
+	vm.push(mapval.NewBoolean(res))
+}
+
 func asFloat(v mapval.Value) float64 {
 	// ... (unchanged)
 	if v.Type == mapval.ValInteger {

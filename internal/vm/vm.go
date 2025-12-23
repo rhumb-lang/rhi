@@ -477,6 +477,9 @@ func (vm *VM) Step() (Result, error) {
 	case mapval.OP_IS_EMPTY:
 		vm.opIsEmpty()
 
+	case mapval.OP_IS_MAP:
+		vm.opIsMap()
+
 	case mapval.OP_COALESCE:
 		vm.opCoalesce()
 
@@ -529,7 +532,13 @@ func (vm *VM) Step() (Result, error) {
 
 	// Testing
 
-	case mapval.OP_ASSERT_EQ:
+			case mapval.OP_GET_PARAMS:
+
+				vm.opGetParams()
+
+			case mapval.OP_ASSERT_EQ:
+
+	
 		vm.opAssertEq()
 
 	case mapval.OP_INSPECT:

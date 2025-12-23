@@ -236,6 +236,77 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 		c.emit(mapval.OP_EQ)   // Subject == Literal
 		return nil
 
+	case *ast.MapExpression:
+		// Structural Map Match
+		// 1. Check if Subject is a Map
+		c.emit(mapval.OP_LOAD_LOC)
+		c.Chunk().WriteByte(0, 0) // Load Subject
+		c.emit(mapval.OP_IS_MAP)
+		
+		var failJumps []int
+		failJumps = append(failJumps, c.emitJump(mapval.OP_JUMP_IF_FALSE))
+
+		for i, field := range t.Fields {
+			// Subject is at the bottom of the current pattern stack [Subject]
+			// We need to duplicate it to extract field
+			c.emit(mapval.OP_LOAD_LOC)
+			c.Chunk().WriteByte(0, 0) // Load Subject
+
+			var key string
+			var valPattern ast.Expression
+
+			switch f := field.(type) {
+			case *ast.FieldElement:
+				key = fmt.Sprintf("%d", i+1)
+				valPattern = f.Value
+			case *ast.FieldDefinition:
+				if label, ok := f.Key.(*ast.LabelLiteral); ok {
+					key = label.Value
+				}
+				valPattern = f.Value
+			case *ast.FieldPun:
+				if label, ok := f.Key.(*ast.LabelLiteral); ok {
+					key = label.Value
+				}
+				valPattern = f.Key.(ast.Expression)
+			}
+
+			if key == "" || valPattern == nil {
+				return fmt.Errorf("unsupported map pattern field")
+			}
+
+			// Extract field from subject
+			keyIdx := c.makeConstant(mapval.NewText(key))
+			c.emit(mapval.OP_SEND)
+			c.Chunk().WriteByte(byte(keyIdx), 0)
+
+			// Stack: [Subject, FieldValue]
+			// Match field value
+			if err := c.compilePattern(valPattern); err != nil {
+				return err
+			}
+			// Stack: [Subject, FieldBool]
+
+			// If FieldBool is false, whole match fails
+			failJump := c.emitJump(mapval.OP_JUMP_IF_FALSE)
+			failJumps = append(failJumps, failJump)
+		}
+
+		// All fields matched!
+		c.emit(mapval.OP_POP) // Pop Subject
+		c.emitConstant(mapval.NewBoolean(true))
+		endJump := c.emitJump(mapval.OP_JUMP)
+
+		// Fail Target
+		for _, fj := range failJumps {
+			c.patchJump(fj)
+		}
+		c.emit(mapval.OP_POP) // Pop Subject
+		c.emitConstant(mapval.NewBoolean(false))
+
+		c.patchJump(endJump)
+		return nil
+
 	case *ast.UnaryExpression:
 		if t.Op == ast.OpSignal {
 			if label, ok := t.Expr.(*ast.LabelLiteral); ok {
@@ -279,6 +350,20 @@ func collectBindingLabels(expr ast.Expression) []string {
 		labels = append(labels, collectBindingLabels(e.Right)...)
 	case *ast.UnaryExpression:
 		labels = append(labels, collectBindingLabels(e.Expr)...)
+	case *ast.MapExpression:
+		for _, f := range e.Fields {
+			switch field := f.(type) {
+			case *ast.FieldElement:
+				labels = append(labels, collectBindingLabels(field.Value)...)
+			case *ast.FieldDefinition:
+				labels = append(labels, collectBindingLabels(field.Value)...)
+			case *ast.FieldPun:
+				// FieldPun.Key is ast.Node, but in patterns it should be a label/expression
+				if expr, ok := field.Key.(ast.Expression); ok {
+					labels = append(labels, collectBindingLabels(expr)...)
+				}
+			}
+		}
 	case *ast.CallExpression:
 		for _, arg := range e.Args {
 			labels = append(labels, collectBindingLabels(arg)...)
