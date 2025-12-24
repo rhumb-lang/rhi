@@ -109,33 +109,22 @@ func (c *Compiler) compileExpression(expr ast.Expression) error {
 		// Assert (Pops Name, Expected, Actual)
 		c.emit(mapval.OP_ASSERT_EQ)
 	case *ast.EffectExpression:
-		// Special handling for Monitored Call: func(args) { ... }
-		if call, ok := e.Target.(*ast.CallExpression); ok {
-			// 1. Compile Callee
-			if err := c.compileExpression(call.Callee); err != nil {
-				return err
-			}
-			// 2. Compile Args
-			for _, arg := range call.Args {
-				if err := c.compileExpression(arg); err != nil {
-					return err
-				}
-			}
-			// 3. Compile Selector
-			if err := c.compileExpression(e.Selector); err != nil {
-				return err
-			}
-			// 4. Emit MONITOR with Arg Count
-			c.emit(mapval.OP_MONITOR)
-			c.Chunk().WriteByte(byte(len(call.Args)), 0)
-			return nil
+		// Standard handling:
+		// Wrap EVERYTHING in a Thunk unless it's a simple literal or label.
+		// structure or IIFE (+>) needs to be wrapped to catch signals during construction.
+		// Function calls also should be wrapped to handle non-closure targets (Native).
+		
+		useThunk := true
+		if _, ok := e.Target.(*ast.LabelLiteral); ok {
+			useThunk = false
+		} else if _, ok := e.Target.(*ast.IntegerLiteral); ok {
+			useThunk = false
+		} else if _, ok := e.Target.(*ast.TextLiteral); ok {
+			useThunk = false
 		}
 
-		// Standard handling:
-		// Only wrap in Thunk if it's a RoutineExpression (multi-statement block).
-		// Otherwise, Vassal Mode or Dispatch Mode is preferred for better closure handling.
-		if routine, ok := e.Target.(*ast.RoutineExpression); ok {
-			if err := c.compileThunk(routine); err != nil {
+		if useThunk {
+			if err := c.compileThunk(e.Target); err != nil {
 				return err
 			}
 		} else {

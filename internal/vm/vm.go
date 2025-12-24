@@ -297,6 +297,8 @@ func (vm *VM) Step() (Result, error) {
 
 	}
 
+	instruction := mapval.OpCode(chunk.Code[frame.IP])
+
 	if vm.Config.TraceFrame {
 		fmt.Printf("FRAME: %s IP:%04d SP:%d Base:%d", frame.Closure.Fn.Name, frame.IP, vm.SP, frame.Base)
 		if frame.Monitor != nil {
@@ -309,22 +311,13 @@ func (vm *VM) Step() (Result, error) {
 	}
 
 	if vm.Config.TraceStack {
-
 		fmt.Print("          ")
-
 		for i := 0; i < vm.SP; i++ {
-
 			fmt.Printf("[ %s ]", vm.Stack[i])
-
 		}
-
 		fmt.Println()
-
-		fmt.Printf("%04d %s\n", frame.IP, mapval.OpCode(chunk.Code[frame.IP]))
-
+		fmt.Printf("%04d %s\n", frame.IP, instruction)
 	}
-
-	instruction := mapval.OpCode(chunk.Code[frame.IP])
 
 	frame.IP++
 
@@ -479,6 +472,36 @@ func (vm *VM) Step() (Result, error) {
 
 	case mapval.OP_IS_MAP:
 		vm.opIsMap()
+
+	case mapval.OP_LENGTH:
+		vm.opLength()
+
+	case mapval.OP_FREEZE:
+		vm.opFreeze()
+
+	case mapval.OP_COPY:
+		vm.opCopy()
+
+	case mapval.OP_COERCE_DATE:
+		vm.opToDate()
+
+	case mapval.OP_GET_CTOR:
+		vm.opGetCtor()
+
+	case mapval.OP_GET_BASE:
+		vm.opGetBase()
+
+	case mapval.OP_COERCE_BOOL:
+		vm.opToBool()
+
+	case mapval.OP_BOOL_NEG:
+		vm.opBoolNeg()
+
+	case mapval.OP_SPREAD:
+		vm.opSpread()
+
+	case mapval.OP_COERCE_KEY:
+		vm.opToKey()
 
 	case mapval.OP_COALESCE:
 		vm.opCoalesce()

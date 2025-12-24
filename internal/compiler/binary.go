@@ -10,8 +10,64 @@ import (
 func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	// Function Definition
 	if bin.Op == ast.OpMakeFn || bin.Op == ast.OpLetFn || bin.Op == ast.OpBindFn {
-		// LHS is Params (Map), RHS is Body (Routine)
+		// Check for Dispatch Mode (LHS is NOT a Map Literal)
+		// e.g. child -> action
+		if _, isMap := bin.Left.(*ast.MapExpression); !isMap && bin.Op == ast.OpMakeFn {
+			// Dispatch / Vassal Mode
+			
+			// 1. Compile Target (LHS)
+			if err := c.compileExpression(bin.Left); err != nil {
+				return err
+			}
 
+			// 2. Compile Action (RHS) as a Closure
+			// We treat RHS as the body of a 0-arity function
+			
+			// Create child compiler for the action
+			child := NewCompiler()
+			child.Enclosing = c
+			child.Function.Name = "<dispatch>"
+			
+			// Hoist locals
+			hoister := NewHoister()
+			locals := hoister.Hoist(bin.Right)
+			for _, name := range locals {
+				if child.Scope.resolveLocal(name) != -1 { continue }
+				if child.Enclosing != nil && child.Enclosing.isDeclared(name) { continue }
+				child.Scope.addLocal(name)
+				child.emitConstant(mapval.NewEmpty())
+			}
+
+			if err := child.compileExpression(bin.Right); err != nil {
+				return err
+			}
+			child.emit(mapval.OP_RETURN)
+
+			// Create Function
+			fnVal := mapval.NewFunction(child.Function)
+			idx := c.makeConstant(fnVal)
+			c.emit(mapval.OP_MAKE_FN)
+			c.Chunk().WriteByte(byte(idx), 0)
+			
+			// Upvalues
+			for _, up := range child.Upvalues {
+				isLocal := byte(0)
+				if up.IsLocal {
+					isLocal = 1
+				}
+				c.Chunk().WriteByte(isLocal, 0)
+				c.Chunk().WriteByte(byte(up.Index), 0)
+			}
+
+			// 3. Emit Monitor (Dispatch)
+			c.emit(mapval.OP_MONITOR)
+			c.Chunk().WriteByte(0, 0) // argc=0
+
+			return nil
+		}
+
+		// LHS is Params (Map), RHS is Body (Routine)
+		// ... (Existing Logic)
 		// Create child compiler
 		child := NewCompiler()
 		child.Enclosing = c
@@ -60,22 +116,14 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 		hoister := NewHoister()
 		locals := hoister.Hoist(bin.Right)
 		for _, name := range locals {
-			// Check if already declared in enclosing scopes (for Upvalue support)
-			// But wait, parameters (added above) shadow outer variables.
-			// And we just added parameters to child.Scope.
-			// child.isDeclared(name) will return true if it's a parameter.
-			// If it's a parameter, it's a local.
-			// If it's NOT a parameter, check enclosing.
-			// `child.Scope.resolveLocal(name)` handles parameters.
-
+			// Check if already declared in current scope (params)
 			if child.Scope.resolveLocal(name) != -1 {
-				// Already a parameter, ignore (it's local)
 				continue
 			}
 
-			// Check Enclosing
+			// Check if declared in enclosing scopes (CAPTURE)
+			// We MUST check Enclosing here to avoid shadowing captured variables.
 			if child.Enclosing != nil && child.Enclosing.isDeclared(name) {
-				// Exists in outer scope -> Don't make it local (Upvalue)
 				continue
 			}
 
@@ -193,29 +241,60 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 				return nil
 			}
 
-			// Variable Assignment: x .= 1
+			name := label.Value
+
+			// --- STEP 1: RESOLVE EXISTING ---
+			// Check if the variable is already defined in the current scope or capturing an upvalue.
+			// If it exists, we must UPDATE it, not define a new one (Shadowing).
+
+			localIdx := c.Scope.resolveLocal(name)
+			upvalIdx := -1
+			if localIdx == -1 {
+				upvalIdx = c.resolveUpvalue(name)
+			}
+
+			// Found existing variable? Compile RHS and Store.
+			if localIdx != -1 || upvalIdx != -1 {
+				// Compile RHS
+				if err := c.compileExpression(bin.Right); err != nil {
+					return err
+				}
+
+				// Emit Store
+				if localIdx != -1 {
+					if bin.Op == ast.OpAssignImm {
+						c.emit(mapval.OP_STORE_LOC_IMMUT)
+					} else {
+						c.emit(mapval.OP_STORE_LOC)
+					}
+					c.Chunk().WriteByte(byte(localIdx), 0)
+				} else {
+					// Upvalue
+					c.emit(mapval.OP_STORE_UPVALUE)
+					c.Chunk().WriteByte(byte(upvalIdx), 0)
+				}
+				return nil
+			}
+
+			// --- STEP 2: DEFINE NEW VARIABLE ---
+			// Not found in any scope. This is a definition.
 
 			// Check if RHS is a function definition
 			isFunc := false
-			// Check for FunctionNode or BlockNode if used for functions
-			// Currently, Function definitions come as OpMakeFn, OpLetFn, OpBindFn in BinaryExpression?
-			// Or just check if it compiles to a function?
-			// The parser produces ast.BinaryExpression for "->".
-			// Let's check bin.Right type.
 			if be, ok := bin.Right.(*ast.BinaryExpression); ok {
 				if be.Op == ast.OpMakeFn || be.Op == ast.OpLetFn || be.Op == ast.OpBindFn {
 					isFunc = true
 				}
 			}
 
-			var idx int
+			var index int
 
 			if isFunc {
 				// --- RECURSION FIX ---
-				// 1. Define label FIRST so the function body can see it
-				idx = c.Scope.addLocal(label.Value)
+				// 1. Define label FIRST (if not already hoisted)
+				index = c.Scope.addLocal(label.Value)
 
-				// 2. Compile Body (It will now capture 'idx' as an Upvalue)
+				// 2. Compile Body (It will now capture 'index' as an Upvalue)
 				if err := c.compileExpression(bin.Right); err != nil {
 					return err
 				}
@@ -227,29 +306,7 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 				}
 
 				// 2. Resolve Variable
-				// Try to resolve first (maybe re-assignment)
-				idx = c.Scope.resolveLocal(label.Value)
-				if idx == -1 {
-					// Define new if not found (Shadowing or New)
-					// But wait, standard assignment := can re-assign.
-					// Immutable assignment .= usually defines new.
-					// If .= and exists -> Error (checked at runtime or compile time?)
-					// Logic below handles resolution.
-					// If we want to support shadowing, we should addLocal.
-					// If we want to support re-assignment, we resolve.
-					// Current logic:
-					// If OpAssignMut (:=), we resolve. If not found, addLocal?
-					// If OpAssignImm (.=), we addLocal?
-					// But `resolveLocal` finds in current scope.
-					// If found, and .=, it's an error (handled in VM).
-					// If found, and :=, it's update.
-					// If NOT found, it's new definition.
-
-					idx = c.Scope.resolveLocal(label.Value)
-					if idx == -1 {
-						idx = c.Scope.addLocal(label.Value)
-					}
-				}
+				index = c.Scope.addLocal(label.Value)
 			}
 
 			// Emit Store
@@ -258,7 +315,7 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 			} else {
 				c.emit(mapval.OP_STORE_LOC)
 			}
-			c.Chunk().WriteByte(byte(idx), 0)
+			c.Chunk().WriteByte(byte(index), 0)
 			return nil
 		}
 
@@ -354,6 +411,50 @@ func (c *Compiler) compileBinary(bin *ast.BinaryExpression) error {
 	if err := c.compileExpression(bin.Left); err != nil {
 		return err
 	}
+
+	// Handle Postfix Operators (Right is nil)
+	if bin.Right == nil {
+		switch bin.Op {
+		case ast.OpLength:
+			c.emit(mapval.OP_LENGTH)
+		case ast.OpIsEmpty:
+			c.emit(mapval.OP_IS_EMPTY)
+		case ast.OpAllSub:
+			c.emit(mapval.OP_ALL_SUB)
+		case ast.OpAllFld:
+			c.emit(mapval.OP_ALL_FIELDS)
+		case ast.OpAllPos:
+			c.emit(mapval.OP_ALL_POS)
+		case ast.OpFreeze:
+			c.emit(mapval.OP_FREEZE)
+		case ast.OpCopy:
+			c.emit(mapval.OP_COPY)
+		case ast.OpToDate:
+			c.emit(mapval.OP_COERCE_DATE)
+		case ast.OpGetParams:
+			c.emit(mapval.OP_GET_PARAMS)
+		case ast.OpGetCtor:
+			c.emit(mapval.OP_GET_CTOR)
+		case ast.OpGetBase:
+			c.emit(mapval.OP_GET_BASE)
+		case ast.OpToNum:
+			c.emit(mapval.OP_COERCE_NUM)
+		case ast.OpNegNum:
+			c.emit(mapval.OP_NUM_NEG)
+		case ast.OpToBool:
+			c.emit(mapval.OP_COERCE_BOOL)
+		case ast.OpNegBool:
+			c.emit(mapval.OP_BOOL_NEG)
+		case ast.OpSpread:
+			c.emit(mapval.OP_SPREAD)
+		case ast.OpToKey:
+			c.emit(mapval.OP_COERCE_KEY)
+		default:
+			return fmt.Errorf("unsupported postfix op: %v", bin.Op)
+		}
+		return nil
+	}
+
 	// Compile Right
 	if err := c.compileExpression(bin.Right); err != nil {
 		return err

@@ -22,7 +22,7 @@ func (vm *VM) opSend() error {
 
 	receiver := vm.pop()
 	if vm.Config.TraceSpace {
-		fmt.Printf("DEBUG: opSend receiver: %s (Type %s)\n", receiver, receiver.Type)
+		fmt.Printf("TRACE: opSend receiver: %s (Type %s)\n", receiver, receiver.Type)
 	}
 
 	if receiver.Type != mapval.ValObject {

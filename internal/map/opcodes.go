@@ -151,6 +151,8 @@ func (op OpCode) String() string {
 		return "OP_LOAD_LOC"
 	case OP_STORE_LOC:
 		return "OP_STORE_LOC"
+	case OP_STORE_LOC_IMMUT:
+		return "OP_STORE_LOC_IMMUT"
 	case OP_LOAD_UPVALUE:
 		return "OP_LOAD_UPVALUE"
 	case OP_STORE_UPVALUE:
@@ -279,6 +281,8 @@ func (op OpCode) String() string {
 		return "OP_LENGTH"
 	case OP_IS_EMPTY:
 		return "OP_IS_EMPTY"
+	case OP_IS_MAP:
+		return "OP_IS_MAP"
 	case OP_ALL_SUB:
 		return "OP_ALL_SUB"
 	case OP_ALL_FIELDS:

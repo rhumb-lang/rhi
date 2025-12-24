@@ -63,7 +63,8 @@ func (c *Compiler) addUpvalue(isLocal bool, index int) int {
 }
 
 func (c *Compiler) isDeclared(name string) bool {
-	if c.Scope.resolveLocal(name) != -1 {
+	res := c.Scope.resolveLocal(name) != -1
+	if res {
 		return true
 	}
 	if c.Enclosing != nil {

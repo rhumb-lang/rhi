@@ -118,6 +118,9 @@ func (vm *VM) opStoreUpvalue() {
 
 	// Check immutability
 	if upvalue.Frozen != nil && *upvalue.Frozen {
+		if vm.Config.TraceSpace {
+			fmt.Printf("TRACE: opStoreUpvalue Upvalue %d is Frozen\n", idx)
+		}
 		// Emit #*** signal instead of panic
 		msg := "cannot assign value to immutable label"
 		sig := mapval.NewErrorSignal(0, msg, mapval.NewEmpty())
@@ -126,6 +129,9 @@ func (vm *VM) opStoreUpvalue() {
 	}
 
 	val := vm.peek(0)
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: opStoreUpvalue Upvalue %d = %s (FrozenPtr: %p, FrozenVal: %v)\n", idx, val, upvalue.Frozen, upvalue.Frozen != nil && *upvalue.Frozen)
+	}
 
 	if upvalue.Location != nil {
 		*upvalue.Location = val
@@ -140,12 +146,19 @@ func (vm *VM) opAdd() error {
 	b := vm.pop()
 	a := vm.pop()
 
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: opAdd %s + %s\n", a, b)
+	}
+
 	// --- Path A: Numeric (Non-Time) ---
 	// If both are numbers, use the Numeric Hierarchy
 	if isNumeric(a) && isNumeric(b) {
 		res, err := performNumericOp("+", a, b)
 		if err != nil {
 			return err
+		}
+		if vm.Config.TraceSpace {
+			fmt.Printf("TRACE: opAdd result = %s\n", res)
 		}
 		vm.push(res)
 		return nil
@@ -859,7 +872,6 @@ func (vm *VM) opJump() {
 func (vm *VM) opIfTrue() {
 	offset := vm.readShort()
 	val := vm.pop()
-	// fmt.Printf("DEBUG: opIfTrue (JUMP_IF_FALSE) checking val: %s, isFalsy: %v\n", val.Canonical(), vm.isFalsy(val))
 	if vm.isFalsy(val) {
 		frame := vm.currentFrame()
 		frame.IP += offset
@@ -919,6 +931,9 @@ func (vm *VM) captureUpvalue(location int, frozen *bool) *mapval.Upvalue {
 	// This means multiple closures capturing the same var get different Upvalue structs.
 	// But they point to the same Stack location and the same Frozen bool pointer.
 	// So they share state correctly.
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: Capturing Upvalue at Location %d (Value: %s, Frozen: %v)\n", location, *val, *frozen)
+	}
 	return &mapval.Upvalue{Location: val, Frozen: frozen}
 }
 
@@ -1013,7 +1028,8 @@ func (vm *VM) opReturn() (int, error) {
 	frame := vm.currentFrame() // Frame returning FROM
 
 	// Check for Monitor (Selector attached to block)
-	if frame.Monitor != nil {
+	// Only intercept if the monitor is intended to transform values.
+	if frame.Monitor != nil && frame.Monitor.Fn.HasValuePatterns {
 		// Intercept Return!
 		// The Selector acts as a continuation/transformer for the return value.
 		// We effectively replace the current frame with the Monitor frame.
@@ -1075,7 +1091,6 @@ func (vm *VM) isTruthy(val mapval.Value) bool {
 
 func numericCompare(a, b mapval.Value) (int, error) {
 	if (a.Type != mapval.ValInteger && a.Type != mapval.ValFloat) || (b.Type != mapval.ValInteger && b.Type != mapval.ValFloat) {
-		fmt.Printf("DEBUG: numericCompare types mismatch: a=%s(%d) b=%s(%d)\n", a.Canonical(), a.Type, b.Canonical(), b.Type)
 		return 0, fmt.Errorf("operands must be numbers for comparison")
 	}
 

@@ -7,6 +7,98 @@ import (
 	mapval "github.com/rhumb-lang/rhi/internal/map"
 )
 
+func (vm *VM) opLength() {
+	val := vm.pop()
+	res := int64(0)
+	switch val.Type {
+	case mapval.ValText:
+		res = int64(len(val.Str))
+	case mapval.ValObject:
+		if m, ok := val.Obj.(*mapval.Map); ok {
+			res = int64(len(m.Fields))
+		} else if t, ok := val.Obj.(*mapval.Tuple); ok {
+			res = int64(len(t.Payload))
+		}
+	}
+	vm.push(mapval.NewInt(res))
+}
+
+func (vm *VM) opFreeze() {
+	// [.] - Freeze target
+	// For MVP, we can just return the value as is, or mark it immutable if possible.
+	// Since opStoreLocImmut handles immutability at variable level, this might be for objects.
+	// Placeholder: Identity
+}
+
+func (vm *VM) opCopy() {
+	// [:] - Copy target
+	// Should perform shallow copy of Map or List
+	val := vm.pop()
+	if val.Type == mapval.ValObject {
+		if m, ok := val.Obj.(*mapval.Map); ok {
+			newMap := mapval.NewMap()
+			// Copy Legend
+			newMap.Legend.Fields = make([]mapval.FieldDesc, len(m.Legend.Fields))
+			copy(newMap.Legend.Fields, m.Legend.Fields)
+			// Copy Fields
+			newMap.Fields = make([]mapval.Value, len(m.Fields))
+			copy(newMap.Fields, m.Fields)
+			vm.push(mapval.Value{Type: mapval.ValObject, Obj: newMap})
+			return
+		}
+	}
+	vm.push(val)
+}
+
+func (vm *VM) opToDate() {
+	// [/] - To Date
+	// Coerce Int/Float/String to Date
+	val := vm.pop()
+	res := mapval.NewEmpty()
+	if val.Type == mapval.ValInteger {
+		res = mapval.Value{Type: mapval.ValDateTime, Integer: val.Integer}
+	}
+	vm.push(res)
+}
+
+func (vm *VM) opGetCtor() {
+	// [^] - Get Constructor
+	// Placeholder
+	vm.pop()
+	vm.push(mapval.NewEmpty())
+}
+
+func (vm *VM) opGetBase() {
+	// [!] - Get Base
+	// Placeholder
+	vm.pop()
+	vm.push(mapval.NewEmpty())
+}
+
+func (vm *VM) opToBool() {
+	val := vm.pop()
+	vm.push(mapval.NewBoolean(vm.isTruthy(val)))
+}
+
+func (vm *VM) opBoolNeg() {
+	val := vm.pop()
+	vm.push(mapval.NewBoolean(vm.isFalsy(val)))
+}
+
+func (vm *VM) opSpread() {
+	// [&] - Spread
+	// Placeholder
+	vm.pop()
+	vm.push(mapval.NewEmpty())
+}
+
+func (vm *VM) opToKey() {
+	// [`] - To Key
+	// Placeholder
+	vm.pop()
+	vm.push(mapval.NewEmpty())
+}
+
 func (vm *VM) opCoalesce() {
 	b := vm.pop()
 	a := vm.pop()
@@ -81,6 +173,9 @@ func (vm *VM) opRange() {
 	}
 
 	r := &mapval.Range{Start: a.Integer, End: b.Integer}
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: opRange %d | %d\n", a.Integer, b.Integer)
+	}
 	vm.push(mapval.Value{Type: mapval.ValRange, Obj: r}) // Use ValRange tag
 }
 
@@ -106,6 +201,10 @@ func (vm *VM) opForeach() error {
 	rhs := vm.pop()
 	lhs := vm.pop()
 
+	if vm.Config.TraceSpace {
+		fmt.Printf("TRACE: opForeach LHS=%s RHS=%s\n", lhs, rhs)
+	}
+
 	// Case 1: Subscription (Map <> Selector)
 	if lhs.Type == mapval.ValObject {
 		if _, ok := lhs.Obj.(*mapval.Map); ok {
@@ -130,6 +229,9 @@ func (vm *VM) opForeach() error {
 			}
 
 			for i := start; ; i += step {
+				if vm.Config.TraceSpace {
+					fmt.Printf("TRACE: opForeach Iteration i=%d\n", i)
+				}
 				// Execute Closure(i)
 
 				// Push Closure (Function)
@@ -138,17 +240,6 @@ func (vm *VM) opForeach() error {
 				vm.push(mapval.NewInt(i))
 
 				// Setup Frame
-				// We can reuse opCall logic?
-				// opCall expects args on stack.
-				// opCall sets up frame but DOES NOT RUN.
-				// So we call opCall, then RunSynchronous.
-
-				// opCall checks peek(argCount).
-				// Arg count is 1.
-				// But opCall reads argCount from Bytecode stream!
-				// We are in Go code, we don't have an instruction stream for "CALL 1".
-				// So we must manually setup frame.
-
 				newFrame := &CallFrame{
 					Parent:  vm.CurrentFrame,
 					Closure: closure,
@@ -165,8 +256,7 @@ func (vm *VM) opForeach() error {
 				}
 				if res != Ok {
 					// Propagate Halt/Error?
-					// If Halt, stop everything.
-					return nil // Stop loop? Or return error?
+					return nil // Stop loop
 				}
 
 				// Pop result of closure

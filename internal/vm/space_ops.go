@@ -308,27 +308,6 @@ func (vm *VM) opInject() error {
 
 	zombie.WaitingSignal = ""
 
-	// Clear the Monitor that handled the signal so it doesn't intercept
-	// the eventual return of the revived frame.
-	// We walk up the chain because the monitor might be on a parent frame (e.g. recursion).
-	curr := zombie
-	foundMonitor := false
-	for curr != nil {
-		if curr.Monitor != nil {
-			if vm.Config.TraceSpace {
-				fmt.Printf("TRACE: Clearing Monitor on Frame %p (Closure: %s)\n", curr, curr.Closure.Fn.Name)
-			}
-			curr.Monitor = nil
-			foundMonitor = true
-			break
-		}
-		curr = curr.Parent
-	}
-
-	if !foundMonitor && vm.Config.TraceSpace {
-		fmt.Printf("TRACE: WARNING: No Monitor found to clear starting from zombie %p\n", zombie)
-	}
-
 	if vm.Config.TraceSpace {
 		fmt.Printf("TRACE: Reviving Zombie Frame %p\n", zombie)
 	}

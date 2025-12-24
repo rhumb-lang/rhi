@@ -23,6 +23,16 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 	hoister := NewHoister()
 	for _, pat := range s.Patterns {
 		if p, ok := pat.(*ast.PatternDefinition); ok {
+			// Check if this is a value pattern (anything other than a signal match)
+			isSignalPattern := false
+			if unary, ok := p.Target.(*ast.UnaryExpression); ok && unary.Op == ast.OpSignal {
+				isSignalPattern = true
+			}
+
+			if !isSignalPattern {
+				child.Function.HasValuePatterns = true
+			}
+
 			// Binding in Target
 			if label, ok := p.Target.(*ast.LabelLiteral); ok {
 				// Only hoist if NOT declared in parent (Binding)
@@ -81,7 +91,7 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 
 		switch p := pat.(type) {
 		case *ast.PatternDefinition:
-			if err := child.compilePattern(p.Target); err != nil {
+			if err := child.compilePattern(p.Target, false); err != nil {
 				return err
 			}
 			// Jump if False (No Match) -> Next Pattern
@@ -135,7 +145,7 @@ func (c *Compiler) compileSelector(s *ast.SelectorExpression) error {
 	return nil
 }
 
-func (c *Compiler) compilePattern(target ast.Expression) error {
+func (c *Compiler) compilePattern(target ast.Expression, allowEmpty bool) error {
 	// Stack: [Subject]
 
 	switch t := target.(type) {
@@ -180,25 +190,34 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 		// 2. Bind variable (Local)
 		idx := c.Scope.resolveLocal(t.Value)
 		if idx != -1 {
-			// Check if Subject is Empty (Bind fails on Empty)
-			c.emit(mapval.OP_DUP)           // [Subject, Subject]
-			c.emit(mapval.OP_IS_EMPTY)      // [Subject, IsEmpty]
-			failJump := c.emitJump(mapval.OP_JUMP_IF_TRUE) // Jumps if Empty
+			if !allowEmpty {
+				// Check if Subject is Empty (Bind fails on Empty)
+				c.emit(mapval.OP_DUP)           // [Subject, Subject]
+				c.emit(mapval.OP_IS_EMPTY)      // [Subject, IsEmpty]
+				failJump := c.emitJump(mapval.OP_JUMP_IF_TRUE) // Jumps if Empty
 
-			// Not Empty: Bind
-			c.emit(mapval.OP_STORE_LOC)     // [Subject] (stored)
-			c.Chunk().WriteByte(byte(idx), 0)
-			c.emit(mapval.OP_POP)           // []
-			c.emitConstant(mapval.NewBoolean(true)) // [True]
-			endJump := c.emitJump(mapval.OP_JUMP)
+				// Not Empty: Bind
+				c.emit(mapval.OP_STORE_LOC)     // [Subject] (stored)
+				c.Chunk().WriteByte(byte(idx), 0)
+				c.emit(mapval.OP_POP)           // []
+				c.emitConstant(mapval.NewBoolean(true)) // [True]
+				endJump := c.emitJump(mapval.OP_JUMP)
 
-			// Fail Label
-			c.patchJump(failJump)
-			c.emit(mapval.OP_POP)           // [Subject] -> []
-			c.emitConstant(mapval.NewBoolean(false)) // [False]
+				// Fail Label
+				c.patchJump(failJump)
+				c.emit(mapval.OP_POP)           // [Subject] -> []
+				c.emitConstant(mapval.NewBoolean(false)) // [False]
 
-			c.patchJump(endJump)
-			return nil
+				c.patchJump(endJump)
+				return nil
+			} else {
+				// Allow Empty: Bind directly
+				c.emit(mapval.OP_STORE_LOC)
+				c.Chunk().WriteByte(byte(idx), 0)
+				c.emit(mapval.OP_POP)
+				c.emitConstant(mapval.NewBoolean(true))
+				return nil
+			}
 		}
 
 		// 3. Pinned Match (Upvalue)
@@ -282,7 +301,7 @@ func (c *Compiler) compilePattern(target ast.Expression) error {
 
 			// Stack: [Subject, FieldValue]
 			// Match field value
-			if err := c.compilePattern(valPattern); err != nil {
+			if err := c.compilePattern(valPattern, false); err != nil { // Map fields don't allow empty by default
 				return err
 			}
 			// Stack: [Subject, FieldBool]
@@ -408,8 +427,8 @@ func (c *Compiler) compileSignalPattern(call *ast.CallExpression, topicIdx int) 
 		c.emit(mapval.OP_SEND)
 		c.Chunk().WriteByte(byte(idxConst), 0)
 
-		// Match Arg
-		if err := c.compilePattern(arg); err != nil {
+		// Match Arg - ALLOW EMPTY BINDINGS IN SIGNALS
+		if err := c.compilePattern(arg, true); err != nil {
 			return err
 		}
 		// Stack: [ArgBool]
