@@ -7,7 +7,7 @@
 depth .= 100
 
 % Recursive builder that spawns a thread inside a child realm
-build-tower .= [level] -> level == depth {
+build-tower .= [level] -> (level == depth) {
   yes .. (
     % Bottom level: Fire the signal!
     #fire("From the deep")
@@ -27,7 +27,7 @@ build-tower .= [level] -> level == depth {
 wrapped-call .= [] -> build-tower(0)
 
 result .= wrapped-call {
-  #fire(msg) .. "Caught: $msg"
+  #fire(msg) .. 'Caught: ' && msg
 }
 
-result %= "Caught: From the deep"
+result %= 'Caught: From the deep'
